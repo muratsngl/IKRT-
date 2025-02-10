@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35013.160
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IKRT#", "IKRT#.vcxproj", "{7BD192AC-6633-405E-8476-AAC88B1C2738}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Debug|x64.ActiveCfg = Debug|x64
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Debug|x64.Build.0 = Debug|x64
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Debug|x86.ActiveCfg = Debug|Win32
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Debug|x86.Build.0 = Debug|Win32
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Release|x64.ActiveCfg = Release|x64
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Release|x64.Build.0 = Release|x64
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Release|x86.ActiveCfg = Release|Win32
+		{7BD192AC-6633-405E-8476-AAC88B1C2738}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {205CAFD8-1E72-4A47-B3B5-275DF6D2CC8C}
+	EndGlobalSection
+EndGlobal
