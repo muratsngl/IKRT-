@@ -7,9 +7,11 @@
 #include <string.h>
 #include <memory>
 #include <iostream>
+#include <vector>
 
 #include "Camera.h"
 #include "Shader.h"
+#include "FABRIK.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -55,8 +57,8 @@ int main()
 
 	
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
 
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Inverse Kinematics with Realtime Data",NULL,NULL);
@@ -79,34 +81,84 @@ int main()
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
-	
-	float triangleVertices[] = {
+	//vertex information of guiding triangle and the snake;
+	std::vector<float>triangleVertices = {
 		// Triangle 1
-		0.0f, 0.0f, 0.0f,  // Vertex 1
+		-0.1f, 0.0f, 0.0f,  // Vertex 1
 		0.1f, 0.1f, 0.0f,  // Vertex 2
 		0.1f, 0.0f, 0.0f,  // Vertex 3
 
 	};
+	std::vector<float>snakeEndpoints = {
+		0.0f,1.6f,0.0f,
+		0.0f,0.8f,0.0f,
+		0.0f,0.0f,0.0f,
+		0.0f,-0.8f,0.0f,
+		0.0f,-1.6f,0.0f
+	};
+	unsigned int snakeVAO;
+	glGenVertexArrays(1, &snakeVAO);
+	glBindVertexArray(snakeVAO);
+	
+	unsigned int snakeVBO[2];
+	glGenBuffers(2,snakeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, snakeVBO[0]);
+	std::cout << "snakeVBO[0]: " << snakeVBO[0] << ", snakeVBO[1]: " << snakeVBO[1] << std::endl;
+	
+	glBufferStorage(GL_ARRAY_BUFFER, sizeof(float) * snakeEndpoints.size(), NULL,
+		GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_WRITE_BIT);
+	float* firstHandle = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,
+		sizeof(float) * snakeEndpoints.size(),
+		GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_WRITE_BIT);
+	
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+	// Allocate and persistently map second VBO
+	glBindBuffer(GL_ARRAY_BUFFER, snakeVBO[1]);
+	glBufferStorage(GL_ARRAY_BUFFER, sizeof(float) * snakeEndpoints.size(), NULL,
+		GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_WRITE_BIT);
+	float* secondHandle = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,
+		sizeof(float) * snakeEndpoints.size(),
+		GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_WRITE_BIT);
+
+	memcpy(firstHandle, snakeEndpoints.data(), sizeof(float) * snakeEndpoints.size());
+	
+
+	glBindVertexArray(0);
+	
+	unsigned int triangleVAO;
+	glGenVertexArrays(1, &triangleVAO);
+	glBindVertexArray(triangleVAO);
+	
 	unsigned int triangleVBO;
 	glGenBuffers(1, &triangleVBO);
 	glBindBuffer(GL_ARRAY_BUFFER,triangleVBO);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(triangleVertices),triangleVertices,GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * triangleVertices.size(), triangleVertices.data(),GL_STATIC_DRAW);
 
-	unsigned int triangleVAO;
-	glGenVertexArrays(1,&triangleVAO);
-	glBindVertexArray(triangleVAO);
+	
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3,GL_FLOAT,GL_FALSE,3*(sizeof(float)),(void*)0);
 
 	glBindVertexArray(0);
-
+	
 	Shader triangleShader("triangle.vs", "triangle.fs");
 	
-	triangleShader.use();
-	glBindVertexArray(triangleVAO);
-	glm::mat4 model = glm::mat4(1.0f);
+	int whichBuffertoRead = 0;
+	int whichBuffertoWrite = 1;
+	glm::mat4 triangleModel = glm::mat4(1.0f);
+	glm::mat4 view;
+	glm::mat4 projection;
+	glm::mat4 snakeModel = triangleModel;
+	glm::vec3 targetPosition(0.1f,0.1f,0.0f);
+	glm::vec3 delta(0);
+	glPointSize(10.0f);
 	while (!glfwWindowShouldClose(window)) {
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		//specifies which buffer to use for drawcall
+		whichBuffertoRead = whichBuffertoRead % 2;
+		whichBuffertoWrite = 1 - whichBuffertoRead++;
 		tempX = cxIndex;
 		tempY = cyIndex;
 		memcpy(&cxIndex, (char*)pBuf + 8, sizeof(float));
@@ -127,17 +179,6 @@ int main()
 			deltaY = mappedTempY-mappedCyIndex;
 			firstTrue = true;
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-		std::cout << deltaX << " " << deltaY << std::endl;
-		
-		
 		// per-frame time logic
 	    // --------------------
 		float currentFrame = static_cast<float>(glfwGetTime());
@@ -147,16 +188,38 @@ int main()
 		// -----
 		deltaX = fabs(deltaX) < 0.008f || !trueInput ? 0 : deltaX;
 		deltaY = fabs(deltaY) < 0.008f || !trueInput ? 0 : deltaY;
-		processInput(window);
-		model = glm::translate(model, glm::vec3(2*deltaX, 1.33*deltaY, 0.0f));
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		//drawing commands for the guiding triangle
+		delta = glm::vec3(2 * deltaX, 1.33 * deltaY, 0.0f);
+		triangleModel = glm::translate(triangleModel, delta);
+		targetPosition += delta;
+		view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glBindVertexArray(triangleVAO);
+		triangleShader.use();
 		triangleShader.setMat4("view", view);
 		triangleShader.setMat4("projection", projection);
-		triangleShader.setMat4("model",model);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		triangleShader.setMat4("model",triangleModel);
 		glDrawArrays(GL_TRIANGLES,0,3);
+		
+		//FABRIK ROUTINE AND BUFFER UPDATES
+		simpleFabrikRoutine(snakeEndpoints,targetPosition);
+		
+		if (whichBuffertoWrite) {
+			//use secondHandle
+			memcpy(secondHandle,snakeEndpoints.data(),sizeof(float)* snakeEndpoints.size());
+		}
+		else {
+			memcpy(firstHandle, snakeEndpoints.data(), sizeof(float) * snakeEndpoints.size());
+		}
+		glBindVertexArray(snakeVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, snakeVBO[whichBuffertoRead]);
+		triangleShader.setMat4("model",snakeModel);
+		glDrawArrays(GL_LINE_STRIP,0,5);
+		glDrawArrays(GL_POINTS,0,5);
+
+
+		
+		processInput(window);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
