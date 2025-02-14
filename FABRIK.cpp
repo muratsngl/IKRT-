@@ -1,4 +1,5 @@
 #include "FABRIK.h"
+#include <iostream>
 
 //stop the process if target position is within the tolerance
 #define TOLERANCE 0.0001
@@ -14,16 +15,19 @@ void simpleFabrikRoutine(std::vector<float>& currentPositions, const glm::vec3& 
 	float distanceBetweenJoints = numberOfBones * 0.4f;
 	glm::vec3 rootNode(currentPositions[0], currentPositions[1], currentPositions[2]);
 	float distanceBetweenRootAndTarget = glm::distance(rootNode,targetPosition);
-	glm::vec3 prevNode,currentNode;
+	glm::vec3 prevNode,currentNode, prevNodeOld;
 	float lambda;
+	glm::vec3 distanceConsecJoints;
 	//target is unreachable
 	if (distanceBetweenRootAndTarget > distanceBetweenJoints) {
 		float distanceBetweenJandR ;
 		prevNode = rootNode;
 		for (int i = 3; i < totalSize;i+=3) {
+			
+
 			distanceBetweenJandR = glm::distance(prevNode,targetPosition);
 			if (distanceBetweenJandR > 0) {
-				lambda = 0.4f / distanceBetweenJandR;
+				lambda = 0.2f / distanceBetweenJandR;
 			}
 			else lambda = 0;
 			
@@ -43,12 +47,13 @@ void simpleFabrikRoutine(std::vector<float>& currentPositions, const glm::vec3& 
 		float distanceBetweenEndTargetPosition = glm::distance(endEffectorPosition, targetPosition);
 		float distanceBetweenPiPii;
 		int loopCounter = 0;
-		while (distanceBetweenEndTargetPosition > TOLERANCE||loopCounter<MAX_ITERATIONS) {
+		while (distanceBetweenEndTargetPosition > TOLERANCE&&loopCounter<MAX_ITERATIONS) {
 			loopCounter++;
 			endEffectorPosition = targetPosition;
 			currentPositions[totalSize - 3] = targetPosition.x;
 			currentPositions[totalSize - 2] = targetPosition.y;
 			currentPositions[totalSize - 1] = targetPosition.z;
+			
 			prevNode = endEffectorPosition;
 			for (int k = totalSize - 6; k >= 0; k -= 3) {
 				currentNode = glm::vec3 (currentPositions[k],
@@ -56,7 +61,7 @@ void simpleFabrikRoutine(std::vector<float>& currentPositions, const glm::vec3& 
 							   currentPositions[k+2]);
 				distanceBetweenPiPii = glm::distance(prevNode, currentNode);
 				if (distanceBetweenPiPii > 0) {
-					lambda = 0.4f / distanceBetweenPiPii;
+					lambda = 0.2f / distanceBetweenPiPii;
 				}
 				else lambda = 0;
 				currentNode = (1 - lambda) * prevNode + lambda * currentNode;
@@ -75,7 +80,7 @@ void simpleFabrikRoutine(std::vector<float>& currentPositions, const glm::vec3& 
 					currentPositions[j + 2]);
 				distanceBetweenPiPii = glm::distance(prevNode, currentNode);
 				if (distanceBetweenPiPii > 0) {
-					lambda = 0.4f / distanceBetweenPiPii;
+					lambda = 0.2f / distanceBetweenPiPii;
 				}
 				else lambda = 0;
 				currentNode = (1 - lambda) * prevNode + lambda * currentNode;
