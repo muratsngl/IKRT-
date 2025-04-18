@@ -112,7 +112,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);glfw3.lib;opengl32.lib;</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);glfw3.lib;opengl32.lib;assimp-vc143-mtd.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>"C:\openGL";</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,6 +144,8 @@
     <ClInclude Include="Skeleton.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="snake_mesh.fs" />
+    <None Include="snake_mesh.vs" />
     <None Include="triangle.fs" />
     <None Include="triangle.vs" />
   </ItemGroup>

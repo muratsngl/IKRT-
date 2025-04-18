@@ -49,5 +49,11 @@
     <None Include="triangle.fs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="snake_mesh.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="snake_mesh.fs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

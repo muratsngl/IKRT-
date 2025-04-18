@@ -5,7 +5,7 @@
 #define TOLERANCE 0.0001
 #define MAX_ITERATIONS 50
 
-void simpleFabrikRoutine(std::vector<float>& currentPositions, const glm::vec3& targetPosition) {
+void simple_fabrik_routine(std::vector<float>& currentPositions, const glm::vec3& targetPosition) {
 	//for the simple snake model I have set joint distances to 1 this will 
 	// vary as more complex models are introduced. but 
 	// they will always be constant so its a good idea to calculate them prior to the routine
