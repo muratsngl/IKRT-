@@ -140,10 +140,17 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FABRIK.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="model_bones.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Skeleton.h" />
+    <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assimp-vc143-mtd.dll" />
+    <None Include="MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae" />
+    <None Include="skeletal.fs" />
+    <None Include="skeletal.vs" />
     <None Include="snake_mesh.fs" />
     <None Include="snake_mesh.vs" />
     <None Include="triangle.fs" />

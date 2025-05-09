@@ -13,6 +13,8 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "FABRIK.h"
+#include "model_bones.h"
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -21,7 +23,8 @@ void process_input(GLFWwindow* window);
 void init_buffers();
 void init_shaders();
 void create_snake_bone_transforms();
-
+void update_finger_positions(); // this will later become a controller class
+void create_orcun_bone_transforms(const std::vector<unsigned short>& indices);
 
 
 const unsigned int SCR_WIDTH = 1240;
@@ -91,19 +94,143 @@ std::vector<float> rightArmSubbase{
 	0.3f,0.1f,0.0f,
 	0.3f,-0.1f,0.0f
 };
+std::vector<float> rightArmMesh{
+	// Original segment at y=0.25
+	0.3f, 0.25f, -0.05f,  // x=0.3, z=-0.05
+	0.3f, 0.25f, 0.05f,
+	0.35f, 0.25f, 0.0f,   // x+0.05
+	0.25f, 0.25f, 0.0f,   // x-0.05
+
+	// NEW intermediate segment at y=0.175
+	0.3f, 0.175f, -0.05f,
+	0.3f, 0.175f, 0.05f,
+	0.35f, 0.175f, 0.0f,
+	0.25f, 0.175f, 0.0f,
+
+	// Original segment at y=0.1
+	0.3f, 0.1f, -0.05f,
+	0.3f, 0.1f, 0.05f,
+	0.35f, 0.1f, 0.0f,
+	0.25f, 0.1f, 0.0f,
+
+	// NEW intermediate segment at y=0.0
+	0.3f, 0.0f, -0.05f,
+	0.3f, 0.0f, 0.05f,
+	0.35f, 0.0f, 0.0f,
+	0.25f, 0.0f, 0.0f,
+
+	// Original segment at y=-0.1
+	0.3f, -0.1f, -0.05f,
+	0.3f, -0.1f, 0.05f,
+	0.35f, -0.1f, 0.0f,
+	0.25f, -0.1f, 0.0f
+};
 std::vector<float> rightLegSubbase{
 	0.25f,-0.5f,0.0f,
 	0.25f,-0.8f,0.0f,
 	0.25f,-1.1f,0.0f
 };
+std::vector<float> rightLegMesh{
+	// Original segment at y=-0.5
+	0.25f, -0.5f, -0.1f,
+	0.25f, -0.5f, 0.1f,
+	0.35f, -0.5f, 0.0f,   // x+0.1
+	0.15f, -0.5f, 0.0f,   // x-0.1
+
+	// NEW intermediate segment at y=-0.65
+	0.25f, -0.65f, -0.1f,
+	0.25f, -0.65f, 0.1f,
+	0.35f, -0.65f, 0.0f,
+	0.15f, -0.65f, 0.0f,
+
+	// Original segment at y=-0.8
+	0.25f, -0.8f, -0.1f,
+	0.25f, -0.8f, 0.1f,
+	0.35f, -0.8f, 0.0f,
+	0.15f, -0.8f, 0.0f,
+
+	// NEW intermediate segment at y=-0.95
+	0.25f, -0.95f, -0.1f,
+	0.25f, -0.95f, 0.1f,
+	0.35f, -0.95f, 0.0f,
+	0.15f, -0.95f, 0.0f,
+
+	// Original segment at y=-1.1
+	0.25f, -1.1f, -0.1f,
+	0.25f, -1.1f, 0.1f,
+	0.35f, -1.1f, 0.0f,
+	0.15f, -1.1f, 0.0f
+};
 std::vector<float> leftArmSubbase{
 	-0.3f,0.25f,0.0f,
 	-0.3f,0.1f,0.0f,
 	-0.3f,-0.1f,0.0f };
+std::vector<float> leftArmMesh{
+	// Original segment at y=0.25
+	-0.3f, 0.25f, -0.05f,
+	-0.3f, 0.25f, 0.05f,
+	-0.35f, 0.25f, 0.0f,   // x-0.05
+	-0.25f, 0.25f, 0.0f,   // x+0.05
+
+	// NEW intermediate segment at y=0.175
+	-0.3f, 0.175f, -0.05f,
+	-0.3f, 0.175f, 0.05f,
+	-0.35f, 0.175f, 0.0f,
+	-0.25f, 0.175f, 0.0f,
+
+	// Original segment at y=0.1
+	-0.3f, 0.1f, -0.05f,
+	-0.3f, 0.1f, 0.05f,
+	-0.35f, 0.1f, 0.0f,
+	-0.25f, 0.1f, 0.0f,
+
+	// NEW intermediate segment at y=0.0
+	-0.3f, 0.0f, -0.05f,
+	-0.3f, 0.0f, 0.05f,
+	-0.35f, 0.0f, 0.0f,
+	-0.25f, 0.0f, 0.0f,
+
+	// Original segment at y=-0.1
+	-0.3f, -0.1f, -0.05f,
+	-0.3f, -0.1f, 0.05f,
+	-0.35f, -0.1f, 0.0f,
+	-0.25f, -0.1f, 0.0f
+};
 std::vector<float> leftLegSubbase{
 	-0.25f,-0.5f,0.0f,
 	-0.25f,-0.8f,0.0f,
 	-0.25f,-1.1f,0.0f
+};
+std::vector<float> leftLegMesh{
+	// Original segment at y=-0.5
+	-0.25f, -0.5f, -0.1f,
+	-0.25f, -0.5f, 0.1f,
+	-0.35f, -0.5f, 0.0f,   // x-0.1
+	-0.15f, -0.5f, 0.0f,   // x+0.1
+
+	// NEW intermediate segment at y=-0.65
+	-0.25f, -0.65f, -0.1f,
+	-0.25f, -0.65f, 0.1f,
+	-0.35f, -0.65f, 0.0f,
+	-0.15f, -0.65f, 0.0f,
+
+	// Original segment at y=-0.8
+	-0.25f, -0.8f, -0.1f,
+	-0.25f, -0.8f, 0.1f,
+	-0.35f, -0.8f, 0.0f,
+	-0.15f, -0.8f, 0.0f,
+
+	// NEW intermediate segment at y=-0.95
+	-0.25f, -0.95f, -0.1f,
+	-0.25f, -0.95f, 0.1f,
+	-0.35f, -0.95f, 0.0f,
+	-0.15f, -0.95f, 0.0f,
+
+	// Original segment at y=-1.1
+	-0.25f, -1.1f, -0.1f,
+	-0.25f, -1.1f, 0.1f,
+	-0.35f, -1.1f, 0.0f,
+	-0.15f, -1.1f, 0.0f
 };
 //vertex information of guiding triangle and the snake;
 std::vector<float>snakeEndpoints{
@@ -114,6 +241,16 @@ std::vector<float>snakeEndpoints{
 		0.0f,0.8f,0.0f
 };
 std::vector<float>snakeEndpointsOriginal = snakeEndpoints;
+std::vector<glm::vec3> snakeEndpointsglm = {
+	glm::vec3(0.0f, 1.6f, 0.0f),
+	glm::vec3(0.0f, 1.4f, 0.0f),
+	glm::vec3(0.0f, 1.2f, 0.0f),
+	glm::vec3(0.0f, 1.0f, 0.0f),
+	glm::vec3(0.0f, 0.8f, 0.0f)
+};
+
+std::vector<glm::vec3> snakeEndpointsOriginalglm = snakeEndpointsglm;
+
 std::vector<float>snakeMesh{
 		0.0f,1.6f,-0.1f,  //0
 		0.0f,1.6f,0.1f, 
@@ -363,6 +500,18 @@ std::vector<GLuint> snakeMeshIndices{
 
 };
 
+//MODEL BONE STRUCTURES
+std::vector<unsigned short> orcun_left_arm{6,7,17};
+std::vector<unsigned short> orcun_right_arm{9,10,18};
+std::vector<unsigned short> orcun_left_leg{11,12,13};
+std::vector<unsigned short> orcun_right_leg{14,15,16};
+
+std::vector<glm::vec3> orcun_positions(19);
+std::vector<glm::vec3> orcun_positions_original(19);
+std::vector<glm::mat4> orcun_matrices(19);
+
+GLuint orcunUBO;
+
 
 int whichBuffertoRead = 0;
 int whichBuffertoWrite = 1;
@@ -372,13 +521,13 @@ glm::mat4 projection;
 glm::mat4 humanoidModel = glm::mat4(1.0f);
 
 std::vector<glm::mat4> snake_bone_transforms={glm::mat4(1.0f),glm::mat4(1.0f) ,glm::mat4(1.0f) ,glm::mat4(1.0f),glm::mat4(1.0f)  };
-
-glm::vec3 targetPositionIndex(0.0f, 0.8f, 0.0f);
+std::vector<glm::mat4> orcun_matrices_original;
+glm::vec3 targetPositionIndex(-1.2f, 2.f, 0.0f);
 
 //glm::vec3 targetPositionIndex(-0.4f, -0.2f, 0.0f);
-glm::vec3 targetPositionMiddle(0.4f, -0.2f, 0.0f);
-glm::vec3 targetPositionRing(-0.35f, -1.2f, 0.0f);
-glm::vec3 targetPositionPinky(0.35f, -1.2f, 0.0f);
+glm::vec3 targetPositionMiddle(-0.3f, -1.2f, 0.0f);
+glm::vec3 targetPositionRing(1.6f, 2.f, 0.0f);
+glm::vec3 targetPositionPinky(0.5f, -1.2f, 0.0f);
 
 glm::mat4 guidePointsModelIndex = glm::translate(glm::mat4(1.0f), targetPositionIndex);
 glm::mat4 guidePointsModelRing = glm::translate(glm::mat4(1.0f), targetPositionRing);
@@ -410,6 +559,8 @@ GLfloat* leftArmBufferHandle[2];
 GLuint leftLegVAO;
 GLuint leftLegVBO[2];
 GLfloat* leftLegBufferHandle[2];
+
+ 
 //guide points VAO VBO
 GLuint guidePointsVAO;
 GLuint guidePointsVBO;
@@ -420,28 +571,31 @@ GLfloat* snakeBufferHandle[2];
 GLuint snakeMeshVBO,snakeMeshVAO, snakeMeshEBO; 
 
 GLuint snakeBoneUBO;
+std::vector<unsigned short> snakeIndices{0,1,2,3,4};
 
 
 int main() 
 {	
 	// Variables for hand recognition and correct input taking
 	
-
+	
 	//IPC setup via shared memory 
 	const std::string shm_name = "handPositionData";
 	std::wstring stemp = std::wstring(shm_name.begin(), shm_name.end());
 	LPCWSTR sw = stemp.c_str();
-	HANDLE hMapFile = OpenFileMapping(FILE_MAP_READ,FALSE,sw);
+	HANDLE hMapFile = OpenFileMapping(FILE_MAP_READ, FALSE, sw);
 	if (hMapFile == NULL) {
 		std::cerr << "Could not open shared memory";
 		return 1;
 	}
 
-	void* pBuf = MapViewOfFile(hMapFile, FILE_MAP_READ, 0,0,62);
+	void* pBuf = MapViewOfFile(hMapFile, FILE_MAP_READ, 0, 0, 62);
 	if (pBuf == NULL) {
 		std::cerr << "Could not map view of file" << std::endl;
 		return 1;
 	}
+	
+	
 
 	
 	glfwInit();
@@ -473,24 +627,43 @@ int main()
 	Shader snakeMeshShader("snake_mesh.vs", "snake_mesh.fs");
 	
 	init_buffers();
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR) {
+		std::cerr << "OpenGL Error: " << std::hex << error << std::endl;
+	}
+	string modelPath = "./MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae";
+	Model currentModel(modelPath);
+	orcun_positions = currentModel.bindPosePositions;
+	orcun_positions_original = orcun_positions;
+	orcun_matrices = currentModel.bindPoseMatrices;
+	orcun_matrices_original = orcun_matrices;
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	Shader skeletonShader("skeletal.vs", "skeletal.fs");
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	while (!glfwWindowShouldClose(window)) {
+		GLenum error = glGetError();
+		if (error != GL_NO_ERROR) {
+			std::cerr << "OpenGL Error: " << std::hex << error << std::endl;
+		
+}
+		
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
 		tempXIndex = cxIndex;
 		tempYIndex = cyIndex;
 		tempZIndex = czIndex;
-		
+
 		tempXMiddle = cxMiddle;
 		tempYMiddle = cyMiddle;
 		tempZMiddle = czMiddle;
-		
+
 		tempXRing = cxRing;
 		tempYRing = cyRing;
 		tempZRing = czRing;
-		
+
 		tempXPinky = cxPinky;
 		tempYPinky = cyPinky;
 		tempZPinky = czPinky;
@@ -498,11 +671,11 @@ int main()
 		memcpy(&cxIndex, (char*)pBuf + 8, sizeof(float));
 		memcpy(&cyIndex, (char*)pBuf + 12, sizeof(float));
 		memcpy(&czIndex, (char*)pBuf + 41, sizeof(float));
-		
+
 		memcpy(&cxMiddle, (char*)pBuf + 16, sizeof(float));
 		memcpy(&cyMiddle, (char*)pBuf + 20, sizeof(float));
 		memcpy(&czMiddle, (char*)pBuf + 45, sizeof(float));
-		
+
 		memcpy(&cxRing, (char*)pBuf + 24, sizeof(float));
 		memcpy(&cyRing, (char*)pBuf + 28, sizeof(float));
 		memcpy(&czRing, (char*)pBuf + 49, sizeof(float));
@@ -518,34 +691,29 @@ int main()
 		// after creating the rigged model(humanoid) I will find ways to increase fps
 		// currently no middle calibration for z axis is defined TODO::
 		if (!firstTrue) { isMiddleized = fabs(cxMiddle - 0.5f) < 0.01f && fabs(cyMiddle - 0.5f) < 0.01f; }
-		if (isMiddleized) 
+		if (isMiddleized)
 		{
-			deltaXIndex = 2*(cxIndex-tempXIndex);
-			deltaYIndex = -2*(cyIndex -tempYIndex);
+			deltaXIndex = 2 * (cxIndex - tempXIndex);
+			deltaYIndex = -2 * (cyIndex - tempYIndex);
 			deltaZIndex = 2 * (czIndex - tempZIndex);
 
-			deltaXRing = 2 * (cxRing - tempXRing) ;
-			deltaYRing = -2 * (cyRing - tempYRing) ;
+			deltaXRing = 2 * (cxRing - tempXRing);
+			deltaYRing = -2 * (cyRing - tempYRing);
 			deltaZRing = 2 * (czRing - tempZRing);
-			
-			deltaXMiddle = 2 * (cxMiddle - tempXMiddle) ;
-			deltaYMiddle = -2 * (cyMiddle - tempYMiddle) ;
+
+			deltaXMiddle = 2 * (cxMiddle - tempXMiddle);
+			deltaYMiddle = -2 * (cyMiddle - tempYMiddle);
 			deltaZMiddle = 2 * (czMiddle - tempZMiddle);
 
-			deltaXPinky = 2 * (cxPinky - tempXPinky) ;
-			deltaYPinky = -2 * (cyPinky - tempYPinky) ;
+			deltaXPinky = 2 * (cxPinky - tempXPinky);
+			deltaYPinky = -2 * (cyPinky - tempYPinky);
 			deltaZPinky = 2 * (czPinky - tempZPinky);
 
 			firstTrue = true;
 		}
-		// per-frame time logic
-	    // --------------------
-		float currentFrame = static_cast<float>(glfwGetTime());
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-		// input
+
 		// -----
-		
+
 		//calculating deltas for all fingers
 		deltaXIndex = fabs(deltaXIndex) < 0.008f || !trueInput ? 0 : deltaXIndex;
 		deltaYIndex = fabs(deltaYIndex) < 0.008f || !trueInput ? 0 : deltaYIndex;
@@ -562,43 +730,81 @@ int main()
 		deltaXPinky = fabs(deltaXPinky) < 0.008f || !trueInput ? 0 : deltaXPinky;
 		deltaYPinky = fabs(deltaYPinky) < 0.008f || !trueInput ? 0 : deltaYPinky;
 		deltaZPinky = fabs(deltaZPinky) < 0.008f || !trueInput ? 0 : deltaZPinky;
+		
+		float currentFrame = static_cast<float>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 		//drawing commands for the guiding point
 		
-		glPointSize(10.0f);
+		//glPointSize(10.0f);
 		view = camera.GetViewMatrix();
 		projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		glBindVertexArray(guidePointsVAO);
-		generalPurposeShader.use();
-		generalPurposeShader.setMat4("view", view);
-		generalPurposeShader.setMat4("projection", projection);
+		//skeletonShader.use();
+		//skeletonShader.setMat4("view", view);
+		//skeletonShader.setMat4("model", humanoidModel);
+		//skeletonShader.setMat4("projection", projection);
+		//currentModel.Draw(skeletonShader);
+		
+		//glBindVertexArray(guidePointsVAO);
+		//generalPurposeShader.use();
+		//generalPurposeShader.setMat4("view", view);
+		//generalPurposeShader.setMat4("projection", projection);
 
-		//translating and drawing guiding points
-		deltaIndex = glm::vec3(2 * deltaXIndex, 1.33 * deltaYIndex, deltaZIndex);
+		////translating and drawing guiding points
+		deltaIndex = glm::vec3(4 * deltaXIndex, 2.66 * deltaYIndex, deltaZIndex);
 
-		guidePointsModelIndex = glm::translate(guidePointsModelIndex, deltaIndex);
+		//guidePointsModelIndex = glm::translate(guidePointsModelIndex, deltaIndex);
 		targetPositionIndex += deltaIndex;
-		generalPurposeShader.setMat4("model", guidePointsModelIndex);
-		glDrawArrays(GL_POINTS, 0, 1);
-		
-		/*deltaRing = glm::vec3(2 * deltaXRing, 1.33 * deltaYRing, deltaZRing);
-		guidePointsModelRing = glm::translate(guidePointsModelRing, deltaRing);
+		//generalPurposeShader.setMat4("model", guidePointsModelIndex);
+		//glDrawArrays(GL_POINTS, 0, 1);
+		//
+		deltaRing = glm::vec3(4 * deltaXRing, 2.66 * deltaYRing, deltaZRing);
+		//guidePointsModelRing = glm::translate(guidePointsModelRing, deltaRing);
 		targetPositionRing += deltaRing;
-		generalPurposeShader.setMat4("model", guidePointsModelRing);
-		glDrawArrays(GL_POINTS, 0, 1);
-		
-		deltaMiddle = glm::vec3(2 * deltaXMiddle, 1.33 * deltaYMiddle, deltaZMiddle);
-		guidePointsModelMiddle = glm::translate(guidePointsModelMiddle, deltaMiddle);
+		//generalPurposeShader.setMat4("model", guidePointsModelRing);
+		//glDrawArrays(GL_POINTS, 0, 1);
+		//
+		deltaMiddle = glm::vec3(4 * deltaXMiddle, 2.66 * deltaYMiddle, deltaZMiddle);
+		//guidePointsModelMiddle = glm::translate(guidePointsModelMiddle, deltaMiddle);
 		targetPositionMiddle += deltaMiddle;
-		generalPurposeShader.setMat4("model", guidePointsModelMiddle);
-		glDrawArrays(GL_POINTS, 0, 1);
-		
-		deltaPinky = glm::vec3(2 * deltaXPinky, 1.33 * deltaYPinky, deltaZPinky);
-		guidePointsModelPinky = glm::translate(guidePointsModelPinky, deltaPinky);
+		//generalPurposeShader.setMat4("model", guidePointsModelMiddle);
+		//glDrawArrays(GL_POINTS, 0, 1);
+		//
+		deltaPinky = glm::vec3(4 * deltaXPinky, 2.66 * deltaYPinky, deltaZPinky);
+		//guidePointsModelPinky = glm::translate(guidePointsModelPinky, deltaPinky);
 		targetPositionPinky += deltaPinky;
-		generalPurposeShader.setMat4("model", guidePointsModelPinky);
-		glDrawArrays(GL_POINTS, 0, 1);
+		//generalPurposeShader.setMat4("model", guidePointsModelPinky);
+		//glDrawArrays(GL_POINTS, 0, 1);
 		
-		glPointSize(5.0f);
+		
+		/*simple_fabrik_routine_indexed(snakeEndpointsglm,targetPositionIndex,snakeIndices);
+		create_snake_bone_transforms();*/
+		simple_fabrik_routine_indexed(orcun_positions,targetPositionIndex,orcun_right_arm);
+		simple_fabrik_routine_indexed(orcun_positions, targetPositionMiddle, orcun_right_leg);
+		simple_fabrik_routine_indexed(orcun_positions, targetPositionRing, orcun_left_arm);
+		simple_fabrik_routine_indexed(orcun_positions, targetPositionPinky, orcun_left_leg);
+
+		create_orcun_bone_transforms(orcun_right_arm);
+		create_orcun_bone_transforms(orcun_left_arm);
+		create_orcun_bone_transforms(orcun_right_leg);
+		create_orcun_bone_transforms(orcun_left_leg);
+		glBindBuffer(GL_UNIFORM_BUFFER,orcunUBO);
+		for (short i = 0; i < 19; i++) {
+			glBufferSubData(GL_UNIFORM_BUFFER, i*sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(orcun_matrices[i]));
+		}
+		error = glGetError();
+		if (error != GL_NO_ERROR) {
+			std::cerr << "OpenGL Error: " << std::hex << error << std::endl;
+		}
+		skeletonShader.use();
+		skeletonShader.setMat4("view",view);
+		skeletonShader.setMat4("model",humanoidModel);
+		skeletonShader.setMat4("projection", projection);
+		currentModel.Draw(skeletonShader);
+
+
+
+		/*glPointSize(5.0f);
 		generalPurposeShader.setMat4("model", humanoidModel);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glBindVertexArray(centerSkeletonVAO);
@@ -609,31 +815,26 @@ int main()
 		glDrawElements(GL_POINTS, 8, GL_UNSIGNED_INT, 0);*/
 		
 		
+
+
 		
-		simple_fabrik_routine(snakeEndpoints, targetPositionIndex);
-		create_snake_bone_transforms();
-		//simple_fabrik_routine(leftArmSubbase, targetPositionIndex);
-		/*simple_fabrik_routine(rightArmSubbase, targetPositionMiddle);
-		simple_fabrik_routine(leftLegSubbase, targetPositionRing);
-		simple_fabrik_routine(rightLegSubbase, targetPositionPinky);
-		*/
 		
-		if (whichBuffertoWrite) {
-			//use secondHandle
-			//memcpy(rightArmBufferHandle[1], rightArmSubbase.data(), sizeof(float) * rightArmSubbase.size());
-			//memcpy(leftArmBufferHandle[1], leftArmSubbase.data(), sizeof(float) * leftArmSubbase.size());
-			//memcpy(rightLegBufferHandle[1], rightLegSubbase.data(), sizeof(float) * rightLegSubbase.size());
-			//memcpy(leftLegBufferHandle[1], leftLegSubbase.data(), sizeof(float) * leftLegSubbase.size());
-			memcpy(snakeBufferHandle[1], snakeEndpoints.data(), sizeof(float)* snakeEndpoints.size());
-			
-		}
-		else {
-			/*memcpy(rightArmBufferHandle[0], rightArmSubbase.data(), sizeof(float) * rightArmSubbase.size());
-			memcpy(leftArmBufferHandle[0], leftArmSubbase.data(), sizeof(float) * leftArmSubbase.size());
-			memcpy(rightLegBufferHandle[0], rightLegSubbase.data(), sizeof(float) * rightLegSubbase.size());
-			memcpy(leftLegBufferHandle[0], leftLegSubbase.data(), sizeof(float) * leftLegSubbase.size());*/
-			memcpy(snakeBufferHandle[0], snakeEndpoints.data(), sizeof(float)* snakeEndpoints.size());
-		}
+		//if (whichBuffertoWrite) {
+		//	//use secondHandle
+		//	/*memcpy(rightArmBufferHandle[1], rightArmSubbase.data(), sizeof(float) * rightArmSubbase.size());
+		//	memcpy(leftArmBufferHandle[1], leftArmSubbase.data(), sizeof(float) * leftArmSubbase.size());
+		//	memcpy(rightLegBufferHandle[1], rightLegSubbase.data(), sizeof(float) * rightLegSubbase.size());
+		//	memcpy(leftLegBufferHandle[1], leftLegSubbase.data(), sizeof(float) * leftLegSubbase.size());*/
+		//	memcpy(snakeBufferHandle[1], snakeEndpoints.data(), sizeof(float)* snakeEndpoints.size());
+		//	
+		//}
+		//else {
+		//	/*memcpy(rightArmBufferHandle[0], rightArmSubbase.data(), sizeof(float) * rightArmSubbase.size());
+		//	memcpy(leftArmBufferHandle[0], leftArmSubbase.data(), sizeof(float) * leftArmSubbase.size());
+		//	memcpy(rightLegBufferHandle[0], rightLegSubbase.data(), sizeof(float) * rightLegSubbase.size());
+		//	memcpy(leftLegBufferHandle[0], leftLegSubbase.data(), sizeof(float) * leftLegSubbase.size());*/
+		//	memcpy(snakeBufferHandle[0], snakeEndpoints.data(), sizeof(float)* snakeEndpoints.size());
+		//}
 		
 		/*glBindVertexArray(rightArmVAO);
 		glBindBuffer(GL_ARRAY_BUFFER, rightArmVBO[whichBuffertoRead]);
@@ -653,10 +854,10 @@ int main()
 		glBindVertexArray(leftLegVAO);
 		glBindBuffer(GL_ARRAY_BUFFER, leftLegVBO[whichBuffertoRead]);
 		glDrawArrays(GL_LINE_STRIP, 0, 3);
-		glDrawArrays(GL_POINTS, 0, 3);*/
-		generalPurposeShader.setMat4("model", humanoidModel);
-		
-		glBindVertexArray(snakeVAO);
+		glDrawArrays(GL_POINTS, 0, 3);
+		generalPurposeShader.setMat4("model", humanoidModel);*/
+		//snake drawing setup ubos
+		/*glBindVertexArray(snakeVAO);
 		glBindBuffer(GL_ARRAY_BUFFER, snakeVBO[whichBuffertoRead]);
 		glDrawArrays(GL_LINE_STRIP, 0, 5);
 		glDrawArrays(GL_POINTS, 0, 5);
@@ -671,13 +872,12 @@ int main()
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 3, sizeof(glm::mat4), glm::value_ptr(snake_bone_transforms[3]));
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 4, sizeof(glm::mat4), glm::value_ptr(snake_bone_transforms[4]));
 		glBindVertexArray(snakeMeshVAO);
-		glDrawElements(GL_TRIANGLES, snakeMeshIndices.size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, snakeMeshIndices.size(), GL_UNSIGNED_INT, 0);*/
+
+
 		
 		
-		GLenum error = glGetError();
-		if (error != GL_NO_ERROR) {
-			std::cerr << "OpenGL Error: " << std::hex << error << std::endl;
-		}
+		
 		
 		
 		//specifies which buffer to use for drawcall::
@@ -899,6 +1099,12 @@ void init_buffers() {
 	glBufferData(GL_UNIFORM_BUFFER,320,NULL,GL_DYNAMIC_READ);
 	glBindBuffer(GL_UNIFORM_BUFFER,0);
 
+	glGenBuffers(1,&orcunUBO);
+	glBindBuffer(GL_UNIFORM_BUFFER,orcunUBO);
+	glBindBufferBase(GL_UNIFORM_BUFFER,1,orcunUBO);
+	glBufferData(GL_UNIFORM_BUFFER, 1216,NULL,GL_DYNAMIC_READ);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 }
 
 
@@ -908,13 +1114,57 @@ void init_shaders() {
 }
 
 //shitty global dependent code for fast prototyping
-void create_snake_bone_transforms() {
-	for (int i = 2; i < snakeEndpoints.size(); i += 3) {
-		glm::vec3 newPosition(snakeEndpoints[i - 2], snakeEndpoints[i - 1], snakeEndpoints[i]);
-		glm::vec3 originalPosition(snakeEndpointsOriginal[i - 2], snakeEndpointsOriginal[i - 1], snakeEndpointsOriginal[i]);
-		glm::vec3 translateVector(newPosition - originalPosition);
-		snake_bone_transforms[i/3] = glm::translate(glm::mat4(1.0f), translateVector);
+
+// CAUTION: as a late realization I have concluded that 2D input systems cannot provide rotation and translation together. BUT: contextual information about objects and scenes may provide information about rotation. I think those can be generalized without a 3D input device. It may not be as fluent as the 3D but still we may get away with it
+
+void create_orcun_bone_transforms(const std::vector<unsigned short>& indices) {
+	for (short i = 0; i < indices.size() - 1; i++) {
+
+		glm::vec3 translateVector = (orcun_positions[indices[i]] - orcun_positions_original[indices[i]]);
+		float rotationCos = glm::dot(glm::normalize(orcun_positions[indices[i + 1]] - orcun_positions[indices[i]]), glm::normalize(orcun_positions_original[indices[i + 1]] - orcun_positions_original[indices[i]]));
+		float rotationAngle = glm::acos(rotationCos);
+		std::cout << rotationAngle << std::endl;
+		std::cout << rotationCos << std::endl;
+		glm::quat rotationQuat1 = glm::angleAxis(rotationAngle, glm::vec3(0, 0, 1));
+		glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), -orcun_positions_original[indices[i]]);
+		orcun_matrices[indices[i]] = glm::translate(glm::mat4(1.0f), translateVector) * glm::inverse(offsetMatrix) * glm::mat4_cast(rotationQuat1) * offsetMatrix;
+		if (i == indices.size() - 2) {
+			translateVector = (orcun_positions[indices[i + 1]] - orcun_positions_original[indices[i + 1]]);
+			offsetMatrix = glm::translate(glm::mat4(1.0f), -orcun_positions_original[indices[i]]);
+			orcun_matrices[indices[i + 1]] = glm::translate(glm::mat4(1.0f), translateVector) * glm::inverse(offsetMatrix) * glm::mat4_cast(rotationQuat1) * offsetMatrix;
+		}
+
 	}
+
+}
+
+
+
+
+
+void create_snake_bone_transforms() {
+	for (int i = 0; i < snakeEndpointsglm.size()-1; i ++) {
+		
+		glm::vec3 translateVector = snakeEndpointsglm[i]-snakeEndpointsOriginalglm[i];
+		glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), -snakeEndpointsglm[i]);
+		float rotationCos = glm::dot(glm::normalize(snakeEndpointsglm[i + 1] - snakeEndpointsglm[i]), glm::normalize((snakeEndpointsOriginalglm[i + 1] - snakeEndpointsOriginalglm[i])));
+		float rotationAngle = acos(rotationCos);
+		glm::quat rotationQuat1 = glm::angleAxis(rotationAngle, glm::vec3(0,0,1));
+		snake_bone_transforms[i] = glm::translate(glm::mat4(1.0f), translateVector) *glm::inverse(offsetMatrix)*glm::mat4_cast(rotationQuat1)*offsetMatrix;
+		if (i == snakeEndpointsglm.size() - 2) {
+			glm::vec3 translateVector = snakeEndpointsglm[i+1] - snakeEndpointsOriginalglm[i+1];
+			glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), -snakeEndpointsglm[i+1]);
+			snake_bone_transforms[i+1] = glm::translate(glm::mat4(1.0f), translateVector) * glm::inverse(offsetMatrix) * glm::mat4_cast(rotationQuat1) * offsetMatrix;
+		}
+	}
+	
+}
+
+void update_finger_positions()
+{	
+	
+	
+
 }
 
 

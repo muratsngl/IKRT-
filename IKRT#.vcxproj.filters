@@ -41,6 +41,15 @@
     <ClInclude Include="FABRIK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="model_bones.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="triangle.vs">
@@ -53,6 +62,14 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="snake_mesh.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="assimp-vc143-mtd.dll" />
+    <None Include="MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae" />
+    <None Include="skeletal.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="skeletal.vs">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
