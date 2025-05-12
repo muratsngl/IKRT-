@@ -1121,16 +1121,20 @@ void create_orcun_bone_transforms(const std::vector<unsigned short>& indices) {
 	for (short i = 0; i < indices.size() - 1; i++) {
 
 		glm::vec3 translateVector = (orcun_positions[indices[i]] - orcun_positions_original[indices[i]]);
+		glm::vec3 rotationOrientationVector = glm::normalize(glm::cross((orcun_positions_original[indices[i + 1]] - orcun_positions_original[indices[i]]),(orcun_positions[indices[i + 1]] - orcun_positions[indices[i]])));
 		float rotationCos = glm::dot(glm::normalize(orcun_positions[indices[i + 1]] - orcun_positions[indices[i]]), glm::normalize(orcun_positions_original[indices[i + 1]] - orcun_positions_original[indices[i]]));
+		/*if (glm::dot(rotationOrientationVector, glm::vec3(0, 0, -1)) <= 0) {
+			rotationCos = -rotationCos;
+		}*/
 		float rotationAngle = glm::acos(rotationCos);
 		std::cout << rotationAngle << std::endl;
 		std::cout << rotationCos << std::endl;
-		glm::quat rotationQuat1 = glm::angleAxis(rotationAngle, glm::vec3(0, 0, 1));
+		glm::quat rotationQuat1 = glm::angleAxis(rotationAngle, rotationOrientationVector);
 		glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), -orcun_positions_original[indices[i]]);
 		orcun_matrices[indices[i]] = glm::translate(glm::mat4(1.0f), translateVector) * glm::inverse(offsetMatrix) * glm::mat4_cast(rotationQuat1) * offsetMatrix;
 		if (i == indices.size() - 2) {
 			translateVector = (orcun_positions[indices[i + 1]] - orcun_positions_original[indices[i + 1]]);
-			offsetMatrix = glm::translate(glm::mat4(1.0f), -orcun_positions_original[indices[i]]);
+			offsetMatrix = glm::translate(glm::mat4(1.0f), -orcun_positions_original[indices[i+1]]);
 			orcun_matrices[indices[i + 1]] = glm::translate(glm::mat4(1.0f), translateVector) * glm::inverse(offsetMatrix) * glm::mat4_cast(rotationQuat1) * offsetMatrix;
 		}
 
