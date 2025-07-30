@@ -8,16 +8,9 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
   "/home/kavulsulka/IKRT-/CMakeLists.txt"
-  "/home/kavulsulka/IKRT-/MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae"
   "CMakeFiles/3.28.3/CMakeCCompiler.cmake"
   "CMakeFiles/3.28.3/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.28.3/CMakeSystem.cmake"
-  "/home/kavulsulka/IKRT-/skeletal.fs"
-  "/home/kavulsulka/IKRT-/skeletal.vs"
-  "/home/kavulsulka/IKRT-/snake_mesh.fs"
-  "/home/kavulsulka/IKRT-/snake_mesh.vs"
-  "/home/kavulsulka/IKRT-/triangle.fs"
-  "/home/kavulsulka/IKRT-/triangle.vs"
   "/usr/lib/x86_64-linux-gnu/cmake/assimp-5.3/assimpConfig.cmake"
   "/usr/lib/x86_64-linux-gnu/cmake/assimp-5.3/assimpConfigVersion.cmake"
   "/usr/lib/x86_64-linux-gnu/cmake/assimp-5.3/assimpTargets-none.cmake"
@@ -61,13 +54,6 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
-  "triangle.vs"
-  "triangle.fs"
-  "snake_mesh.vs"
-  "snake_mesh.fs"
-  "skeletal.vs"
-  "skeletal.fs"
-  "MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae"
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 

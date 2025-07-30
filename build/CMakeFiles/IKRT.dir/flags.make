@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/kavulsulka/IKRT- -I/home/kavulsulka/IKRT-/vendor/assimp/include -I/home/kavulsulka/IKRT-/vendor/stb_image
+CXX_INCLUDES = -I/home/kavulsulka/IKRT-/include -I/home/kavulsulka/IKRT- -I/home/kavulsulka/IKRT-/vendor/assimp/include -I/home/kavulsulka/IKRT-/vendor/stb_image
 
 CXX_FLAGS = -std=gnu++17
 

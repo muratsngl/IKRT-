@@ -129,149 +129,149 @@ IKRT/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/build
 .PHONY : IKRT/fast
 
-FABRIK.o: FABRIK.cpp.o
-.PHONY : FABRIK.o
+src/FABRIK.o: src/FABRIK.cpp.o
+.PHONY : src/FABRIK.o
 
 # target to build an object file
-FABRIK.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/FABRIK.cpp.o
-.PHONY : FABRIK.cpp.o
+src/FABRIK.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/FABRIK.cpp.o
+.PHONY : src/FABRIK.cpp.o
 
-FABRIK.i: FABRIK.cpp.i
-.PHONY : FABRIK.i
+src/FABRIK.i: src/FABRIK.cpp.i
+.PHONY : src/FABRIK.i
 
 # target to preprocess a source file
-FABRIK.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/FABRIK.cpp.i
-.PHONY : FABRIK.cpp.i
+src/FABRIK.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/FABRIK.cpp.i
+.PHONY : src/FABRIK.cpp.i
 
-FABRIK.s: FABRIK.cpp.s
-.PHONY : FABRIK.s
+src/FABRIK.s: src/FABRIK.cpp.s
+.PHONY : src/FABRIK.s
 
 # target to generate assembly for a file
-FABRIK.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/FABRIK.cpp.s
-.PHONY : FABRIK.cpp.s
+src/FABRIK.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/FABRIK.cpp.s
+.PHONY : src/FABRIK.cpp.s
 
-application_logic.o: application_logic.cpp.o
-.PHONY : application_logic.o
+src/application_logic.o: src/application_logic.cpp.o
+.PHONY : src/application_logic.o
 
 # target to build an object file
-application_logic.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/application_logic.cpp.o
-.PHONY : application_logic.cpp.o
+src/application_logic.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/application_logic.cpp.o
+.PHONY : src/application_logic.cpp.o
 
-application_logic.i: application_logic.cpp.i
-.PHONY : application_logic.i
+src/application_logic.i: src/application_logic.cpp.i
+.PHONY : src/application_logic.i
 
 # target to preprocess a source file
-application_logic.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/application_logic.cpp.i
-.PHONY : application_logic.cpp.i
+src/application_logic.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/application_logic.cpp.i
+.PHONY : src/application_logic.cpp.i
 
-application_logic.s: application_logic.cpp.s
-.PHONY : application_logic.s
+src/application_logic.s: src/application_logic.cpp.s
+.PHONY : src/application_logic.s
 
 # target to generate assembly for a file
-application_logic.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/application_logic.cpp.s
-.PHONY : application_logic.cpp.s
+src/application_logic.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/application_logic.cpp.s
+.PHONY : src/application_logic.cpp.s
 
-main_new.o: main_new.cpp.o
-.PHONY : main_new.o
+src/main_new.o: src/main_new.cpp.o
+.PHONY : src/main_new.o
 
 # target to build an object file
-main_new.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/main_new.cpp.o
-.PHONY : main_new.cpp.o
+src/main_new.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/main_new.cpp.o
+.PHONY : src/main_new.cpp.o
 
-main_new.i: main_new.cpp.i
-.PHONY : main_new.i
+src/main_new.i: src/main_new.cpp.i
+.PHONY : src/main_new.i
 
 # target to preprocess a source file
-main_new.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/main_new.cpp.i
-.PHONY : main_new.cpp.i
+src/main_new.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/main_new.cpp.i
+.PHONY : src/main_new.cpp.i
 
-main_new.s: main_new.cpp.s
-.PHONY : main_new.s
+src/main_new.s: src/main_new.cpp.s
+.PHONY : src/main_new.s
 
 # target to generate assembly for a file
-main_new.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/main_new.cpp.s
-.PHONY : main_new.cpp.s
+src/main_new.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/main_new.cpp.s
+.PHONY : src/main_new.cpp.s
 
-model_loader.o: model_loader.cpp.o
-.PHONY : model_loader.o
+src/model_loader.o: src/model_loader.cpp.o
+.PHONY : src/model_loader.o
 
 # target to build an object file
-model_loader.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/model_loader.cpp.o
-.PHONY : model_loader.cpp.o
+src/model_loader.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/model_loader.cpp.o
+.PHONY : src/model_loader.cpp.o
 
-model_loader.i: model_loader.cpp.i
-.PHONY : model_loader.i
+src/model_loader.i: src/model_loader.cpp.i
+.PHONY : src/model_loader.i
 
 # target to preprocess a source file
-model_loader.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/model_loader.cpp.i
-.PHONY : model_loader.cpp.i
+src/model_loader.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/model_loader.cpp.i
+.PHONY : src/model_loader.cpp.i
 
-model_loader.s: model_loader.cpp.s
-.PHONY : model_loader.s
+src/model_loader.s: src/model_loader.cpp.s
+.PHONY : src/model_loader.s
 
 # target to generate assembly for a file
-model_loader.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/model_loader.cpp.s
-.PHONY : model_loader.cpp.s
+src/model_loader.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/model_loader.cpp.s
+.PHONY : src/model_loader.cpp.s
 
-render_setup.o: render_setup.cpp.o
-.PHONY : render_setup.o
+src/render_setup.o: src/render_setup.cpp.o
+.PHONY : src/render_setup.o
 
 # target to build an object file
-render_setup.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/render_setup.cpp.o
-.PHONY : render_setup.cpp.o
+src/render_setup.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/render_setup.cpp.o
+.PHONY : src/render_setup.cpp.o
 
-render_setup.i: render_setup.cpp.i
-.PHONY : render_setup.i
+src/render_setup.i: src/render_setup.cpp.i
+.PHONY : src/render_setup.i
 
 # target to preprocess a source file
-render_setup.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/render_setup.cpp.i
-.PHONY : render_setup.cpp.i
+src/render_setup.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/render_setup.cpp.i
+.PHONY : src/render_setup.cpp.i
 
-render_setup.s: render_setup.cpp.s
-.PHONY : render_setup.s
+src/render_setup.s: src/render_setup.cpp.s
+.PHONY : src/render_setup.s
 
 # target to generate assembly for a file
-render_setup.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/render_setup.cpp.s
-.PHONY : render_setup.cpp.s
+src/render_setup.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/render_setup.cpp.s
+.PHONY : src/render_setup.cpp.s
 
-shared_memory.o: shared_memory.cpp.o
-.PHONY : shared_memory.o
+src/shared_memory.o: src/shared_memory.cpp.o
+.PHONY : src/shared_memory.o
 
 # target to build an object file
-shared_memory.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/shared_memory.cpp.o
-.PHONY : shared_memory.cpp.o
+src/shared_memory.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/shared_memory.cpp.o
+.PHONY : src/shared_memory.cpp.o
 
-shared_memory.i: shared_memory.cpp.i
-.PHONY : shared_memory.i
+src/shared_memory.i: src/shared_memory.cpp.i
+.PHONY : src/shared_memory.i
 
 # target to preprocess a source file
-shared_memory.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/shared_memory.cpp.i
-.PHONY : shared_memory.cpp.i
+src/shared_memory.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/shared_memory.cpp.i
+.PHONY : src/shared_memory.cpp.i
 
-shared_memory.s: shared_memory.cpp.s
-.PHONY : shared_memory.s
+src/shared_memory.s: src/shared_memory.cpp.s
+.PHONY : src/shared_memory.s
 
 # target to generate assembly for a file
-shared_memory.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/shared_memory.cpp.s
-.PHONY : shared_memory.cpp.s
+src/shared_memory.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/shared_memory.cpp.s
+.PHONY : src/shared_memory.cpp.s
 
 # Help Target
 help:
@@ -282,24 +282,24 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... IKRT"
-	@echo "... FABRIK.o"
-	@echo "... FABRIK.i"
-	@echo "... FABRIK.s"
-	@echo "... application_logic.o"
-	@echo "... application_logic.i"
-	@echo "... application_logic.s"
-	@echo "... main_new.o"
-	@echo "... main_new.i"
-	@echo "... main_new.s"
-	@echo "... model_loader.o"
-	@echo "... model_loader.i"
-	@echo "... model_loader.s"
-	@echo "... render_setup.o"
-	@echo "... render_setup.i"
-	@echo "... render_setup.s"
-	@echo "... shared_memory.o"
-	@echo "... shared_memory.i"
-	@echo "... shared_memory.s"
+	@echo "... src/FABRIK.o"
+	@echo "... src/FABRIK.i"
+	@echo "... src/FABRIK.s"
+	@echo "... src/application_logic.o"
+	@echo "... src/application_logic.i"
+	@echo "... src/application_logic.s"
+	@echo "... src/main_new.o"
+	@echo "... src/main_new.i"
+	@echo "... src/main_new.s"
+	@echo "... src/model_loader.o"
+	@echo "... src/model_loader.i"
+	@echo "... src/model_loader.s"
+	@echo "... src/render_setup.o"
+	@echo "... src/render_setup.i"
+	@echo "... src/render_setup.s"
+	@echo "... src/shared_memory.o"
+	@echo "... src/shared_memory.i"
+	@echo "... src/shared_memory.s"
 .PHONY : help
 
 

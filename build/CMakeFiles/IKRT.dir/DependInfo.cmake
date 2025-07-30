@@ -8,12 +8,12 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/kavulsulka/IKRT-/FABRIK.cpp" "CMakeFiles/IKRT.dir/FABRIK.cpp.o" "gcc" "CMakeFiles/IKRT.dir/FABRIK.cpp.o.d"
-  "/home/kavulsulka/IKRT-/application_logic.cpp" "CMakeFiles/IKRT.dir/application_logic.cpp.o" "gcc" "CMakeFiles/IKRT.dir/application_logic.cpp.o.d"
-  "/home/kavulsulka/IKRT-/main_new.cpp" "CMakeFiles/IKRT.dir/main_new.cpp.o" "gcc" "CMakeFiles/IKRT.dir/main_new.cpp.o.d"
-  "/home/kavulsulka/IKRT-/model_loader.cpp" "CMakeFiles/IKRT.dir/model_loader.cpp.o" "gcc" "CMakeFiles/IKRT.dir/model_loader.cpp.o.d"
-  "/home/kavulsulka/IKRT-/render_setup.cpp" "CMakeFiles/IKRT.dir/render_setup.cpp.o" "gcc" "CMakeFiles/IKRT.dir/render_setup.cpp.o.d"
-  "/home/kavulsulka/IKRT-/shared_memory.cpp" "CMakeFiles/IKRT.dir/shared_memory.cpp.o" "gcc" "CMakeFiles/IKRT.dir/shared_memory.cpp.o.d"
+  "/home/kavulsulka/IKRT-/src/FABRIK.cpp" "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o.d"
+  "/home/kavulsulka/IKRT-/src/application_logic.cpp" "CMakeFiles/IKRT.dir/src/application_logic.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/application_logic.cpp.o.d"
+  "/home/kavulsulka/IKRT-/src/main_new.cpp" "CMakeFiles/IKRT.dir/src/main_new.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/main_new.cpp.o.d"
+  "/home/kavulsulka/IKRT-/src/model_loader.cpp" "CMakeFiles/IKRT.dir/src/model_loader.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/model_loader.cpp.o.d"
+  "/home/kavulsulka/IKRT-/src/render_setup.cpp" "CMakeFiles/IKRT.dir/src/render_setup.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/render_setup.cpp.o.d"
+  "/home/kavulsulka/IKRT-/src/shared_memory.cpp" "CMakeFiles/IKRT.dir/src/shared_memory.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/shared_memory.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
