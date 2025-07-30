@@ -1,0 +1,3 @@
+/home/kavulsulka/IKRT-/build/CMakeFiles/IKRT.dir
+/home/kavulsulka/IKRT-/build/CMakeFiles/edit_cache.dir
+/home/kavulsulka/IKRT-/build/CMakeFiles/rebuild_cache.dir
