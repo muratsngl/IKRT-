@@ -56,6 +56,10 @@ void update_shared_memory() {
     finger_data.prevCzPinky = finger_data.czPinky;
     
     // Read new values from shared memory
+    
+    
+    
+    
     memcpy(&finger_data.cxIndex, (char*)pBuf + 8, sizeof(float));
     memcpy(&finger_data.cyIndex, (char*)pBuf + 12, sizeof(float));
     memcpy(&finger_data.czIndex, (char*)pBuf + 41, sizeof(float));

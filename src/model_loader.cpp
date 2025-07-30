@@ -31,11 +31,11 @@ bool load_interactor_model(const char* path) {
     }
 }
 
-const InteractorModelData& get_model_data() {
+const InteractorModelData& get_interactor_model_data() {
     return model_data;
 }
 
-InteractorModel* get_model() {
+InteractorModel* get_interactor_model() {
     return current_model;
 }
 

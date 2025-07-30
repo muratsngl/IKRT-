@@ -3,6 +3,7 @@
 
 // Finger position data structure
 struct FingerData {
+    float cxHandRoot,cyHandRoot,czHandRoot;
     float cxIndex, cyIndex, czIndex;
     float cxMiddle, cyMiddle, czMiddle;
     float cxRing, cyRing, czRing;
@@ -11,12 +12,14 @@ struct FingerData {
     
     
     // Previous frame data for delta calculations
+    float prevCxHandRoot,prevCyHandRoot,prevCzHandRoot;
     float prevCxIndex, prevCyIndex, prevCzIndex;
     float prevCxMiddle, prevCyMiddle, prevCzMiddle;
     float prevCxRing, prevCyRing, prevCzRing;
     float prevCxPinky, prevCyPinky, prevCzPinky;
     
     // Delta values
+    float deltaXRoot,deltaYRoot,deltaZRoot;
     float deltaXIndex, deltaYIndex, deltaZIndex;
     float deltaXMiddle, deltaYMiddle, deltaZMiddle;
     float deltaXRing, deltaYRing, deltaZRing;

@@ -119,7 +119,7 @@ void render_frame() {
     glm::mat4 model = glm::mat4(1.0f);
     
     // Update uniform buffer with bone transforms
-    const InteractorModelData& model_data = get_model_data();
+    const InteractorModelData& model_data = get_interactor_model_data();
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
     for (short i = 0; i < 19; i++) {
         if (i < model_data.bind_pose_matrices.size()) {
@@ -134,7 +134,7 @@ void render_frame() {
         skeletonShader->setMat4("model", model);
         skeletonShader->setMat4("view", view);
         skeletonShader->setMat4("projection", projection);
-        get_model()->Draw(*skeletonShader);
+        get_interactor_model()->Draw(*skeletonShader);
     }
     
     // Process input and swap buffers
