@@ -7,10 +7,11 @@
 
 static InteractorModelData model_data;
 static InteractorModel* current_model = nullptr;
+static SceneElementModel* current_scene_element_model = nullptr;
 
 bool load_interactor_model(const char* path) {
     try {
-        current_model = new InteractorModel("assets/models/MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae");
+        current_model = new InteractorModel(path);
         
         // Copy data from the model
         model_data.bind_pose_positions = current_model->bindPosePositions;
@@ -30,6 +31,16 @@ bool load_interactor_model(const char* path) {
         return false;
     }
 }
+bool load_scene_element_model(const char* path) {
+    try {
+        current_scene_element_model = new SceneElementModel(path);
+        // Additional logic for handling the loaded model can be added here
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading SceneElementModel: " << e.what() << std::endl;
+        return false;
+    }
+}
 
 const InteractorModelData& get_interactor_model_data() {
     return model_data;
@@ -37,6 +48,10 @@ const InteractorModelData& get_interactor_model_data() {
 
 InteractorModel* get_interactor_model() {
     return current_model;
+}
+
+SceneElementModel* get_scene_element_model() {
+    return current_scene_element_model;
 }
 
 void update_bone_transforms(const std::vector<unsigned short>& indices) {

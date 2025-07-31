@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/kavulsulka/IKRT-/src/FABRIK.cpp" "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o.d"
+  "/home/kavulsulka/IKRT-/src/Texture.cpp" "CMakeFiles/IKRT.dir/src/Texture.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/Texture.cpp.o.d"
   "/home/kavulsulka/IKRT-/src/application_logic.cpp" "CMakeFiles/IKRT.dir/src/application_logic.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/application_logic.cpp.o.d"
   "/home/kavulsulka/IKRT-/src/main_new.cpp" "CMakeFiles/IKRT.dir/src/main_new.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/main_new.cpp.o.d"
   "/home/kavulsulka/IKRT-/src/model_loader.cpp" "CMakeFiles/IKRT.dir/src/model_loader.cpp.o" "gcc" "CMakeFiles/IKRT.dir/src/model_loader.cpp.o.d"

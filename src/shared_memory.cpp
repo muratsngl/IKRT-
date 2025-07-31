@@ -55,26 +55,36 @@ void update_shared_memory() {
     finger_data.prevCyPinky = finger_data.cyPinky;
     finger_data.prevCzPinky = finger_data.czPinky;
     
+    finger_data.prevCxHandRoot = finger_data.cxHandRoot;
+    finger_data.prevCyHandRoot = finger_data.cyHandRoot;
+    finger_data.prevCzHandRoot = finger_data.czHandRoot;
+
+    
+    
     // Read new values from shared memory
     
     
     
+    memcpy(&finger_data.cxHandRoot,(char*)pBuf,sizeof(float));
+    memcpy(&finger_data.cyHandRoot,(char*)pBuf+4,sizeof(float));
+    memcpy(&finger_data.czHandRoot, (char*)pBuf + 41, sizeof(float));
+    
     
     memcpy(&finger_data.cxIndex, (char*)pBuf + 8, sizeof(float));
     memcpy(&finger_data.cyIndex, (char*)pBuf + 12, sizeof(float));
-    memcpy(&finger_data.czIndex, (char*)pBuf + 41, sizeof(float));
+    memcpy(&finger_data.czIndex, (char*)pBuf + 45, sizeof(float));
 
     memcpy(&finger_data.cxMiddle, (char*)pBuf + 16, sizeof(float));
     memcpy(&finger_data.cyMiddle, (char*)pBuf + 20, sizeof(float));
-    memcpy(&finger_data.czMiddle, (char*)pBuf + 45, sizeof(float));
+    memcpy(&finger_data.czMiddle, (char*)pBuf + 49, sizeof(float));
 
     memcpy(&finger_data.cxRing, (char*)pBuf + 24, sizeof(float));
     memcpy(&finger_data.cyRing, (char*)pBuf + 28, sizeof(float));
-    memcpy(&finger_data.czRing, (char*)pBuf + 49, sizeof(float));
+    memcpy(&finger_data.czRing, (char*)pBuf + 43, sizeof(float));
 
     memcpy(&finger_data.cxPinky, (char*)pBuf + 32, sizeof(float));
     memcpy(&finger_data.cyPinky, (char*)pBuf + 36, sizeof(float));
-    memcpy(&finger_data.czPinky, (char*)pBuf + 53, sizeof(float));
+    memcpy(&finger_data.czPinky, (char*)pBuf + 57, sizeof(float));
 
     memcpy(&finger_data.trueInput, (char*)pBuf + 40, sizeof(bool));
     
@@ -84,7 +94,13 @@ void update_shared_memory() {
                                   fabs(finger_data.cyMiddle - 0.5f) < 0.01f;
     }
     
-    if (finger_data.isMiddleized) {
+    if (finger_data.isMiddleized) 
+    {
+        finger_data.deltaXRoot = 2 * (finger_data.cxHandRoot - finger_data.prevCxHandRoot);
+        finger_data.deltaYRoot = -2 * (finger_data.cyHandRoot - finger_data.prevCyHandRoot);
+        finger_data.deltaZRoot = 2 * (finger_data.czHandRoot - finger_data.prevCzHandRoot);
+
+        
         finger_data.deltaXIndex = 2 * (finger_data.cxIndex - finger_data.prevCxIndex);
         finger_data.deltaYIndex = -2 * (finger_data.cyIndex - finger_data.prevCyIndex);
         finger_data.deltaZIndex = 2 * (finger_data.czIndex - finger_data.prevCzIndex);
@@ -102,8 +118,9 @@ void update_shared_memory() {
         finger_data.deltaZPinky = 2 * (finger_data.czPinky - finger_data.prevCzPinky);
 
         finger_data.firstTrue = true;
+        
     }
-    
+
     // Apply threshold filtering
     const float threshold = 0.008f;
     
@@ -122,6 +139,10 @@ void update_shared_memory() {
     finger_data.deltaXPinky = fabs(finger_data.deltaXPinky) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaXPinky;
     finger_data.deltaYPinky = fabs(finger_data.deltaYPinky) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaYPinky;
     finger_data.deltaZPinky = fabs(finger_data.deltaZPinky) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaZPinky;
+
+    finger_data.deltaXRoot = fabs(finger_data.deltaXRoot) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaXRoot;
+    finger_data.deltaYRoot = fabs(finger_data.deltaYRoot) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaYRoot;
+    finger_data.deltaZRoot = fabs(finger_data.deltaZRoot) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaZRoot;
 }
 
 void cleanup_shared_memory() {

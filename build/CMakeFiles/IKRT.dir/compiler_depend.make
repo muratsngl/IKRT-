@@ -376,28 +376,73 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /home/kavulsulka/IKRT-/include/application_logic.hpp \
   /home/kavulsulka/IKRT-/include/model_loader.hpp \
   /home/kavulsulka/IKRT-/include/shared_memory.hpp \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/poppack1.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/pushpack1.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/MathFunctions.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/aabb.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/anim.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/camera.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/config.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/defs.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/light.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/mesh.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/metadata.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/scene.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/texture.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/types.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.inl \
   /usr/include/GL/gl.h \
   /usr/include/GL/glext.h \
   /usr/include/GLFW/glfw3.h \
   /usr/include/KHR/khrplatform.h \
   /usr/include/alloca.h \
+  /usr/include/asm-generic/errno-base.h \
+  /usr/include/asm-generic/errno.h \
   /usr/include/assert.h \
+  /usr/include/c++/13/algorithm \
   /usr/include/c++/13/backward/binders.h \
   /usr/include/c++/13/bit \
+  /usr/include/c++/13/bits/algorithmfwd.h \
   /usr/include/c++/13/bits/alloc_traits.h \
   /usr/include/c++/13/bits/allocator.h \
+  /usr/include/c++/13/bits/basic_string.h \
+  /usr/include/c++/13/bits/basic_string.tcc \
+  /usr/include/c++/13/bits/char_traits.h \
+  /usr/include/c++/13/bits/charconv.h \
   /usr/include/c++/13/bits/concept_check.h \
   /usr/include/c++/13/bits/cpp_type_traits.h \
+  /usr/include/c++/13/bits/cxxabi_forced.h \
+  /usr/include/c++/13/bits/enable_special_members.h \
+  /usr/include/c++/13/bits/erase_if.h \
   /usr/include/c++/13/bits/exception.h \
   /usr/include/c++/13/bits/exception_defines.h \
   /usr/include/c++/13/bits/functexcept.h \
   /usr/include/c++/13/bits/functional_hash.h \
   /usr/include/c++/13/bits/hash_bytes.h \
+  /usr/include/c++/13/bits/hashtable.h \
+  /usr/include/c++/13/bits/hashtable_policy.h \
   /usr/include/c++/13/bits/invoke.h \
+  /usr/include/c++/13/bits/localefwd.h \
   /usr/include/c++/13/bits/memory_resource.h \
   /usr/include/c++/13/bits/memoryfwd.h \
   /usr/include/c++/13/bits/move.h \
   /usr/include/c++/13/bits/new_allocator.h \
+  /usr/include/c++/13/bits/node_handle.h \
+  /usr/include/c++/13/bits/ostream_insert.h \
+  /usr/include/c++/13/bits/postypes.h \
   /usr/include/c++/13/bits/predefined_ops.h \
   /usr/include/c++/13/bits/ptr_traits.h \
   /usr/include/c++/13/bits/range_access.h \
@@ -405,35 +450,56 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/c++/13/bits/requires_hosted.h \
   /usr/include/c++/13/bits/specfun.h \
   /usr/include/c++/13/bits/std_abs.h \
+  /usr/include/c++/13/bits/stl_algo.h \
   /usr/include/c++/13/bits/stl_algobase.h \
   /usr/include/c++/13/bits/stl_bvector.h \
   /usr/include/c++/13/bits/stl_construct.h \
   /usr/include/c++/13/bits/stl_function.h \
+  /usr/include/c++/13/bits/stl_heap.h \
   /usr/include/c++/13/bits/stl_iterator.h \
   /usr/include/c++/13/bits/stl_iterator_base_funcs.h \
   /usr/include/c++/13/bits/stl_iterator_base_types.h \
   /usr/include/c++/13/bits/stl_pair.h \
+  /usr/include/c++/13/bits/stl_tempbuf.h \
   /usr/include/c++/13/bits/stl_uninitialized.h \
   /usr/include/c++/13/bits/stl_vector.h \
+  /usr/include/c++/13/bits/string_view.tcc \
+  /usr/include/c++/13/bits/stringfwd.h \
+  /usr/include/c++/13/bits/uniform_int_dist.h \
+  /usr/include/c++/13/bits/unordered_set.h \
   /usr/include/c++/13/bits/uses_allocator.h \
   /usr/include/c++/13/bits/uses_allocator_args.h \
   /usr/include/c++/13/bits/utility.h \
   /usr/include/c++/13/bits/vector.tcc \
   /usr/include/c++/13/cassert \
+  /usr/include/c++/13/cctype \
+  /usr/include/c++/13/cerrno \
   /usr/include/c++/13/cfloat \
   /usr/include/c++/13/climits \
+  /usr/include/c++/13/clocale \
   /usr/include/c++/13/cmath \
   /usr/include/c++/13/cstddef \
   /usr/include/c++/13/cstdint \
+  /usr/include/c++/13/cstdio \
+  /usr/include/c++/13/cstdlib \
+  /usr/include/c++/13/cstring \
+  /usr/include/c++/13/cwchar \
   /usr/include/c++/13/debug/assertions.h \
   /usr/include/c++/13/debug/debug.h \
+  /usr/include/c++/13/ext/aligned_buffer.h \
   /usr/include/c++/13/ext/alloc_traits.h \
   /usr/include/c++/13/ext/numeric_traits.h \
+  /usr/include/c++/13/ext/string_conversions.h \
   /usr/include/c++/13/ext/type_traits.h \
   /usr/include/c++/13/initializer_list \
+  /usr/include/c++/13/iosfwd \
   /usr/include/c++/13/limits \
   /usr/include/c++/13/new \
+  /usr/include/c++/13/pstl/execution_defs.h \
+  /usr/include/c++/13/pstl/glue_algorithm_defs.h \
   /usr/include/c++/13/pstl/pstl_config.h \
+  /usr/include/c++/13/string \
+  /usr/include/c++/13/string_view \
   /usr/include/c++/13/tr1/bessel_function.tcc \
   /usr/include/c++/13/tr1/beta_function.tcc \
   /usr/include/c++/13/tr1/ell_integral.tcc \
@@ -448,8 +514,11 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/c++/13/tr1/special_function_util.h \
   /usr/include/c++/13/tuple \
   /usr/include/c++/13/type_traits \
+  /usr/include/c++/13/unordered_set \
   /usr/include/c++/13/vector \
+  /usr/include/ctype.h \
   /usr/include/endian.h \
+  /usr/include/errno.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
   /usr/include/glm/common.hpp \
@@ -586,15 +655,23 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/glm/vec4.hpp \
   /usr/include/glm/vector_relational.hpp \
   /usr/include/limits.h \
+  /usr/include/linux/errno.h \
   /usr/include/linux/limits.h \
+  /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdint.h \
+  /usr/include/stdio.h \
   /usr/include/stdlib.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
+  /usr/include/wchar.h \
+  /usr/include/x86_64-linux-gnu/asm/errno.h \
   /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
   /usr/include/x86_64-linux-gnu/bits/byteswap.h \
   /usr/include/x86_64-linux-gnu/bits/endian.h \
   /usr/include/x86_64-linux-gnu/bits/endianness.h \
+  /usr/include/x86_64-linux-gnu/bits/errno.h \
   /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
   /usr/include/x86_64-linux-gnu/bits/floatn.h \
   /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h \
@@ -604,6 +681,7 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
   /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \
   /usr/include/x86_64-linux-gnu/bits/local_lim.h \
+  /usr/include/x86_64-linux-gnu/bits/locale.h \
   /usr/include/x86_64-linux-gnu/bits/long-double.h \
   /usr/include/x86_64-linux-gnu/bits/math-vector.h \
   /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h \
@@ -618,6 +696,7 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
   /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
   /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
   /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
@@ -625,16 +704,26 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/x86_64-linux-gnu/bits/time64.h \
   /usr/include/x86_64-linux-gnu/bits/timesize.h \
   /usr/include/x86_64-linux-gnu/bits/types.h \
+  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
   /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/timer_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/wint_t.h \
   /usr/include/x86_64-linux-gnu/bits/typesizes.h \
   /usr/include/x86_64-linux-gnu/bits/uintn-identity.h \
   /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
@@ -645,6 +734,7 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
   /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h \
   /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
+  /usr/include/x86_64-linux-gnu/c++/13/bits/c++locale.h \
   /usr/include/x86_64-linux-gnu/c++/13/bits/cpu_defines.h \
   /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
   /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
@@ -654,6 +744,7 @@ CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/appl
   /usr/include/x86_64-linux-gnu/sys/types.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/float.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h
@@ -663,6 +754,34 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /home/kavulsulka/IKRT-/include/model_loader.hpp \
   /home/kavulsulka/IKRT-/include/render_setup.hpp \
   /home/kavulsulka/IKRT-/include/shared_memory.hpp \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/poppack1.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/pushpack1.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/MathFunctions.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/aabb.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/anim.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/camera.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/config.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/defs.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/light.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/mesh.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/metadata.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/scene.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/texture.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/types.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.inl \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.h \
+  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.inl \
   /usr/include/GL/gl.h \
   /usr/include/GL/glew.h \
   /usr/include/GL/glu.h \
@@ -671,8 +790,10 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
   /usr/include/assert.h \
+  /usr/include/c++/13/algorithm \
   /usr/include/c++/13/backward/binders.h \
   /usr/include/c++/13/bit \
+  /usr/include/c++/13/bits/algorithmfwd.h \
   /usr/include/c++/13/bits/alloc_traits.h \
   /usr/include/c++/13/bits/allocator.h \
   /usr/include/c++/13/bits/basic_ios.h \
@@ -685,12 +806,16 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/c++/13/bits/cpp_type_traits.h \
   /usr/include/c++/13/bits/cxxabi_forced.h \
   /usr/include/c++/13/bits/cxxabi_init_exception.h \
+  /usr/include/c++/13/bits/enable_special_members.h \
+  /usr/include/c++/13/bits/erase_if.h \
   /usr/include/c++/13/bits/exception.h \
   /usr/include/c++/13/bits/exception_defines.h \
   /usr/include/c++/13/bits/exception_ptr.h \
   /usr/include/c++/13/bits/functexcept.h \
   /usr/include/c++/13/bits/functional_hash.h \
   /usr/include/c++/13/bits/hash_bytes.h \
+  /usr/include/c++/13/bits/hashtable.h \
+  /usr/include/c++/13/bits/hashtable_policy.h \
   /usr/include/c++/13/bits/invoke.h \
   /usr/include/c++/13/bits/ios_base.h \
   /usr/include/c++/13/bits/istream.tcc \
@@ -704,6 +829,7 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/c++/13/bits/move.h \
   /usr/include/c++/13/bits/nested_exception.h \
   /usr/include/c++/13/bits/new_allocator.h \
+  /usr/include/c++/13/bits/node_handle.h \
   /usr/include/c++/13/bits/ostream.tcc \
   /usr/include/c++/13/bits/ostream_insert.h \
   /usr/include/c++/13/bits/postypes.h \
@@ -714,20 +840,25 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/c++/13/bits/requires_hosted.h \
   /usr/include/c++/13/bits/specfun.h \
   /usr/include/c++/13/bits/std_abs.h \
+  /usr/include/c++/13/bits/stl_algo.h \
   /usr/include/c++/13/bits/stl_algobase.h \
   /usr/include/c++/13/bits/stl_bvector.h \
   /usr/include/c++/13/bits/stl_construct.h \
   /usr/include/c++/13/bits/stl_function.h \
+  /usr/include/c++/13/bits/stl_heap.h \
   /usr/include/c++/13/bits/stl_iterator.h \
   /usr/include/c++/13/bits/stl_iterator_base_funcs.h \
   /usr/include/c++/13/bits/stl_iterator_base_types.h \
   /usr/include/c++/13/bits/stl_pair.h \
+  /usr/include/c++/13/bits/stl_tempbuf.h \
   /usr/include/c++/13/bits/stl_uninitialized.h \
   /usr/include/c++/13/bits/stl_vector.h \
   /usr/include/c++/13/bits/streambuf.tcc \
   /usr/include/c++/13/bits/streambuf_iterator.h \
   /usr/include/c++/13/bits/string_view.tcc \
   /usr/include/c++/13/bits/stringfwd.h \
+  /usr/include/c++/13/bits/uniform_int_dist.h \
+  /usr/include/c++/13/bits/unordered_set.h \
   /usr/include/c++/13/bits/uses_allocator.h \
   /usr/include/c++/13/bits/uses_allocator_args.h \
   /usr/include/c++/13/bits/utility.h \
@@ -743,11 +874,13 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/c++/13/cstdint \
   /usr/include/c++/13/cstdio \
   /usr/include/c++/13/cstdlib \
+  /usr/include/c++/13/cstring \
   /usr/include/c++/13/cwchar \
   /usr/include/c++/13/cwctype \
   /usr/include/c++/13/debug/assertions.h \
   /usr/include/c++/13/debug/debug.h \
   /usr/include/c++/13/exception \
+  /usr/include/c++/13/ext/aligned_buffer.h \
   /usr/include/c++/13/ext/alloc_traits.h \
   /usr/include/c++/13/ext/atomicity.h \
   /usr/include/c++/13/ext/numeric_traits.h \
@@ -761,6 +894,8 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/c++/13/limits \
   /usr/include/c++/13/new \
   /usr/include/c++/13/ostream \
+  /usr/include/c++/13/pstl/execution_defs.h \
+  /usr/include/c++/13/pstl/glue_algorithm_defs.h \
   /usr/include/c++/13/pstl/pstl_config.h \
   /usr/include/c++/13/stdexcept \
   /usr/include/c++/13/streambuf \
@@ -782,6 +917,7 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/c++/13/tuple \
   /usr/include/c++/13/type_traits \
   /usr/include/c++/13/typeinfo \
+  /usr/include/c++/13/unordered_set \
   /usr/include/c++/13/vector \
   /usr/include/ctype.h \
   /usr/include/endian.h \
@@ -932,6 +1068,8 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
   /usr/include/stdint.h \
   /usr/include/stdio.h \
   /usr/include/stdlib.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
   /usr/include/time.h \
   /usr/include/wchar.h \
   /usr/include/wctype.h \
@@ -1038,6 +1176,7 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp 
 CMakeFiles/IKRT.dir/src/model_loader.cpp.o: /home/kavulsulka/IKRT-/src/model_loader.cpp \
   /home/kavulsulka/IKRT-/include/Mesh.h \
   /home/kavulsulka/IKRT-/include/Shader.h \
+  /home/kavulsulka/IKRT-/include/Texture.h \
   /home/kavulsulka/IKRT-/include/model_bones.h \
   /home/kavulsulka/IKRT-/include/model_loader.hpp \
   /home/kavulsulka/IKRT-/include/stb_image.h \
@@ -1533,10 +1672,12 @@ CMakeFiles/IKRT.dir/src/render_setup.cpp.o: /home/kavulsulka/IKRT-/src/render_se
   /home/kavulsulka/IKRT-/include/Camera.h \
   /home/kavulsulka/IKRT-/include/Mesh.h \
   /home/kavulsulka/IKRT-/include/Shader.h \
+  /home/kavulsulka/IKRT-/include/Texture.h \
   /home/kavulsulka/IKRT-/include/application_logic.hpp \
   /home/kavulsulka/IKRT-/include/model_bones.h \
   /home/kavulsulka/IKRT-/include/model_loader.hpp \
   /home/kavulsulka/IKRT-/include/render_setup.hpp \
+  /home/kavulsulka/IKRT-/include/shared_memory.hpp \
   /home/kavulsulka/IKRT-/include/stb_image.h \
   /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/poppack1.h \
   /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/pushpack1.h \
@@ -2277,6 +2418,8 @@ CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: /home/kavulsulka/IKRT-/src/shared_m
 /usr/include/x86_64-linux-gnu/sys/mman.h:
 
 /usr/include/x86_64-linux-gnu/bits/unistd_ext.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_statx_timestamp.h:
 
 /usr/include/glm/ext/vector_bool3.hpp:
 
@@ -3036,8 +3179,6 @@ CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: /home/kavulsulka/IKRT-/src/shared_m
 
 /usr/include/x86_64-linux-gnu/bits/time.h:
 
-/usr/include/x86_64-linux-gnu/bits/stdint-least.h:
-
 /usr/include/glm/detail/func_packing.inl:
 
 /usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
@@ -3156,41 +3297,9 @@ CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: /home/kavulsulka/IKRT-/src/shared_m
 
 /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.h:
 
-/usr/include/GL/glext.h:
-
-/usr/include/glm/ext/quaternion_trigonometric.hpp:
-
-/usr/include/c++/13/bits/uniform_int_dist.h:
-
-/home/kavulsulka/IKRT-/src/main_new.cpp:
-
-/usr/include/GL/glew.h:
-
-/home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.h:
-
-/usr/include/GL/glu.h:
-
-/home/kavulsulka/IKRT-/include/Mesh.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_statx_timestamp.h:
-
-/home/kavulsulka/IKRT-/src/model_loader.cpp:
-
-/home/kavulsulka/IKRT-/include/Shader.h:
-
 /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/poppack1.h:
 
 /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/postprocess.h:
-
-/home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Importer.hpp:
-
-/usr/include/c++/13/bits/unordered_set.h:
-
-/usr/include/glm/ext/matrix_float4x3_precision.hpp:
-
-/usr/include/endian.h:
-
-/usr/include/glm/gtc/quaternion.hpp:
 
 /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/MathFunctions.h:
 
@@ -3236,25 +3345,61 @@ CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: /home/kavulsulka/IKRT-/src/shared_m
 
 /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.h:
 
-/usr/include/c++/13/bits/hashtable_policy.h:
+/usr/include/GL/glext.h:
 
-/usr/include/c++/13/bits/sstream.tcc:
+/usr/include/glm/ext/quaternion_trigonometric.hpp:
+
+/usr/include/c++/13/bits/hashtable_policy.h:
 
 /usr/include/c++/13/bits/stl_algo.h:
 
 /usr/include/c++/13/bits/stl_tempbuf.h:
 
+/usr/include/c++/13/bits/unordered_set.h:
+
+/home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Importer.hpp:
+
+/usr/include/glm/ext/matrix_float4x3_precision.hpp:
+
+/usr/include/endian.h:
+
+/usr/include/glm/gtc/quaternion.hpp:
+
 /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h:
 
 /usr/include/c++/13/ext/aligned_buffer.h:
 
-/usr/include/glm/detail/type_half.hpp:
-
-/usr/include/c++/13/fstream:
-
 /usr/include/c++/13/pstl/execution_defs.h:
 
 /usr/include/c++/13/pstl/glue_algorithm_defs.h:
+
+/usr/include/string.h:
+
+/usr/include/c++/13/bits/uniform_int_dist.h:
+
+/home/kavulsulka/IKRT-/src/main_new.cpp:
+
+/usr/include/GL/glew.h:
+
+/home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.h:
+
+/usr/include/GL/glu.h:
+
+/home/kavulsulka/IKRT-/include/Mesh.h:
+
+/home/kavulsulka/IKRT-/src/model_loader.cpp:
+
+/home/kavulsulka/IKRT-/include/Shader.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdint-least.h:
+
+/home/kavulsulka/IKRT-/include/Texture.h:
+
+/usr/include/c++/13/bits/sstream.tcc:
+
+/usr/include/glm/detail/type_half.hpp:
+
+/usr/include/c++/13/fstream:
 
 /usr/include/c++/13/stdlib.h:
 
@@ -3309,8 +3454,6 @@ CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: /home/kavulsulka/IKRT-/src/shared_m
 /usr/include/glm/gtx/norm.hpp:
 
 /usr/include/glm/gtx/norm.inl:
-
-/usr/include/string.h:
 
 /home/kavulsulka/IKRT-/src/render_setup.cpp:
 

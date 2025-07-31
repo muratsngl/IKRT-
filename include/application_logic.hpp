@@ -17,6 +17,7 @@ struct ApplicationState {
     glm::vec3 deltaMiddle;
     glm::vec3 deltaRing;
     glm::vec3 deltaPinky;
+    glm::vec3 deltaRoot; // Added for root movement
     
     // Timing
     float deltaTime;

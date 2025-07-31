@@ -241,21 +241,18 @@ CMakeFiles/IKRT.dir/src/render_setup.cpp.o: \
  /usr/include/glm/detail/type_half.hpp \
  /usr/include/glm/detail/type_half.inl /usr/include/glm/integer.hpp \
  /usr/include/glm/detail/func_integer.inl \
- /home/kavulsulka/IKRT-/include/application_logic.hpp \
- /home/kavulsulka/IKRT-/include/Camera.h \
- /usr/include/glm/gtc/matrix_transform.hpp \
- /usr/include/glm/ext/matrix_projection.hpp \
- /usr/include/glm/gtc/constants.hpp \
- /usr/include/glm/ext/scalar_constants.hpp \
- /usr/include/glm/ext/scalar_constants.inl \
- /usr/include/glm/gtc/constants.inl \
- /usr/include/glm/ext/matrix_projection.inl \
- /usr/include/glm/ext/matrix_clip_space.hpp \
- /usr/include/glm/ext/matrix_clip_space.inl \
- /usr/include/glm/ext/matrix_transform.hpp \
- /usr/include/glm/ext/matrix_transform.inl \
- /usr/include/glm/gtc/matrix_transform.inl \
- /home/kavulsulka/IKRT-/include/Shader.h /usr/include/c++/13/string \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/scene.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/types.h \
+ /usr/include/string.h /usr/include/strings.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/defs.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/config.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.h \
+ /usr/include/c++/13/cstring /usr/include/c++/13/string \
  /usr/include/c++/13/bits/stringfwd.h \
  /usr/include/c++/13/bits/char_traits.h \
  /usr/include/c++/13/bits/postypes.h /usr/include/c++/13/cwchar \
@@ -287,7 +284,56 @@ CMakeFiles/IKRT.dir/src/render_setup.cpp.o: \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
  /usr/include/c++/13/bits/charconv.h \
- /usr/include/c++/13/bits/basic_string.tcc /usr/include/c++/13/fstream \
+ /usr/include/c++/13/bits/basic_string.tcc \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.inl \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.inl \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.inl \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.inl \
+ /usr/include/c++/13/algorithm /usr/include/c++/13/bits/stl_algo.h \
+ /usr/include/c++/13/bits/algorithmfwd.h \
+ /usr/include/c++/13/bits/stl_heap.h \
+ /usr/include/c++/13/bits/uniform_int_dist.h \
+ /usr/include/c++/13/bits/stl_tempbuf.h \
+ /usr/include/c++/13/pstl/glue_algorithm_defs.h \
+ /usr/include/c++/13/pstl/execution_defs.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.inl \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/MathFunctions.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.inl \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/texture.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/pushpack1.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/poppack1.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/mesh.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/aabb.h \
+ /usr/include/c++/13/unordered_set \
+ /usr/include/c++/13/bits/unordered_set.h \
+ /usr/include/c++/13/bits/hashtable.h \
+ /usr/include/c++/13/bits/hashtable_policy.h \
+ /usr/include/c++/13/ext/aligned_buffer.h \
+ /usr/include/c++/13/bits/enable_special_members.h \
+ /usr/include/c++/13/bits/node_handle.h \
+ /usr/include/c++/13/bits/erase_if.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/light.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/camera.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.inl \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/anim.h \
+ /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/metadata.h \
+ /home/kavulsulka/IKRT-/include/application_logic.hpp \
+ /home/kavulsulka/IKRT-/include/shared_memory.hpp \
+ /home/kavulsulka/IKRT-/include/Camera.h \
+ /usr/include/glm/gtc/matrix_transform.hpp \
+ /usr/include/glm/ext/matrix_projection.hpp \
+ /usr/include/glm/gtc/constants.hpp \
+ /usr/include/glm/ext/scalar_constants.hpp \
+ /usr/include/glm/ext/scalar_constants.inl \
+ /usr/include/glm/gtc/constants.inl \
+ /usr/include/glm/ext/matrix_projection.inl \
+ /usr/include/glm/ext/matrix_clip_space.hpp \
+ /usr/include/glm/ext/matrix_clip_space.inl \
+ /usr/include/glm/ext/matrix_transform.hpp \
+ /usr/include/glm/ext/matrix_transform.inl \
+ /usr/include/glm/gtc/matrix_transform.inl \
+ /home/kavulsulka/IKRT-/include/Shader.h /usr/include/c++/13/fstream \
  /usr/include/c++/13/istream /usr/include/c++/13/ios \
  /usr/include/c++/13/exception /usr/include/c++/13/bits/exception_ptr.h \
  /usr/include/c++/13/bits/cxxabi_init_exception.h \
@@ -359,56 +405,13 @@ CMakeFiles/IKRT.dir/src/render_setup.cpp.o: \
  /usr/include/glm/ext/vector_int1.hpp \
  /usr/include/glm/ext/vector_int1_sized.hpp \
  /usr/include/glm/ext/vector_uint1.hpp \
- /usr/include/glm/ext/vector_uint1_sized.hpp /usr/include/c++/13/cstring \
- /usr/include/string.h /usr/include/strings.h \
+ /usr/include/glm/ext/vector_uint1_sized.hpp \
  /usr/include/glm/gtc/type_ptr.inl \
  /home/kavulsulka/IKRT-/include/stb_image.h /usr/include/c++/13/stdlib.h \
  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Importer.hpp \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/types.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/defs.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/config.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector2.inl \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/vector3.inl \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/color4.inl \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix3x3.inl \
- /usr/include/c++/13/algorithm /usr/include/c++/13/bits/stl_algo.h \
- /usr/include/c++/13/bits/algorithmfwd.h \
- /usr/include/c++/13/bits/stl_heap.h \
- /usr/include/c++/13/bits/uniform_int_dist.h \
- /usr/include/c++/13/bits/stl_tempbuf.h \
- /usr/include/c++/13/pstl/glue_algorithm_defs.h \
- /usr/include/c++/13/pstl/execution_defs.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/matrix4x4.inl \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/MathFunctions.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/quaternion.inl \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/scene.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/texture.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/pushpack1.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/Compiler/poppack1.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/mesh.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/aabb.h \
- /usr/include/c++/13/unordered_set \
- /usr/include/c++/13/bits/unordered_set.h \
- /usr/include/c++/13/bits/hashtable.h \
- /usr/include/c++/13/bits/hashtable_policy.h \
- /usr/include/c++/13/ext/aligned_buffer.h \
- /usr/include/c++/13/bits/enable_special_members.h \
- /usr/include/c++/13/bits/node_handle.h \
- /usr/include/c++/13/bits/erase_if.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/light.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/camera.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.inl \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/anim.h \
- /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/metadata.h \
  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/postprocess.h \
  /home/kavulsulka/IKRT-/include/Mesh.h \
- /home/kavulsulka/IKRT-/include/Shader.h /usr/include/c++/13/map \
+ /home/kavulsulka/IKRT-/include/Shader.h \
+ /home/kavulsulka/IKRT-/include/Texture.h /usr/include/c++/13/map \
  /usr/include/c++/13/bits/stl_tree.h /usr/include/c++/13/bits/stl_map.h \
  /usr/include/c++/13/bits/stl_multimap.h

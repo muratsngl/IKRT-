@@ -153,6 +153,30 @@ src/FABRIK.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/FABRIK.cpp.s
 .PHONY : src/FABRIK.cpp.s
 
+src/Texture.o: src/Texture.cpp.o
+.PHONY : src/Texture.o
+
+# target to build an object file
+src/Texture.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/Texture.cpp.o
+.PHONY : src/Texture.cpp.o
+
+src/Texture.i: src/Texture.cpp.i
+.PHONY : src/Texture.i
+
+# target to preprocess a source file
+src/Texture.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/Texture.cpp.i
+.PHONY : src/Texture.cpp.i
+
+src/Texture.s: src/Texture.cpp.s
+.PHONY : src/Texture.s
+
+# target to generate assembly for a file
+src/Texture.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/Texture.cpp.s
+.PHONY : src/Texture.cpp.s
+
 src/application_logic.o: src/application_logic.cpp.o
 .PHONY : src/application_logic.o
 
@@ -285,6 +309,9 @@ help:
 	@echo "... src/FABRIK.o"
 	@echo "... src/FABRIK.i"
 	@echo "... src/FABRIK.s"
+	@echo "... src/Texture.o"
+	@echo "... src/Texture.i"
+	@echo "... src/Texture.s"
 	@echo "... src/application_logic.o"
 	@echo "... src/application_logic.i"
 	@echo "... src/application_logic.s"

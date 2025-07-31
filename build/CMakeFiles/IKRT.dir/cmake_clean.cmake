@@ -1,6 +1,10 @@
 file(REMOVE_RECURSE
+  "/home/kavulsulka/IKRT-/IKRT"
+  "/home/kavulsulka/IKRT-/IKRT.pdb"
   "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o"
   "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o.d"
+  "CMakeFiles/IKRT.dir/src/Texture.cpp.o"
+  "CMakeFiles/IKRT.dir/src/Texture.cpp.o.d"
   "CMakeFiles/IKRT.dir/src/application_logic.cpp.o"
   "CMakeFiles/IKRT.dir/src/application_logic.cpp.o.d"
   "CMakeFiles/IKRT.dir/src/main_new.cpp.o"
@@ -11,8 +15,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/IKRT.dir/src/render_setup.cpp.o.d"
   "CMakeFiles/IKRT.dir/src/shared_memory.cpp.o"
   "CMakeFiles/IKRT.dir/src/shared_memory.cpp.o.d"
-  "IKRT"
-  "IKRT.pdb"
 )
 
 # Per-language clean rules from dependency scanning.

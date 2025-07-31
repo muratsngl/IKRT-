@@ -18,6 +18,7 @@ void init_application_state() {
     app_state.deltaMiddle = glm::vec3(0.0f);
     app_state.deltaRing = glm::vec3(0.0f);
     app_state.deltaPinky = glm::vec3(0.0f);
+    app_state.deltaRoot = glm::vec3(0.0f); // Added for root movement
     
     // Initialize timing
     app_state.deltaTime = 0.0f;
@@ -49,6 +50,9 @@ void calculate_deltas() {
     app_state.deltaPinky = glm::vec3(4.0f * finger_data.deltaXPinky, 
                                    2.66f * finger_data.deltaYPinky, 
                                    finger_data.deltaZPinky);
+    app_state.deltaRoot += !finger_data.rootLock? glm::vec3(8.0f * finger_data.deltaXRoot,
+                                   5.32f * finger_data.deltaYRoot,
+                                   finger_data.deltaZRoot): glm::vec3(0.0f); // Added for root movement
     
     // Update target positions
     app_state.targetPositionIndex += app_state.deltaIndex;
@@ -58,7 +62,7 @@ void calculate_deltas() {
 }
 
 void apply_fabrik() {
-    const InteractorModelData& model_data = get_model_data();
+    const InteractorModelData& model_data = get_interactor_model_data();
     
     // Apply FABRIK to each limb
     simple_fabrik_routine_indexed(const_cast<std::vector<glm::vec3>&>(model_data.bind_pose_positions),
@@ -79,7 +83,7 @@ void apply_fabrik() {
 }
 
 void update_transforms() {
-    const InteractorModelData& model_data = get_model_data();
+    const InteractorModelData& model_data = get_interactor_model_data();
     
     // Update bone transforms for each limb
     update_bone_transforms(model_data.right_arm_indices);

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include "assimp/scene.h"
 
 // Forward declaration
 
@@ -24,11 +25,17 @@ struct InteractorModelData {
     std::vector<unsigned short> right_leg_indices;
 };
 
+struct SceneElementModelData{
+    glm::mat3 model_matrix;
+    //add orientation and stuff
+};
+
 // Function declarations
 bool load_scene_element_model(const char* path);
 bool load_interactor_model(const char* path);
 const InteractorModelData& get_interactor_model_data();
 InteractorModel* get_interactor_model(); // Get the actual model for drawing
+SceneElementModel* get_scene_element_model();
 void update_bone_transforms(const std::vector<unsigned short>& indices);
 void sync_data_to_main(std::vector<glm::vec3>& main_positions, std::vector<glm::mat4>& main_matrices);
 void sync_data_from_main(const std::vector<glm::vec3>& main_positions, const std::vector<glm::mat4>& main_matrices);

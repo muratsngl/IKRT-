@@ -25,6 +25,7 @@ set(SOURCES
     src/model_loader.cpp
     src/render_setup.cpp
     src/application_logic.cpp
+    src/Texture.cpp
 )
 
 # Include directories
@@ -39,6 +40,9 @@ include_directories(
 
 # Create executable
 add_executable(IKRT ${SOURCES})
+
+# Set the runtime working directory to the project root
+set_target_properties(IKRT PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # Link libraries
 target_link_libraries(IKRT

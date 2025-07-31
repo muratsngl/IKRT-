@@ -21,19 +21,27 @@ int main() {
     load_shaders();
     init_buffers();
     
-    // Load the model
-    if (!load_interactor_model("./MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae")) {
+    //Load the model
+    if (!load_interactor_model("assets/models/man_with_bones/MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae")) {
         std::cerr << "Failed to load model" << std::endl;
         cleanup_rendering();
         cleanup_shared_memory();
         return -1;
     }
-    
+    if(load_scene_element_model("assets/models/watermelon/scene.gltf") == false){
+        std::cerr << "Failed to load scene element model" << std::endl;
+        cleanup_rendering();
+        cleanup_shared_memory();
+        return -1;
+    }
+
+
+
     // Initialize application state
     init_application_state();
     
     // Set wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT, GL_TRIANGLES);
     
     // Main loop
     while (!should_close_window()) {

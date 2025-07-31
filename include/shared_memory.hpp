@@ -29,6 +29,7 @@ struct FingerData {
     bool isMiddleized;
     bool firstTrue;
     bool trueInput;
+    bool rootLock = true; // Added for root movement control
 };
 
 // Shared memory functions

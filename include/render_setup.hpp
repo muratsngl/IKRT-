@@ -12,17 +12,13 @@ struct RenderContext {
     
     // OpenGL objects
     GLuint orcunUBO;
-    GLuint snakeBoneUBO;
+   
     
     // Various VAOs and VBOs for different objects
-    GLuint centerSkeletonVAO, centerSkeletonVBO;
-    GLuint centerSkeletonTriangleEBO, centerSkeletonLineEBO;
-    GLuint guidePointsVAO, guidePointsVBO;
-    GLuint snakeMeshVAO, snakeMeshVBO, snakeMeshEBO;
-    GLuint snakeVAO, snakeVBO[2];
+    
     
     // Buffer handles for persistent mapping
-    GLfloat* snakeBufferHandle[2];
+    
     
     // Buffer management
     int whichBuffertoRead;

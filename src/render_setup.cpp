@@ -1,9 +1,11 @@
 #include "include/render_setup.hpp"
 #include "include/model_loader.hpp"
 #include "include/application_logic.hpp"
+#include "include/shared_memory.hpp"
 #include "include/Camera.h"
 #include "include/Shader.h"
-#include "include/model_bones.h" // Include the Model class definition
+#include "include/model_bones.h" 
+#include "include/application_logic.hpp"// Include the Model class definition
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,11 +16,15 @@ static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 static Shader* generalPurposeShader = nullptr;
 static Shader* snakeMeshShader = nullptr;
 static Shader* skeletonShader = nullptr;
+static Shader* sceneElementShader = nullptr;
 
 // Mouse and timing variables
 static float lastX = 1240.0f / 2.0f;
 static float lastY = 720.0f / 2.0f;
 static bool firstMouse = true;
+
+// Add static variables to track the key state
+static bool spaceKeyPressed = false;
 
 bool init_rendering() {
     // Initialize GLFW
@@ -71,17 +77,13 @@ void load_shaders() {
     generalPurposeShader = new Shader("assets/shaders/triangle.vs", "assets/shaders/triangle.fs");
     snakeMeshShader = new Shader("assets/shaders/snake_mesh.vs", "assets/shaders/snake_mesh.fs");
     skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
+    sceneElementShader = new Shader("assets/shaders/model.vert", "assets/shaders/model.frag");
 }
 
 void init_buffers() {
     GLbitfield flags = GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_WRITE_BIT;
     
-    // Generate uniform buffer objects
-    glGenBuffers(1, &render_context.snakeBoneUBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, render_context.snakeBoneUBO);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, render_context.snakeBoneUBO);
-    glBufferData(GL_UNIFORM_BUFFER, 320, nullptr, GL_DYNAMIC_READ);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  
 
     glGenBuffers(1, &render_context.orcunUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
@@ -89,20 +91,10 @@ void init_buffers() {
     glBufferData(GL_UNIFORM_BUFFER, 1216, nullptr, GL_DYNAMIC_READ);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
-    // Initialize other buffers (guide points, snake, etc.)
-    std::vector<float> guidePoints{0.0f, 0.0f, 0.0f};
+ 
     
-    glGenVertexArrays(1, &render_context.guidePointsVAO);
-    glBindVertexArray(render_context.guidePointsVAO);
-    
-    glGenBuffers(1, &render_context.guidePointsVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.guidePointsVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * guidePoints.size(), 
-                 guidePoints.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    
-    glBindVertexArray(0);
+   
+   
 }
 
 void render_frame() {
@@ -118,7 +110,11 @@ void render_frame() {
                                           0.1f, 100.0f);
     glm::mat4 model = glm::mat4(1.0f);
     
+    
+    
+    
     // Update uniform buffer with bone transforms
+    //Room for optimization this could be done in a single memory access;
     const InteractorModelData& model_data = get_interactor_model_data();
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
     for (short i = 0; i < 19; i++) {
@@ -131,10 +127,21 @@ void render_frame() {
 
     // Render the skeletal model
     if (skeletonShader) {
-        skeletonShader->setMat4("model", model);
+        skeletonShader->use();
+        skeletonShader->setMat4("model", glm::translate(model, get_application_state().deltaRoot));
         skeletonShader->setMat4("view", view);
         skeletonShader->setMat4("projection", projection);
         get_interactor_model()->Draw(*skeletonShader);
+    }
+
+    if(sceneElementShader){
+        sceneElementShader->use();
+        sceneElementShader->setMat4("model", model);
+        sceneElementShader->setMat4("view", view);
+        sceneElementShader->setMat4("projection", projection);
+        get_scene_element_model()->Draw(*sceneElementShader);
+        // Draw the scene element model
+        
     }
     
     // Process input and swap buffers
@@ -155,6 +162,8 @@ void cleanup_rendering() {
     delete generalPurposeShader;
     delete snakeMeshShader;
     delete skeletonShader;
+    delete sceneElementShader;
+    
     
     if (render_context.window) {
         glfwDestroyWindow(render_context.window);
@@ -208,4 +217,16 @@ void process_input(GLFWwindow* window) {
         camera.ProcessKeyboard(LEFT, app_state.deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, app_state.deltaTime);
+    //DEBUG: CURRENTLY TOGGLES ROOT LOCK RANDOMLY BECAUSE OF BUTTON DEBOUNCING//SOLVED WITH SCHMIDT TRIGGER
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        if (!spaceKeyPressed) { // Key was not previously pressed
+            get_finger_data().rootLock = !get_finger_data().rootLock; // Toggle root lock
+            std::cout << "rootLock toggled to: " << get_finger_data().rootLock << std::endl;
+            spaceKeyPressed = true; // Mark the key as pressed
+        }
+        } else {
+            spaceKeyPressed = false; // Reset the key state when released
+        }
+
+
 }
