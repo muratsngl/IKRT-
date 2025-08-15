@@ -291,7 +291,7 @@ public:
     }
 
     // Add a draw function to the SceneElementModel class
-    void Draw(Shader& shader) {
+    void Draw(Shader& shader) const {
         for (unsigned int i = 0; i < meshes.size(); i++) {
             meshes[i].Draw(shader);
         }

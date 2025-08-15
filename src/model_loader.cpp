@@ -7,7 +7,8 @@
 
 static InteractorModelData model_data;
 static InteractorModel* current_model = nullptr;
-static SceneElementModel* current_scene_element_model = nullptr;
+static std::vector<SceneElementModel> scene_element_model_arr;
+static uint SceneElementModelCount = 0;
 
 bool load_interactor_model(const char* path) {
     try {
@@ -33,8 +34,9 @@ bool load_interactor_model(const char* path) {
 }
 bool load_scene_element_model(const char* path) {
     try {
-        current_scene_element_model = new SceneElementModel(path);
-        // Additional logic for handling the loaded model can be added here
+        SceneElementModel* newModel = new SceneElementModel(path);
+        scene_element_model_arr.push_back(*newModel);
+        SceneElementModelCount++;
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error loading SceneElementModel: " << e.what() << std::endl;
@@ -50,10 +52,12 @@ InteractorModel* get_interactor_model() {
     return current_model;
 }
 
-SceneElementModel* get_scene_element_model() {
-    return current_scene_element_model;
+const SceneElementModel&get_scene_element_model(size_t index) {
+    return scene_element_model_arr[index];
 }
-
+size_t get_scene_element_model_count() {
+    return SceneElementModelCount;
+}
 void update_bone_transforms(const std::vector<unsigned short>& indices) {
     for (short i = 0; i < indices.size() - 1; i++) {
         glm::vec3 translateVector = (model_data.bind_pose_positions[indices[i]] - 

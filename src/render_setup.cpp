@@ -13,8 +13,7 @@
 
 static RenderContext render_context;
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-static Shader* generalPurposeShader = nullptr;
-static Shader* snakeMeshShader = nullptr;
+
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
 
@@ -74,8 +73,6 @@ bool init_rendering() {
 }
 
 void load_shaders() {
-    generalPurposeShader = new Shader("assets/shaders/triangle.vs", "assets/shaders/triangle.fs");
-    snakeMeshShader = new Shader("assets/shaders/snake_mesh.vs", "assets/shaders/snake_mesh.fs");
     skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
     sceneElementShader = new Shader("assets/shaders/model.vert", "assets/shaders/model.frag");
 }
@@ -135,11 +132,25 @@ void render_frame() {
     }
 
     if(sceneElementShader){
+        
+        
         sceneElementShader->use();
-        sceneElementShader->setMat4("model", model);
+         // Add quaternion rotations for model transformations
+        glm::quat rotationX = glm::angleAxis(glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        glm::quat rotationZ = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+    // Apply the rotations to the model matrix
+        sceneElementShader->setMat4("model", glm::mat4_cast(rotationX) * glm::mat4_cast(rotationZ) * model);
+
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
-        get_scene_element_model()->Draw(*sceneElementShader);
+
+
+        for(size_t i = 0;i<get_scene_element_model_count();i++){
+            const SceneElementModel& model = get_scene_element_model(i);
+            model.Draw(*sceneElementShader);
+        }
+        
         // Draw the scene element model
         
     }
@@ -159,8 +170,6 @@ bool should_close_window() {
 }
 
 void cleanup_rendering() {
-    delete generalPurposeShader;
-    delete snakeMeshShader;
     delete skeletonShader;
     delete sceneElementShader;
     
@@ -229,4 +238,5 @@ void process_input(GLFWwindow* window) {
         }
 
 
+  
 }

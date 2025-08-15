@@ -67,7 +67,7 @@ public:
     }
 
     // Add a draw function for StaticMesh
-    void Draw(Shader& shader) {
+    void Draw(Shader& shader) const {
         // Bind appropriate textures
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
@@ -125,7 +125,7 @@ private:
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
+        
         // set the vertex attribute pointers
         // vertex Positions
         glEnableVertexAttribArray(0);
@@ -142,7 +142,10 @@ private:
        // vertex bitangent
        glEnableVertexAttribArray(4);
        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(StaticVertex), (void*)offsetof(StaticVertex, Bitangent));
-        glBindVertexArray(0);
+       glBindVertexArray(0);
+        
+        vertices.clear();
+        
     }
     
     void drawStaticMesh()
@@ -228,6 +231,7 @@ private:
        glEnableVertexAttribArray(6);
        glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, Bitangent));
         glBindVertexArray(0);
+        vertices.clear();
     }
 };
 #endif

@@ -28,7 +28,15 @@ int main() {
         cleanup_shared_memory();
         return -1;
     }
-    if(load_scene_element_model("assets/models/watermelon/scene.gltf") == false){
+    // if(load_scene_element_model("assets/models/watermelon/scene.gltf") == false){
+    //     std::cerr << "Failed to load scene element model" << std::endl;
+    //     cleanup_rendering();
+    //     cleanup_shared_memory();
+    //     return -1;
+    // } //commeted out to flip the scene until the scenelementdata is being implemented
+    
+    
+    if(load_scene_element_model("assets/models/they_are_here/scene.gltf")==false){
         std::cerr << "Failed to load scene element model" << std::endl;
         cleanup_rendering();
         cleanup_shared_memory();
