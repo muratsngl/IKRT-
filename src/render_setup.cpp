@@ -188,20 +188,26 @@ void render_frame() {
                 direction = glm::vec3(1, 0, 0);
             }
             
-            glm::vec3 up = glm::vec3(0, 1, 0);
-            if (abs(glm::dot(direction, up)) > 0.99f) {
-                up = glm::vec3(1, 0, 0);
+            // Create a proper rotation matrix where the bone direction is the Y-axis (up)
+            glm::vec3 up = direction;  // Bone direction becomes the up vector
+            glm::vec3 forward = glm::vec3(0, 0, 1);  // Default forward
+            
+            // If bone direction is too close to forward, use a different forward
+            if (abs(glm::dot(up, forward)) > 0.99f) {
+                forward = glm::vec3(1, 0, 0);
             }
             
-            glm::vec3 right = glm::normalize(glm::cross(direction, up));
-            up = glm::normalize(glm::cross(right, direction));
+            glm::vec3 right = glm::normalize(glm::cross(up, forward));
+            forward = glm::normalize(glm::cross(right, up));
             
-            glm::mat3 rotMatrix(right, up, direction);
+            // Build rotation matrix: right=X, up=Y, forward=Z
+            glm::mat3 rotMatrix(right, up, forward);
             glm::quat rotation = glm::quat_cast(rotMatrix);
             
             boneShape.obb.center = center;
             boneShape.obb.rotation = rotation;
-            boneShape.obb.halfExtents = glm::vec3(0.05f, 0.05f, length * 0.5f + 0.05f);
+            // Half extents: small width/depth (X,Z), length along bone direction (Y)
+            boneShape.obb.halfExtents = glm::vec3(0.05f, length * 0.5f, 0.05f);
             
             return boneShape;
         };
