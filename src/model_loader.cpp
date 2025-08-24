@@ -8,6 +8,7 @@
 static InteractorModelData model_data;
 static InteractorModel* current_model = nullptr;
 static std::vector<SceneElementModel> scene_element_model_arr;
+//static std::vector<InteractableModel> interactable_model_arr;
 static uint SceneElementModelCount = 0;
 
 bool load_interactor_model(const char* path) {

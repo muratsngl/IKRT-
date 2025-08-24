@@ -11,7 +11,8 @@ struct ApplicationState {
     glm::vec3 targetPositionMiddle;
     glm::vec3 targetPositionRing;
     glm::vec3 targetPositionPinky;
-    
+    glm::vec3 targetPositionRoot;
+
     // Delta vectors for movement
     glm::vec3 deltaIndex;
     glm::vec3 deltaMiddle;
@@ -30,6 +31,7 @@ void update_finger_positions();
 void apply_fabrik();
 void update_transforms();
 void calculate_deltas();
+void rearrange_finger_positions_based_on_collision();
 ApplicationState& get_application_state();
 
 #endif

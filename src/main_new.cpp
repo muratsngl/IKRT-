@@ -36,7 +36,7 @@ int main() {
     // } //commeted out to flip the scene until the scenelementdata is being implemented
     
     
-    if(load_scene_element_model("assets/models/they_are_here/scene.gltf")==false){
+    if(load_scene_element_model("assets/models/mug/mug.dae")==false){
         std::cerr << "Failed to load scene element model" << std::endl;
         cleanup_rendering();
         cleanup_shared_memory();
@@ -55,10 +55,11 @@ int main() {
     while (!should_close_window()) {
         // Update shared memory data
         update_shared_memory();
-        
         // Update application logic
         update_finger_positions();
         calculate_deltas();
+        apply_fabrik();
+        rearrange_finger_positions_based_on_collision();
         apply_fabrik();
         update_transforms();
         

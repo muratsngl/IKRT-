@@ -15,6 +15,8 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "collision.hpp"
+
 
 #include <string>
 #include <fstream>
@@ -24,7 +26,8 @@
 #include <vector>
 using namespace std;
 
-
+// Global declaration of scene element boxes
+extern std::vector<Shape> scene_element_boxes;
 
 struct BoneInfo
 {
@@ -337,7 +340,15 @@ private:
         std::vector<StaticVertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<TextureInfo> textures;
-
+        Aabb boundingBox;
+        // Initialize bounding box min/max to first vertex or large/small values
+        if (mesh->mNumVertices > 0) {
+            boundingBox.min = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
+            boundingBox.max = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
+        } else {
+            boundingBox.min = glm::vec3(0.0f);
+            boundingBox.max = glm::vec3(0.0f);
+        }
         // Walk through each of the mesh's vertices
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
@@ -348,6 +359,13 @@ private:
             vector.y = mesh->mVertices[i].y;
             vector.z = mesh->mVertices[i].z;
             vertex.Position = vector;
+            // Update bounding box
+            boundingBox.min.x = std::min(boundingBox.min.x, vector.x);
+            boundingBox.min.y = std::min(boundingBox.min.y, vector.y);
+            boundingBox.min.z = std::min(boundingBox.min.z, vector.z);
+            boundingBox.max.x = std::max(boundingBox.max.x, vector.x);
+            boundingBox.max.y = std::max(boundingBox.max.y, vector.y);
+            boundingBox.max.z = std::max(boundingBox.max.z, vector.z);
             // Normals
             if (mesh->HasNormals())
             {
@@ -380,7 +398,12 @@ private:
 
             vertices.push_back(vertex);
         }
-
+        {
+            Shape s;
+            s.type = AABB;
+            s.aabb = boundingBox;
+            scene_element_boxes.push_back(s);
+        }
         // Walk through each of the mesh's faces and retrieve the corresponding vertex indices
         for (unsigned int i = 0; i < mesh->mNumFaces; i++)
         {

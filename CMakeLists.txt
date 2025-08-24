@@ -26,6 +26,9 @@ set(SOURCES
     src/render_setup.cpp
     src/application_logic.cpp
     src/Texture.cpp
+    src/collision.cpp
+    src/model_bones.cpp
+    src/collision_visualizer.cpp
 )
 
 # Include directories

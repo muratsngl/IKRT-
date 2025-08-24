@@ -201,6 +201,54 @@ src/application_logic.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/application_logic.cpp.s
 .PHONY : src/application_logic.cpp.s
 
+src/collision.o: src/collision.cpp.o
+.PHONY : src/collision.o
+
+# target to build an object file
+src/collision.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/collision.cpp.o
+.PHONY : src/collision.cpp.o
+
+src/collision.i: src/collision.cpp.i
+.PHONY : src/collision.i
+
+# target to preprocess a source file
+src/collision.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/collision.cpp.i
+.PHONY : src/collision.cpp.i
+
+src/collision.s: src/collision.cpp.s
+.PHONY : src/collision.s
+
+# target to generate assembly for a file
+src/collision.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/collision.cpp.s
+.PHONY : src/collision.cpp.s
+
+src/collision_visualizer.o: src/collision_visualizer.cpp.o
+.PHONY : src/collision_visualizer.o
+
+# target to build an object file
+src/collision_visualizer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o
+.PHONY : src/collision_visualizer.cpp.o
+
+src/collision_visualizer.i: src/collision_visualizer.cpp.i
+.PHONY : src/collision_visualizer.i
+
+# target to preprocess a source file
+src/collision_visualizer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.i
+.PHONY : src/collision_visualizer.cpp.i
+
+src/collision_visualizer.s: src/collision_visualizer.cpp.s
+.PHONY : src/collision_visualizer.s
+
+# target to generate assembly for a file
+src/collision_visualizer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.s
+.PHONY : src/collision_visualizer.cpp.s
+
 src/main_new.o: src/main_new.cpp.o
 .PHONY : src/main_new.o
 
@@ -224,6 +272,30 @@ src/main_new.s: src/main_new.cpp.s
 src/main_new.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/main_new.cpp.s
 .PHONY : src/main_new.cpp.s
+
+src/model_bones.o: src/model_bones.cpp.o
+.PHONY : src/model_bones.o
+
+# target to build an object file
+src/model_bones.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/model_bones.cpp.o
+.PHONY : src/model_bones.cpp.o
+
+src/model_bones.i: src/model_bones.cpp.i
+.PHONY : src/model_bones.i
+
+# target to preprocess a source file
+src/model_bones.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/model_bones.cpp.i
+.PHONY : src/model_bones.cpp.i
+
+src/model_bones.s: src/model_bones.cpp.s
+.PHONY : src/model_bones.s
+
+# target to generate assembly for a file
+src/model_bones.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/IKRT.dir/build.make CMakeFiles/IKRT.dir/src/model_bones.cpp.s
+.PHONY : src/model_bones.cpp.s
 
 src/model_loader.o: src/model_loader.cpp.o
 .PHONY : src/model_loader.o
@@ -315,9 +387,18 @@ help:
 	@echo "... src/application_logic.o"
 	@echo "... src/application_logic.i"
 	@echo "... src/application_logic.s"
+	@echo "... src/collision.o"
+	@echo "... src/collision.i"
+	@echo "... src/collision.s"
+	@echo "... src/collision_visualizer.o"
+	@echo "... src/collision_visualizer.i"
+	@echo "... src/collision_visualizer.s"
 	@echo "... src/main_new.o"
 	@echo "... src/main_new.i"
 	@echo "... src/main_new.s"
+	@echo "... src/model_bones.o"
+	@echo "... src/model_bones.i"
+	@echo "... src/model_bones.s"
 	@echo "... src/model_loader.o"
 	@echo "... src/model_loader.i"
 	@echo "... src/model_loader.s"

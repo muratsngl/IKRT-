@@ -2,7 +2,11 @@
 #include "include/shared_memory.hpp"
 #include "include/model_loader.hpp"
 #include "include/FABRIK.h"
+#include "collision.hpp"
 #include <GLFW/glfw3.h>
+#include <cmath>
+#include <iostream>
+
 
 static ApplicationState app_state;
 
@@ -12,6 +16,7 @@ void init_application_state() {
     app_state.targetPositionMiddle = glm::vec3(-0.3f, -1.2f, 0.0f);
     app_state.targetPositionRing = glm::vec3(1.6f, 2.0f, 0.0f);
     app_state.targetPositionPinky = glm::vec3(0.5f, -1.2f, 0.0f);
+    app_state.targetPositionRoot = glm::vec3(0.0f, 0.0f, 0.0f); // Added for root movement
     
     // Initialize deltas
     app_state.deltaIndex = glm::vec3(0.0f);
@@ -50,15 +55,16 @@ void calculate_deltas() {
     app_state.deltaPinky = glm::vec3(4.0f * finger_data.deltaXPinky, 
                                    2.66f * finger_data.deltaYPinky, 
                                    finger_data.deltaZPinky);
-    app_state.deltaRoot += !finger_data.rootLock? glm::vec3(8.0f * finger_data.deltaXRoot,
+    app_state.deltaRoot = !finger_data.rootLock? glm::vec3(8.0f * finger_data.deltaXRoot,
                                    5.32f * finger_data.deltaYRoot,
                                    finger_data.deltaZRoot): glm::vec3(0.0f); // Added for root movement
     
-    // Update target positions
-    app_state.targetPositionIndex += app_state.deltaIndex;
-    app_state.targetPositionRing += app_state.deltaRing;
-    app_state.targetPositionMiddle += app_state.deltaMiddle;
-    app_state.targetPositionPinky += app_state.deltaPinky;
+    // Update target positions - apply deltaRoot directly to all targets
+    app_state.targetPositionIndex += app_state.deltaIndex - app_state.deltaRoot*0.5f;
+    app_state.targetPositionRing += app_state.deltaRing - app_state.deltaRoot*0.5f;
+    app_state.targetPositionMiddle += app_state.deltaMiddle - app_state.deltaRoot*0.5f;
+    app_state.targetPositionPinky += app_state.deltaPinky - app_state.deltaRoot*0.5f;
+    app_state.targetPositionRoot += app_state.deltaRoot; // Added for root movement
 }
 
 void apply_fabrik() {
@@ -81,6 +87,75 @@ void apply_fabrik() {
                                  app_state.targetPositionPinky, 
                                  model_data.left_leg_indices);
 }
+
+void rearrange_finger_positions_based_on_collision(){
+    const InteractorModelData& model_data = get_interactor_model_data();
+    extern std::vector<Shape> scene_element_boxes;
+    
+    // Create OBB for bone segment between bone i and i+1
+    auto createBoneOBB = [&](int boneIndex1, int boneIndex2) -> Shape {
+        Shape boneShape;
+        boneShape.type = OBB;
+        
+        glm::vec3 pos1 = model_data.bind_pose_positions[boneIndex1];
+        glm::vec3 pos2 = model_data.bind_pose_positions[boneIndex2];
+        
+        // Center is midpoint between bones
+        glm::vec3 center = (pos1 + pos2) * 0.5f;
+        
+        // Direction vector between bones
+        glm::vec3 direction = pos2 - pos1;
+        float length = glm::length(direction);
+        
+        if (length > 0.0001f) {
+            direction = glm::normalize(direction);
+        } else {
+            direction = glm::vec3(1, 0, 0); // Default direction
+        }
+        
+        // Create rotation to align with direction vector
+        glm::vec3 up = glm::vec3(0, 1, 0);
+        if (abs(glm::dot(direction, up)) > 0.99f) {
+            up = glm::vec3(1, 0, 0); // Use different up if direction is nearly vertical
+        }
+        
+        glm::vec3 right = glm::normalize(glm::cross(direction, up));
+        up = glm::normalize(glm::cross(right, direction));
+        
+        glm::mat3 rotMatrix(right, up, direction);
+        glm::quat rotation = glm::quat_cast(rotMatrix);
+        
+        // Set OBB properties
+        boneShape.obb.center = center;
+        boneShape.obb.rotation = rotation;
+        // Half extents: cube caps of 0.05f, length extends along bone
+        boneShape.obb.halfExtents = glm::vec3(0.05f, 0.05f, length * 0.5f + 0.05f);
+
+        return boneShape;
+    };
+    
+    // Check collision for specific finger chain
+    auto checkFingerCollision = [&](const std::vector<unsigned short>& indices, glm::vec3& targetPosition, const glm::vec3& delta) {
+        for (size_t i = 0; i < indices.size() - 1; i++) {
+            Shape boneOBB = createBoneOBB(indices[i], indices[i + 1]);
+            
+            if (check_collision(boneOBB, scene_element_boxes)) {
+                // Collision detected, subtract -2 * delta from target position
+                std::cout << "Collision detected on finger segment!" << std::endl;
+                targetPosition -= 2.0f * delta;
+                break; // Only apply once per finger
+            }
+        }
+    };
+    
+    // Check collisions for each finger using app_state finger names
+    checkFingerCollision(model_data.right_arm_indices, app_state.targetPositionIndex, app_state.deltaIndex);
+    checkFingerCollision(model_data.right_leg_indices, app_state.targetPositionMiddle, app_state.deltaMiddle);
+    checkFingerCollision(model_data.left_arm_indices, app_state.targetPositionRing, app_state.deltaRing);
+    checkFingerCollision(model_data.left_leg_indices, app_state.targetPositionPinky, app_state.deltaPinky);
+};
+
+
 
 void update_transforms() {
     const InteractorModelData& model_data = get_interactor_model_data();

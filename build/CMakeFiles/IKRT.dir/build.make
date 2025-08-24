@@ -73,99 +73,141 @@ CMakeFiles/IKRT.dir/src/main_new.cpp.o: CMakeFiles/IKRT.dir/flags.make
 CMakeFiles/IKRT.dir/src/main_new.cpp.o: /home/kavulsulka/IKRT-/src/main_new.cpp
 CMakeFiles/IKRT.dir/src/main_new.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/IKRT.dir/src/main_new.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/main_new.cpp.o -MF CMakeFiles/IKRT.dir/src/main_new.cpp.o.d -o CMakeFiles/IKRT.dir/src/main_new.cpp.o -c /home/kavulsulka/IKRT-/src/main_new.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/main_new.cpp.o -MF CMakeFiles/IKRT.dir/src/main_new.cpp.o.d -o CMakeFiles/IKRT.dir/src/main_new.cpp.o -c /home/kavulsulka/IKRT-/src/main_new.cpp
 
 CMakeFiles/IKRT.dir/src/main_new.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/main_new.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/main_new.cpp > CMakeFiles/IKRT.dir/src/main_new.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/main_new.cpp > CMakeFiles/IKRT.dir/src/main_new.cpp.i
 
 CMakeFiles/IKRT.dir/src/main_new.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/main_new.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/main_new.cpp -o CMakeFiles/IKRT.dir/src/main_new.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/main_new.cpp -o CMakeFiles/IKRT.dir/src/main_new.cpp.s
 
 CMakeFiles/IKRT.dir/src/FABRIK.cpp.o: CMakeFiles/IKRT.dir/flags.make
 CMakeFiles/IKRT.dir/src/FABRIK.cpp.o: /home/kavulsulka/IKRT-/src/FABRIK.cpp
 CMakeFiles/IKRT.dir/src/FABRIK.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/IKRT.dir/src/FABRIK.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/FABRIK.cpp.o -MF CMakeFiles/IKRT.dir/src/FABRIK.cpp.o.d -o CMakeFiles/IKRT.dir/src/FABRIK.cpp.o -c /home/kavulsulka/IKRT-/src/FABRIK.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/FABRIK.cpp.o -MF CMakeFiles/IKRT.dir/src/FABRIK.cpp.o.d -o CMakeFiles/IKRT.dir/src/FABRIK.cpp.o -c /home/kavulsulka/IKRT-/src/FABRIK.cpp
 
 CMakeFiles/IKRT.dir/src/FABRIK.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/FABRIK.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/FABRIK.cpp > CMakeFiles/IKRT.dir/src/FABRIK.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/FABRIK.cpp > CMakeFiles/IKRT.dir/src/FABRIK.cpp.i
 
 CMakeFiles/IKRT.dir/src/FABRIK.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/FABRIK.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/FABRIK.cpp -o CMakeFiles/IKRT.dir/src/FABRIK.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/FABRIK.cpp -o CMakeFiles/IKRT.dir/src/FABRIK.cpp.s
 
 CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: CMakeFiles/IKRT.dir/flags.make
 CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: /home/kavulsulka/IKRT-/src/shared_memory.cpp
 CMakeFiles/IKRT.dir/src/shared_memory.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/IKRT.dir/src/shared_memory.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/shared_memory.cpp.o -MF CMakeFiles/IKRT.dir/src/shared_memory.cpp.o.d -o CMakeFiles/IKRT.dir/src/shared_memory.cpp.o -c /home/kavulsulka/IKRT-/src/shared_memory.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/shared_memory.cpp.o -MF CMakeFiles/IKRT.dir/src/shared_memory.cpp.o.d -o CMakeFiles/IKRT.dir/src/shared_memory.cpp.o -c /home/kavulsulka/IKRT-/src/shared_memory.cpp
 
 CMakeFiles/IKRT.dir/src/shared_memory.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/shared_memory.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/shared_memory.cpp > CMakeFiles/IKRT.dir/src/shared_memory.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/shared_memory.cpp > CMakeFiles/IKRT.dir/src/shared_memory.cpp.i
 
 CMakeFiles/IKRT.dir/src/shared_memory.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/shared_memory.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/shared_memory.cpp -o CMakeFiles/IKRT.dir/src/shared_memory.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/shared_memory.cpp -o CMakeFiles/IKRT.dir/src/shared_memory.cpp.s
 
 CMakeFiles/IKRT.dir/src/model_loader.cpp.o: CMakeFiles/IKRT.dir/flags.make
 CMakeFiles/IKRT.dir/src/model_loader.cpp.o: /home/kavulsulka/IKRT-/src/model_loader.cpp
 CMakeFiles/IKRT.dir/src/model_loader.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/IKRT.dir/src/model_loader.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/model_loader.cpp.o -MF CMakeFiles/IKRT.dir/src/model_loader.cpp.o.d -o CMakeFiles/IKRT.dir/src/model_loader.cpp.o -c /home/kavulsulka/IKRT-/src/model_loader.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/model_loader.cpp.o -MF CMakeFiles/IKRT.dir/src/model_loader.cpp.o.d -o CMakeFiles/IKRT.dir/src/model_loader.cpp.o -c /home/kavulsulka/IKRT-/src/model_loader.cpp
 
 CMakeFiles/IKRT.dir/src/model_loader.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/model_loader.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/model_loader.cpp > CMakeFiles/IKRT.dir/src/model_loader.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/model_loader.cpp > CMakeFiles/IKRT.dir/src/model_loader.cpp.i
 
 CMakeFiles/IKRT.dir/src/model_loader.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/model_loader.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/model_loader.cpp -o CMakeFiles/IKRT.dir/src/model_loader.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/model_loader.cpp -o CMakeFiles/IKRT.dir/src/model_loader.cpp.s
 
 CMakeFiles/IKRT.dir/src/render_setup.cpp.o: CMakeFiles/IKRT.dir/flags.make
 CMakeFiles/IKRT.dir/src/render_setup.cpp.o: /home/kavulsulka/IKRT-/src/render_setup.cpp
 CMakeFiles/IKRT.dir/src/render_setup.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/IKRT.dir/src/render_setup.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/render_setup.cpp.o -MF CMakeFiles/IKRT.dir/src/render_setup.cpp.o.d -o CMakeFiles/IKRT.dir/src/render_setup.cpp.o -c /home/kavulsulka/IKRT-/src/render_setup.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/render_setup.cpp.o -MF CMakeFiles/IKRT.dir/src/render_setup.cpp.o.d -o CMakeFiles/IKRT.dir/src/render_setup.cpp.o -c /home/kavulsulka/IKRT-/src/render_setup.cpp
 
 CMakeFiles/IKRT.dir/src/render_setup.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/render_setup.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/render_setup.cpp > CMakeFiles/IKRT.dir/src/render_setup.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/render_setup.cpp > CMakeFiles/IKRT.dir/src/render_setup.cpp.i
 
 CMakeFiles/IKRT.dir/src/render_setup.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/render_setup.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/render_setup.cpp -o CMakeFiles/IKRT.dir/src/render_setup.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/render_setup.cpp -o CMakeFiles/IKRT.dir/src/render_setup.cpp.s
 
 CMakeFiles/IKRT.dir/src/application_logic.cpp.o: CMakeFiles/IKRT.dir/flags.make
 CMakeFiles/IKRT.dir/src/application_logic.cpp.o: /home/kavulsulka/IKRT-/src/application_logic.cpp
 CMakeFiles/IKRT.dir/src/application_logic.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/IKRT.dir/src/application_logic.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/application_logic.cpp.o -MF CMakeFiles/IKRT.dir/src/application_logic.cpp.o.d -o CMakeFiles/IKRT.dir/src/application_logic.cpp.o -c /home/kavulsulka/IKRT-/src/application_logic.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/application_logic.cpp.o -MF CMakeFiles/IKRT.dir/src/application_logic.cpp.o.d -o CMakeFiles/IKRT.dir/src/application_logic.cpp.o -c /home/kavulsulka/IKRT-/src/application_logic.cpp
 
 CMakeFiles/IKRT.dir/src/application_logic.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/application_logic.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/application_logic.cpp > CMakeFiles/IKRT.dir/src/application_logic.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/application_logic.cpp > CMakeFiles/IKRT.dir/src/application_logic.cpp.i
 
 CMakeFiles/IKRT.dir/src/application_logic.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/application_logic.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/application_logic.cpp -o CMakeFiles/IKRT.dir/src/application_logic.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/application_logic.cpp -o CMakeFiles/IKRT.dir/src/application_logic.cpp.s
 
 CMakeFiles/IKRT.dir/src/Texture.cpp.o: CMakeFiles/IKRT.dir/flags.make
 CMakeFiles/IKRT.dir/src/Texture.cpp.o: /home/kavulsulka/IKRT-/src/Texture.cpp
 CMakeFiles/IKRT.dir/src/Texture.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/IKRT.dir/src/Texture.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/Texture.cpp.o -MF CMakeFiles/IKRT.dir/src/Texture.cpp.o.d -o CMakeFiles/IKRT.dir/src/Texture.cpp.o -c /home/kavulsulka/IKRT-/src/Texture.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/Texture.cpp.o -MF CMakeFiles/IKRT.dir/src/Texture.cpp.o.d -o CMakeFiles/IKRT.dir/src/Texture.cpp.o -c /home/kavulsulka/IKRT-/src/Texture.cpp
 
 CMakeFiles/IKRT.dir/src/Texture.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/Texture.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/Texture.cpp > CMakeFiles/IKRT.dir/src/Texture.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/Texture.cpp > CMakeFiles/IKRT.dir/src/Texture.cpp.i
 
 CMakeFiles/IKRT.dir/src/Texture.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/Texture.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/Texture.cpp -o CMakeFiles/IKRT.dir/src/Texture.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/Texture.cpp -o CMakeFiles/IKRT.dir/src/Texture.cpp.s
+
+CMakeFiles/IKRT.dir/src/collision.cpp.o: CMakeFiles/IKRT.dir/flags.make
+CMakeFiles/IKRT.dir/src/collision.cpp.o: /home/kavulsulka/IKRT-/src/collision.cpp
+CMakeFiles/IKRT.dir/src/collision.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/IKRT.dir/src/collision.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/collision.cpp.o -MF CMakeFiles/IKRT.dir/src/collision.cpp.o.d -o CMakeFiles/IKRT.dir/src/collision.cpp.o -c /home/kavulsulka/IKRT-/src/collision.cpp
+
+CMakeFiles/IKRT.dir/src/collision.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/collision.cpp.i"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/collision.cpp > CMakeFiles/IKRT.dir/src/collision.cpp.i
+
+CMakeFiles/IKRT.dir/src/collision.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/collision.cpp.s"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/collision.cpp -o CMakeFiles/IKRT.dir/src/collision.cpp.s
+
+CMakeFiles/IKRT.dir/src/model_bones.cpp.o: CMakeFiles/IKRT.dir/flags.make
+CMakeFiles/IKRT.dir/src/model_bones.cpp.o: /home/kavulsulka/IKRT-/src/model_bones.cpp
+CMakeFiles/IKRT.dir/src/model_bones.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/IKRT.dir/src/model_bones.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/model_bones.cpp.o -MF CMakeFiles/IKRT.dir/src/model_bones.cpp.o.d -o CMakeFiles/IKRT.dir/src/model_bones.cpp.o -c /home/kavulsulka/IKRT-/src/model_bones.cpp
+
+CMakeFiles/IKRT.dir/src/model_bones.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/model_bones.cpp.i"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/model_bones.cpp > CMakeFiles/IKRT.dir/src/model_bones.cpp.i
+
+CMakeFiles/IKRT.dir/src/model_bones.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/model_bones.cpp.s"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/model_bones.cpp -o CMakeFiles/IKRT.dir/src/model_bones.cpp.s
+
+CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o: CMakeFiles/IKRT.dir/flags.make
+CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o: /home/kavulsulka/IKRT-/src/collision_visualizer.cpp
+CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o: CMakeFiles/IKRT.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o -MF CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o.d -o CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o -c /home/kavulsulka/IKRT-/src/collision_visualizer.cpp
+
+CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.i"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kavulsulka/IKRT-/src/collision_visualizer.cpp > CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.i
+
+CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.s"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kavulsulka/IKRT-/src/collision_visualizer.cpp -o CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.s
 
 # Object files for target IKRT
 IKRT_OBJECTS = \
@@ -175,7 +217,10 @@ IKRT_OBJECTS = \
 "CMakeFiles/IKRT.dir/src/model_loader.cpp.o" \
 "CMakeFiles/IKRT.dir/src/render_setup.cpp.o" \
 "CMakeFiles/IKRT.dir/src/application_logic.cpp.o" \
-"CMakeFiles/IKRT.dir/src/Texture.cpp.o"
+"CMakeFiles/IKRT.dir/src/Texture.cpp.o" \
+"CMakeFiles/IKRT.dir/src/collision.cpp.o" \
+"CMakeFiles/IKRT.dir/src/model_bones.cpp.o" \
+"CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o"
 
 # External object files for target IKRT
 IKRT_EXTERNAL_OBJECTS =
@@ -187,6 +232,9 @@ IKRT_EXTERNAL_OBJECTS =
 /home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/src/render_setup.cpp.o
 /home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/src/application_logic.cpp.o
 /home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/src/Texture.cpp.o
+/home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/src/collision.cpp.o
+/home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/src/model_bones.cpp.o
+/home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o
 /home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/build.make
 /home/kavulsulka/IKRT-/IKRT: /usr/lib/x86_64-linux-gnu/libOpenGL.so
 /home/kavulsulka/IKRT-/IKRT: /usr/lib/x86_64-linux-gnu/libGLX.so
@@ -194,7 +242,7 @@ IKRT_EXTERNAL_OBJECTS =
 /home/kavulsulka/IKRT-/IKRT: /usr/lib/x86_64-linux-gnu/libGLEW.so
 /home/kavulsulka/IKRT-/IKRT: /usr/lib/x86_64-linux-gnu/libglfw.so.3.3
 /home/kavulsulka/IKRT-/IKRT: CMakeFiles/IKRT.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable /home/kavulsulka/IKRT-/IKRT"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kavulsulka/IKRT-/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable /home/kavulsulka/IKRT-/IKRT"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/IKRT.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

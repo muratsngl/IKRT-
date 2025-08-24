@@ -6,6 +6,7 @@
 #include "include/Shader.h"
 #include "include/model_bones.h" 
 #include "include/application_logic.hpp"// Include the Model class definition
+#include "include/collision_visualizer.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -16,6 +17,7 @@ static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
+static CollisionVisualizer* collisionVisualizer = nullptr;
 
 // Mouse and timing variables
 static float lastX = 1240.0f / 2.0f;
@@ -75,6 +77,11 @@ bool init_rendering() {
 void load_shaders() {
     skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
     sceneElementShader = new Shader("assets/shaders/model.vert", "assets/shaders/model.frag");
+    
+    // Initialize collision visualizer
+    collisionVisualizer = new CollisionVisualizer();
+    collisionVisualizer->init();
+
 }
 
 void init_buffers() {
@@ -125,7 +132,7 @@ void render_frame() {
     // Render the skeletal model
     if (skeletonShader) {
         skeletonShader->use();
-        skeletonShader->setMat4("model", glm::translate(model, get_application_state().deltaRoot));
+        skeletonShader->setMat4("model", glm::translate(model, get_application_state().targetPositionRoot));
         skeletonShader->setMat4("view", view);
         skeletonShader->setMat4("projection", projection);
         get_interactor_model()->Draw(*skeletonShader);
@@ -135,12 +142,12 @@ void render_frame() {
         
         
         sceneElementShader->use();
-         // Add quaternion rotations for model transformations
-        glm::quat rotationX = glm::angleAxis(glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-        glm::quat rotationZ = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-
+         // Add quaternion rotations for model transformations THIS WAS MADE FOR 
+        // glm::quat rotationX = glm::angleAxis(glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        // glm::quat rotationZ = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+        
     // Apply the rotations to the model matrix
-        sceneElementShader->setMat4("model", glm::mat4_cast(rotationX) * glm::mat4_cast(rotationZ) * model);
+        sceneElementShader->setMat4("model", model);
 
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
@@ -153,6 +160,69 @@ void render_frame() {
         
         // Draw the scene element model
         
+    }
+    
+    // Render collision boxes at the end of draw calls
+    if (collisionVisualizer) {
+        extern std::vector<Shape> scene_element_boxes;
+        
+        // Create dynamic boxes from current bone positions
+        std::vector<Shape> dynamicBoxes;
+        const InteractorModelData& model_data = get_interactor_model_data();
+        
+        // Create bone OBBs for visualization
+        auto createBoneOBB = [&](int boneIndex1, int boneIndex2) -> Shape {
+            Shape boneShape;
+            boneShape.type = OBB;
+            
+            glm::vec3 pos1 = model_data.bind_pose_positions[boneIndex1];
+            glm::vec3 pos2 = model_data.bind_pose_positions[boneIndex2];
+            
+            glm::vec3 center = (pos1 + pos2) * 0.5f;
+            glm::vec3 direction = pos2 - pos1;
+            float length = glm::length(direction);
+            
+            if (length > 0.0001f) {
+                direction = glm::normalize(direction);
+            } else {
+                direction = glm::vec3(1, 0, 0);
+            }
+            
+            glm::vec3 up = glm::vec3(0, 1, 0);
+            if (abs(glm::dot(direction, up)) > 0.99f) {
+                up = glm::vec3(1, 0, 0);
+            }
+            
+            glm::vec3 right = glm::normalize(glm::cross(direction, up));
+            up = glm::normalize(glm::cross(right, direction));
+            
+            glm::mat3 rotMatrix(right, up, direction);
+            glm::quat rotation = glm::quat_cast(rotMatrix);
+            
+            boneShape.obb.center = center;
+            boneShape.obb.rotation = rotation;
+            boneShape.obb.halfExtents = glm::vec3(0.05f, 0.05f, length * 0.5f + 0.05f);
+            
+            return boneShape;
+        };
+        
+        // Add bone OBBs for all limbs
+        for (size_t i = 0; i < model_data.right_arm_indices.size() - 1; i++) {
+            dynamicBoxes.push_back(createBoneOBB(model_data.right_arm_indices[i], model_data.right_arm_indices[i + 1]));
+        }
+        for (size_t i = 0; i < model_data.left_arm_indices.size() - 1; i++) {
+            dynamicBoxes.push_back(createBoneOBB(model_data.left_arm_indices[i], model_data.left_arm_indices[i + 1]));
+        }
+        for (size_t i = 0; i < model_data.right_leg_indices.size() - 1; i++) {
+            dynamicBoxes.push_back(createBoneOBB(model_data.right_leg_indices[i], model_data.right_leg_indices[i + 1]));
+        }
+        for (size_t i = 0; i < model_data.left_leg_indices.size() - 1; i++) {
+            dynamicBoxes.push_back(createBoneOBB(model_data.left_leg_indices[i], model_data.left_leg_indices[i + 1]));
+        }
+        
+        // Update and render collision boxes
+        collisionVisualizer->updateBoundingBoxes(scene_element_boxes, dynamicBoxes);
+        collisionVisualizer->render(view, projection);
     }
     
     // Process input and swap buffers
@@ -173,6 +243,10 @@ void cleanup_rendering() {
     delete skeletonShader;
     delete sceneElementShader;
     
+    if (collisionVisualizer) {
+        delete collisionVisualizer;
+        collisionVisualizer = nullptr;
+    }
     
     if (render_context.window) {
         glfwDestroyWindow(render_context.window);
