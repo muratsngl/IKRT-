@@ -23,6 +23,12 @@ struct ApplicationState {
     // Timing
     float deltaTime;
     float lastFrame;
+
+    // Interaction state for different end effectors
+    // 0: right hand, 1: left hand, 2: right foot, 3: left foot
+    // 4-8: right fingers (thumb, index, middle, ring, pinky)
+    // 9-13: left fingers (thumb, index, middle, ring, pinky)
+    bool isInteracting[4] = { false };
 };
 
 // Application logic functions

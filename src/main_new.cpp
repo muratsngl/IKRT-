@@ -22,7 +22,7 @@ int main() {
     init_buffers();
     
     //Load the model
-    if (!load_interactor_model("assets/models/man_with_bones/MAN_WITH_CORRECT_BONES_AND_SYSTEM_REALLY.dae")) {
+    if (!load_interactor_model("assets/models/man_with_bones/quit.dae")) {
         std::cerr << "Failed to load model" << std::endl;
         cleanup_rendering();
         cleanup_shared_memory();
@@ -60,7 +60,6 @@ int main() {
         calculate_deltas();
         apply_fabrik();
         rearrange_finger_positions_based_on_collision();
-        apply_fabrik();
         update_transforms();
         
         // Render frame

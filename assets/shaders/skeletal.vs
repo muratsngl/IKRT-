@@ -10,7 +10,7 @@ uniform mat4 projection;
 uniform mat4 model;
 
 layout(std140,binding = 1) uniform bone_transforms{
-mat4 bone_matrices[19];
+mat4 bone_matrices[50];
 };
 
 

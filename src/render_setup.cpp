@@ -92,7 +92,7 @@ void init_buffers() {
     glGenBuffers(1, &render_context.orcunUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, render_context.orcunUBO);
-    glBufferData(GL_UNIFORM_BUFFER, 1216, nullptr, GL_DYNAMIC_READ);
+    glBufferData(GL_UNIFORM_BUFFER, 4000, nullptr, GL_DYNAMIC_READ);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
  
@@ -121,7 +121,7 @@ void render_frame() {
     //Room for optimization this could be done in a single memory access;
     const InteractorModelData& model_data = get_interactor_model_data();
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
-    for (short i = 0; i < 19; i++) {
+    for (short i = 0; i < model_data.bind_pose_matrices.size(); i++) {
         if (i < model_data.bind_pose_matrices.size()) {
             glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), 
                           sizeof(glm::mat4), 
@@ -132,10 +132,11 @@ void render_frame() {
     // Render the skeletal model
     if (skeletonShader) {
         skeletonShader->use();
-        skeletonShader->setMat4("model", glm::translate(model, get_application_state().targetPositionRoot));
+        skeletonShader->setMat4("model", model);
         skeletonShader->setMat4("view", view);
         skeletonShader->setMat4("projection", projection);
         get_interactor_model()->Draw(*skeletonShader);
+        
     }
 
     if(sceneElementShader){
@@ -156,6 +157,7 @@ void render_frame() {
         for(size_t i = 0;i<get_scene_element_model_count();i++){
             const SceneElementModel& model = get_scene_element_model(i);
             model.Draw(*sceneElementShader);
+            
         }
         
         // Draw the scene element model
@@ -171,13 +173,13 @@ void render_frame() {
         const InteractorModelData& model_data = get_interactor_model_data();
         
         // Create bone OBBs for visualization
-        auto createBoneOBB = [&](int boneIndex1, int boneIndex2) -> Shape {
+        auto createBoneOBB = [&](int boneIndex1, int boneIndex2, float halfExtentXZ) -> Shape {
             Shape boneShape;
             boneShape.type = OBB;
-            
-            glm::vec3 pos1 = model_data.bind_pose_positions[boneIndex1];
-            glm::vec3 pos2 = model_data.bind_pose_positions[boneIndex2];
-            
+
+            glm::vec3 pos1 = model_data.bind_pose_matrices[boneIndex1] * glm::vec4(model_data.bind_pose_positions_original[boneIndex1], 1.0f);
+            glm::vec3 pos2 = model_data.bind_pose_matrices[boneIndex2] * glm::vec4(model_data.bind_pose_positions_original[boneIndex2], 1.0f);
+
             glm::vec3 center = (pos1 + pos2) * 0.5f;
             glm::vec3 direction = pos2 - pos1;
             float length = glm::length(direction);
@@ -206,26 +208,58 @@ void render_frame() {
             
             boneShape.obb.center = center;
             boneShape.obb.rotation = rotation;
-            // Half extents: small width/depth (X,Z), length along bone direction (Y)
-            boneShape.obb.halfExtents = glm::vec3(0.05f, length * 0.5f, 0.05f);
+            // Half extents: parameterized width/depth (X,Z), length along bone direction (Y)
+            boneShape.obb.halfExtents = glm::vec3(halfExtentXZ, length * 0.5f, halfExtentXZ);
             
             return boneShape;
         };
         
         // Add bone OBBs for all limbs
-        for (size_t i = 0; i < model_data.right_arm_indices.size() - 1; i++) {
-            dynamicBoxes.push_back(createBoneOBB(model_data.right_arm_indices[i], model_data.right_arm_indices[i + 1]));
-        }
-        for (size_t i = 0; i < model_data.left_arm_indices.size() - 1; i++) {
-            dynamicBoxes.push_back(createBoneOBB(model_data.left_arm_indices[i], model_data.left_arm_indices[i + 1]));
-        }
-        for (size_t i = 0; i < model_data.right_leg_indices.size() - 1; i++) {
-            dynamicBoxes.push_back(createBoneOBB(model_data.right_leg_indices[i], model_data.right_leg_indices[i + 1]));
-        }
-        for (size_t i = 0; i < model_data.left_leg_indices.size() - 1; i++) {
-            dynamicBoxes.push_back(createBoneOBB(model_data.left_leg_indices[i], model_data.left_leg_indices[i + 1]));
-        }
-        
+    for (size_t i = 1; i < model_data.right_arm_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.right_arm_indices[i - 1], model_data.right_arm_indices[i], 0.085f));
+    }
+    for (size_t i = 1; i < model_data.left_arm_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.left_arm_indices[i - 1], model_data.left_arm_indices[i], 0.085f));
+    }
+    for (size_t i = 1; i < model_data.right_leg_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.right_leg_indices[i - 1], model_data.right_leg_indices[i], 0.1f));
+    }
+    for (size_t i = 1; i < model_data.left_leg_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.left_leg_indices[i - 1], model_data.left_leg_indices[i], 0.1f));
+    }
+
+    for (size_t i = 1; i < model_data.right_thumb_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.right_thumb_indices[i - 1], model_data.right_thumb_indices[i], 0.015f));
+    }
+    for (size_t i = 1; i < model_data.right_index_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.right_index_indices[i - 1], model_data.right_index_indices[i], 0.015f));
+    }
+    for (size_t i = 1; i < model_data.right_middle_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.right_middle_indices[i - 1], model_data.right_middle_indices[i], 0.015f));
+    }
+    for (size_t i = 1; i < model_data.right_ring_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.right_ring_indices[i - 1], model_data.right_ring_indices[i], 0.015f));
+    }
+    for (size_t i = 1; i < model_data.right_pinky_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.right_pinky_indices[i - 1], model_data.right_pinky_indices[i], 0.015f));
+    }
+
+    for (size_t i = 1; i < model_data.left_thumb_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.left_thumb_indices[i - 1], model_data.left_thumb_indices[i], 0.015f));
+    }
+    for (size_t i = 1; i < model_data.left_index_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.left_index_indices[i - 1], model_data.left_index_indices[i], 0.015f));
+    }
+    for (size_t i = 1; i < model_data.left_middle_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.left_middle_indices[i - 1], model_data.left_middle_indices[i], 0.02f));
+    }
+    for (size_t i = 1; i < model_data.left_ring_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.left_ring_indices[i - 1], model_data.left_ring_indices[i], 0.02f));
+    }
+    for (size_t i = 1; i < model_data.left_pinky_indices.size(); i++) {
+        dynamicBoxes.push_back(createBoneOBB(model_data.left_pinky_indices[i - 1], model_data.left_pinky_indices[i], 0.02f));
+    }
+
         // Update and render collision boxes
         collisionVisualizer->updateBoundingBoxes(scene_element_boxes, dynamicBoxes);
         collisionVisualizer->render(view, projection);

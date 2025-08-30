@@ -28,6 +28,8 @@ void init_application_state() {
     // Initialize timing
     app_state.deltaTime = 0.0f;
     app_state.lastFrame = 0.0f;
+
+
 }
 
 void update_finger_positions() {
@@ -70,6 +72,9 @@ void calculate_deltas() {
 void apply_fabrik() {
     const InteractorModelData& model_data = get_interactor_model_data();
     
+    // Apply root offset to bone positions first, before FABRIK calculations
+    apply_root_offset_to_bones(app_state.deltaRoot);
+    
     // Apply FABRIK to each limb
     simple_fabrik_routine_indexed(const_cast<std::vector<glm::vec3>&>(model_data.bind_pose_positions),
                                  app_state.targetPositionIndex, 
@@ -86,6 +91,7 @@ void apply_fabrik() {
     simple_fabrik_routine_indexed(const_cast<std::vector<glm::vec3>&>(model_data.bind_pose_positions),
                                  app_state.targetPositionPinky, 
                                  model_data.left_leg_indices);
+   
 }
 
 void rearrange_finger_positions_based_on_collision(){
@@ -93,7 +99,7 @@ void rearrange_finger_positions_based_on_collision(){
     extern std::vector<Shape> scene_element_boxes;
     
     // Create OBB for bone segment between bone i and i+1
-    auto createBoneOBB = [&](int boneIndex1, int boneIndex2) -> Shape {
+    auto createBoneOBB = [&](int boneIndex1, int boneIndex2, float halfExtentXZ) -> Shape {
         Shape boneShape;
         boneShape.type = OBB;
         
@@ -132,31 +138,44 @@ void rearrange_finger_positions_based_on_collision(){
         // Set OBB properties
         boneShape.obb.center = center;
         boneShape.obb.rotation = rotation;
-        // Half extents: small width/depth (X,Z), length along bone direction (Y)
-        boneShape.obb.halfExtents = glm::vec3(0.05f, length * 0.5f, 0.05f);
+        // Half extents: parameterized width/depth (X,Z), length along bone direction (Y)
+        boneShape.obb.halfExtents = glm::vec3(halfExtentXZ, length * 0.5f, halfExtentXZ);
 
         return boneShape;
     };
     
     // Check collision for specific finger chain
-    auto checkFingerCollision = [&](const std::vector<unsigned short>& indices, glm::vec3& targetPosition, const glm::vec3& delta) {
+    auto checkFingerCollision = [&](const std::vector<unsigned short>& indices, const std::string& fingerName, float halfExtentXZ) -> bool {
         for (size_t i = 0; i < indices.size() - 1; i++) {
-            Shape boneOBB = createBoneOBB(indices[i], indices[i + 1]);
+            Shape boneOBB = createBoneOBB(indices[i], indices[i + 1], halfExtentXZ);
             
             if (check_collision(boneOBB, scene_element_boxes)) {
-                // Collision detected, subtract -2 * delta from target position
-                std::cout << "Collision detected on finger segment!" << std::endl;
-                targetPosition -= 2.0f * delta;
-                break; // Only apply once per finger
+                // Collision detected - print which finger is colliding
+                std::cout << "Collision detected: " << fingerName << " finger segment " << i << " is colliding with object!" << std::endl;
+                return true; // Return true if collision found
             }
         }
+        return false; // No collision found
     };
     
-    // Check collisions for each finger using app_state finger names
-    checkFingerCollision(model_data.right_arm_indices, app_state.targetPositionIndex, app_state.deltaIndex);
-    checkFingerCollision(model_data.right_leg_indices, app_state.targetPositionMiddle, app_state.deltaMiddle);
-    checkFingerCollision(model_data.left_arm_indices, app_state.targetPositionRing, app_state.deltaRing);
-    checkFingerCollision(model_data.left_leg_indices, app_state.targetPositionPinky, app_state.deltaPinky);
+    // Check collisions for all fingers and limbs
+    checkFingerCollision(model_data.right_arm_indices, "Right Arm", 0.1f);
+    checkFingerCollision(model_data.left_arm_indices, "Left Arm", 0.1f);
+    checkFingerCollision(model_data.right_leg_indices, "Right Leg", 0.1f);
+    checkFingerCollision(model_data.left_leg_indices, "Left Leg", 0.1f);
+
+    // Check individual fingers
+    checkFingerCollision(model_data.left_thumb_indices, "Left Thumb", 0.02f);
+    checkFingerCollision(model_data.left_index_indices, "Left Index", 0.02f);
+    checkFingerCollision(model_data.left_middle_indices, "Left Middle", 0.02f);
+    checkFingerCollision(model_data.left_ring_indices, "Left Ring", 0.02f);
+    checkFingerCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f);
+
+    checkFingerCollision(model_data.right_thumb_indices, "Right Thumb", 0.02f);
+    checkFingerCollision(model_data.right_index_indices, "Right Index", 0.02f);
+    checkFingerCollision(model_data.right_middle_indices, "Right Middle", 0.02f);
+    checkFingerCollision(model_data.right_ring_indices, "Right Ring", 0.02f);
+    checkFingerCollision(model_data.right_pinky_indices, "Right Pinky", 0.02f);
 };
 
 
@@ -169,6 +188,37 @@ void update_transforms() {
     update_bone_transforms(model_data.left_arm_indices);
     update_bone_transforms(model_data.right_leg_indices);
     update_bone_transforms(model_data.left_leg_indices);
+    
+    // Update center bone matrices (non-extremity bones affected by root translation)
+    update_center_bone_matrices();
+
+
+    if (!app_state.isInteracting[0]) {
+        end_effector_align(model_data.right_thumb_indices);
+    
+    
+        end_effector_align(model_data.right_index_indices);
+    
+ 
+        end_effector_align(model_data.right_middle_indices);
+
+        end_effector_align(model_data.right_ring_indices);
+ 
+        end_effector_align(model_data.right_pinky_indices);
+    
+    }
+    // 9-13: left fingers (thumb, index, middle, ring, pinky)
+    if(!app_state.isInteracting[1]){
+        end_effector_align(model_data.left_thumb_indices);
+    
+        end_effector_align(model_data.left_index_indices);
+    
+        end_effector_align(model_data.left_middle_indices);
+        end_effector_align(model_data.left_ring_indices);
+    
+    
+        end_effector_align(model_data.left_pinky_indices);
+    }
 }
 
 ApplicationState& get_application_state() {

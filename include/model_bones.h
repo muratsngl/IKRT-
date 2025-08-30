@@ -217,6 +217,7 @@ private:
             {
                 BoneInfo newBoneInfo;
                 newBoneInfo.id = m_BoneCounter;
+                std::cout<<newBoneInfo.id<<" " << boneName<<std::endl;
                 newBoneInfo.offset = aiMatrix4x4ToGlm(
                     &mesh->mBones[boneIndex]->mOffsetMatrix);
                 glm::mat4 currentTransform = glm::inverse(newBoneInfo.offset);

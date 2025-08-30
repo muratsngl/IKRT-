@@ -23,6 +23,20 @@ struct InteractorModelData {
     std::vector<unsigned short> right_arm_indices;
     std::vector<unsigned short> left_leg_indices;
     std::vector<unsigned short> right_leg_indices;
+    std::vector<unsigned short> left_thumb_indices;
+    std::vector<unsigned short> right_thumb_indices;
+    std::vector<unsigned short> left_index_indices;
+    std::vector<unsigned short> right_index_indices;
+    std::vector<unsigned short> left_middle_indices;
+    std::vector<unsigned short> right_middle_indices;
+    std::vector<unsigned short> left_ring_indices;
+    std::vector<unsigned short> right_ring_indices;
+    std::vector<unsigned short> left_pinky_indices;
+    std::vector<unsigned short> right_pinky_indices;
+    
+    // Center bones (non-extremity bones: torso, spine, neck, head)
+    std::vector<unsigned short> center_bones;
+
 };
 
 struct SceneElementModelData{
@@ -38,6 +52,9 @@ InteractorModel* get_interactor_model(); // Get the actual model for drawing
 const SceneElementModel& get_scene_element_model(size_t index);
 size_t get_scene_element_model_count();
 void update_bone_transforms(const std::vector<unsigned short>& indices);
+void update_center_bone_matrices();
+void end_effector_align(std::vector<unsigned short> indices);
+void apply_root_offset_to_bones(const glm::vec3& rootOffset);
 void sync_data_to_main(std::vector<glm::vec3>& main_positions, std::vector<glm::mat4>& main_matrices);
 void sync_data_from_main(const std::vector<glm::vec3>& main_positions, const std::vector<glm::mat4>& main_matrices);
 
