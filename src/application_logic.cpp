@@ -2,6 +2,7 @@
 #include "include/shared_memory.hpp"
 #include "include/model_loader.hpp"
 #include "include/FABRIK.h"
+#include "include/Interaction.hpp"
 #include "collision.hpp"
 #include <GLFW/glfw3.h>
 #include <cmath>
@@ -62,10 +63,10 @@ void calculate_deltas() {
                                    finger_data.deltaZRoot): glm::vec3(0.0f); // Added for root movement
     
     // Update target positions - apply deltaRoot directly to all targets
-    app_state.targetPositionIndex += app_state.deltaIndex - app_state.deltaRoot*0.5f;
-    app_state.targetPositionRing += app_state.deltaRing - app_state.deltaRoot*0.5f;
-    app_state.targetPositionMiddle += app_state.deltaMiddle - app_state.deltaRoot*0.5f;
-    app_state.targetPositionPinky += app_state.deltaPinky - app_state.deltaRoot*0.5f;
+    app_state.targetPositionIndex += app_state.deltaIndex ;
+    app_state.targetPositionRing += app_state.deltaRing ;
+    app_state.targetPositionMiddle += app_state.deltaMiddle ;
+    app_state.targetPositionPinky += app_state.deltaPinky ;
     app_state.targetPositionRoot += app_state.deltaRoot; // Added for root movement
 }
 
@@ -124,7 +125,7 @@ void rearrange_finger_positions_based_on_collision(){
         glm::vec3 forward = glm::vec3(0, 0, 1);  // Default forward
         
         // If bone direction is too close to forward, use a different forward
-        if (abs(glm::dot(up, forward)) > 0.99f) {
+        if (fabs(glm::dot(up, forward)) > 0.99f) {
             forward = glm::vec3(1, 0, 0);
         }
         
@@ -144,38 +145,96 @@ void rearrange_finger_positions_based_on_collision(){
         return boneShape;
     };
     
-    // Check collision for specific finger chain
-    auto checkFingerCollision = [&](const std::vector<unsigned short>& indices, const std::string& fingerName, float halfExtentXZ) -> bool {
+    // Check collision with scene elements only
+    auto checkSceneElementCollision = [&](const std::vector<unsigned short>& indices, const std::string& fingerName, float halfExtentXZ) -> bool {
+        bool hasCollision = false;
         for (size_t i = 0; i < indices.size() - 1; i++) {
             Shape boneOBB = createBoneOBB(indices[i], indices[i + 1], halfExtentXZ);
             
+            // Check collision with scene elements only
             if (check_collision(boneOBB, scene_element_boxes)) {
-                // Collision detected - print which finger is colliding
-                std::cout << "Collision detected: " << fingerName << " finger segment " << i << " is colliding with object!" << std::endl;
-                return true; // Return true if collision found
+                std::cout << "Scene collision detected: " << fingerName << " finger segment " << i << " is colliding with scene object!" << std::endl;
+                hasCollision = true;
             }
         }
-        return false; // No collision found
+        return hasCollision;
     };
     
-    // Check collisions for all fingers and limbs
-    checkFingerCollision(model_data.right_arm_indices, "Right Arm", 0.1f);
-    checkFingerCollision(model_data.left_arm_indices, "Left Arm", 0.1f);
-    checkFingerCollision(model_data.right_leg_indices, "Right Leg", 0.1f);
-    checkFingerCollision(model_data.left_leg_indices, "Left Leg", 0.1f);
+    // Check collision with interactable elements only
+    auto checkInteractableElementCollision = [&](const std::vector<unsigned short>& indices, const std::string& fingerName, float halfExtentXZ, EndEffectorType effector) -> bool {
+        bool hasCollision = false;
+        for (size_t i = 0; i < indices.size() - 1; i++) {
+            Shape boneOBB = createBoneOBB(indices[i], indices[i + 1], halfExtentXZ);
+            
+            // Check collision with interactable models only
+            int interactable_id = check_collision_with_id(boneOBB, get_interactable_element_boxes());
+            if (interactable_id != -1) {
+                std::cout << "Interactable collision detected: " << fingerName << " finger segment " << i << " is colliding with interactable model ID: " << interactable_id << std::endl;
+                
+                // Add collision to the appropriate end effector queue
+                add_collision_to_end_effector(effector, interactable_id);
+                hasCollision = true;
+            }
+        }
+        return hasCollision;
+    };
+    
+    // Check collisions for all fingers and limbs with scene elements
+    checkSceneElementCollision(model_data.right_arm_indices, "Right Arm", 0.1f);
+    checkSceneElementCollision(model_data.left_arm_indices, "Left Arm", 0.1f);
+    checkSceneElementCollision(model_data.right_leg_indices, "Right Leg", 0.1f);
+    checkSceneElementCollision(model_data.left_leg_indices, "Left Leg", 0.1f);
 
-    // Check individual fingers
-    checkFingerCollision(model_data.left_thumb_indices, "Left Thumb", 0.02f);
-    checkFingerCollision(model_data.left_index_indices, "Left Index", 0.02f);
-    checkFingerCollision(model_data.left_middle_indices, "Left Middle", 0.02f);
-    checkFingerCollision(model_data.left_ring_indices, "Left Ring", 0.02f);
-    checkFingerCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f);
+    // Check individual fingers with scene elements
+    checkSceneElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.02f);
+    checkSceneElementCollision(model_data.left_index_indices, "Left Index", 0.02f);
+    checkSceneElementCollision(model_data.left_middle_indices, "Left Middle", 0.02f);
+    checkSceneElementCollision(model_data.left_ring_indices, "Left Ring", 0.02f);
+    checkSceneElementCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f);
 
-    checkFingerCollision(model_data.right_thumb_indices, "Right Thumb", 0.02f);
-    checkFingerCollision(model_data.right_index_indices, "Right Index", 0.02f);
-    checkFingerCollision(model_data.right_middle_indices, "Right Middle", 0.02f);
-    checkFingerCollision(model_data.right_ring_indices, "Right Ring", 0.02f);
-    checkFingerCollision(model_data.right_pinky_indices, "Right Pinky", 0.02f);
+    checkSceneElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.02f);
+    checkSceneElementCollision(model_data.right_index_indices, "Right Index", 0.02f);
+    checkSceneElementCollision(model_data.right_middle_indices, "Right Middle", 0.02f);
+    checkSceneElementCollision(model_data.right_ring_indices, "Right Ring", 0.02f);
+    checkSceneElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.02f);
+    
+    // Check collisions for all fingers and limbs with interactable elements
+    // checkInteractableElementCollision(model_data.right_arm_indices, "Right Arm", 0.1f, RIGHT_HAND);
+    // checkInteractableElementCollision(model_data.left_arm_indices, "Left Arm", 0.1f, LEFT_HAND);
+    // checkInteractableElementCollision(model_data.right_leg_indices, "Right Leg", 0.1f, RIGHT_LEG);
+    // checkInteractableElementCollision(model_data.left_leg_indices, "Left Leg", 0.1f, LEFT_LEG);
+
+    // Check individual fingers with interactable elements
+    checkInteractableElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.02f, LEFT_HAND);
+    checkInteractableElementCollision(model_data.left_index_indices, "Left Index", 0.02f, LEFT_HAND);
+    checkInteractableElementCollision(model_data.left_middle_indices, "Left Middle", 0.02f, LEFT_HAND);
+    checkInteractableElementCollision(model_data.left_ring_indices, "Left Ring", 0.02f, LEFT_HAND);
+    checkInteractableElementCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f, LEFT_HAND);
+
+    checkInteractableElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.02f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_index_indices, "Right Index", 0.02f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_middle_indices, "Right Middle", 0.02f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_ring_indices, "Right Ring", 0.02f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.02f, RIGHT_HAND);
+    
+    // Test interaction selection for each end effector
+    int selected_model_id;
+    
+    if (choose_interaction(RIGHT_HAND, selected_model_id)) {
+        std::cout << "Right hand selected interactable model ID: " << selected_model_id << std::endl;
+    }
+    
+    if (choose_interaction(LEFT_HAND, selected_model_id)) {
+        std::cout << "Left hand selected interactable model ID: " << selected_model_id << std::endl;
+    }
+    
+    if (choose_interaction(RIGHT_LEG, selected_model_id)) {
+        std::cout << "Right leg selected interactable model ID: " << selected_model_id << std::endl;
+    }
+    
+    if (choose_interaction(LEFT_LEG, selected_model_id)) {
+        std::cout << "Left leg selected interactable model ID: " << selected_model_id << std::endl;
+    }
 };
 
 

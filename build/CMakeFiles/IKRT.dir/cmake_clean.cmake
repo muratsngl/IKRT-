@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "/home/kavulsulka/IKRT-/IKRT.pdb"
   "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o"
   "CMakeFiles/IKRT.dir/src/FABRIK.cpp.o.d"
+  "CMakeFiles/IKRT.dir/src/Interaction.cpp.o"
+  "CMakeFiles/IKRT.dir/src/Interaction.cpp.o.d"
   "CMakeFiles/IKRT.dir/src/Texture.cpp.o"
   "CMakeFiles/IKRT.dir/src/Texture.cpp.o.d"
   "CMakeFiles/IKRT.dir/src/application_logic.cpp.o"

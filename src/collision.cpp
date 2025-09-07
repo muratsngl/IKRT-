@@ -157,3 +157,148 @@ bool check_collision(const Shape& interactor_box, const std::vector<Shape>& scen
     
     return false;
 }
+
+// New function that returns the ID of the intersected model, or -1 if no collision
+int check_collision_with_id(const Shape& interactor_box, const std::vector<Shape>& scene_element_boxes) {
+    for (const Shape& scene_element_box : scene_element_boxes) {
+        // AABB vs AABB
+        if(interactor_box.type == AABB && scene_element_box.type == AABB) {
+            const Aabb& interactor_aabb = interactor_box.aabb;
+            const Aabb scene_element_aabb = transformAABB(scene_element_box.aabb, model);
+            
+            if (interactor_aabb.min.x <= scene_element_aabb.max.x && 
+                interactor_aabb.max.x >= scene_element_aabb.min.x &&
+                interactor_aabb.min.y <= scene_element_aabb.max.y && 
+                interactor_aabb.max.y >= scene_element_aabb.min.y &&
+                interactor_aabb.min.z <= scene_element_aabb.max.z && 
+                interactor_aabb.max.z >= scene_element_aabb.min.z) {
+                
+                std::cout << "AABB vs AABB collision detected with model ID: " << scene_element_box.id << std::endl;
+                return scene_element_box.id; // Return the ID of the intersected model
+            }
+        }
+        // AABB vs OBB
+        else if(interactor_box.type == AABB && scene_element_box.type == OBB) {
+            const Aabb& interactor_aabb = interactor_box.aabb;
+            const Obb& scene_element_obb = scene_element_box.obb;
+            
+            if (testAABBOBB(interactor_aabb, scene_element_obb)) {
+                std::cout << "AABB vs OBB collision detected with model ID: " << scene_element_box.id << std::endl;
+                return scene_element_box.id; // Return the ID of the intersected model
+            }
+        }
+        // OBB vs AABB  
+        else if(interactor_box.type == OBB && scene_element_box.type == AABB) {
+            const Obb& interactor_obb = interactor_box.obb;
+            const Aabb scene_element_aabb = transformAABB(scene_element_box.aabb, model);
+            
+            if (testAABBOBB(scene_element_aabb, interactor_obb)) {
+                std::cout << "AABB vs OBB collision detected with model ID: " << scene_element_box.id << std::endl;
+                return scene_element_box.id; // Return the ID of the intersected model
+            }
+        }
+        // OBB vs OBB
+        else if(interactor_box.type == OBB && scene_element_box.type == OBB) {
+            if (intersectOBB(interactor_box.obb, scene_element_box.obb)) {
+                std::cout << "OBB vs OBB collision detected with model ID: " << scene_element_box.id << std::endl;
+                return scene_element_box.id; // Return the ID of the intersected model
+            }
+        }
+    }
+    
+    return -1; // No collision detected
+}
+
+// OBB-OBB intersection test using Separating Axis Theorem
+bool intersectOBB(const Obb& a, const Obb& b) {
+    // Get rotation matrices from quaternions
+    glm::mat3 rotA = glm::mat3_cast(a.rotation);
+    glm::mat3 rotB = glm::mat3_cast(b.rotation);
+    
+    // Get axes
+    glm::vec3 axesA[3] = { rotA[0], rotA[1], rotA[2] };
+    glm::vec3 axesB[3] = { rotB[0], rotB[1], rotB[2] };
+    
+    // Vector from A's center to B's center
+    glm::vec3 T = b.center - a.center;
+    
+    // Test 15 potential separating axes
+    // 6 face normals (3 from each OBB)
+    for (int i = 0; i < 3; i++) {
+        if (!testSeparatingAxis(axesA[i], a, b, T)) return false;
+        if (!testSeparatingAxis(axesB[i], a, b, T)) return false;
+    }
+    
+    // 9 edge cross products
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            glm::vec3 axis = glm::cross(axesA[i], axesB[j]);
+            if (glm::length(axis) > 1e-6f) { // Avoid nearly parallel edges
+                axis = glm::normalize(axis);
+                if (!testSeparatingAxis(axis, a, b, T)) return false;
+            }
+        }
+    }
+    
+    return true; // No separating axis found, OBBs intersect
+}
+
+// Helper function to test a single separating axis
+bool testSeparatingAxis(const glm::vec3& axis, const Obb& a, const Obb& b, const glm::vec3& T) {
+    // Get rotation matrices
+    glm::mat3 rotA = glm::mat3_cast(a.rotation);
+    glm::mat3 rotB = glm::mat3_cast(b.rotation);
+    
+    // Project A's half extents onto the axis
+    float ra = 0.0f;
+    for (int i = 0; i < 3; i++) {
+        ra += a.halfExtents[i] * abs(glm::dot(axis, rotA[i]));
+    }
+    
+    // Project B's half extents onto the axis
+    float rb = 0.0f;
+    for (int i = 0; i < 3; i++) {
+        rb += b.halfExtents[i] * abs(glm::dot(axis, rotB[i]));
+    }
+    
+    // Project separation vector onto the axis
+    float distance = abs(glm::dot(T, axis));
+    
+    // Check if projections overlap
+    return distance <= ra + rb;
+}
+
+// Helper function to create OBB from mesh bounds and transform
+Obb createOBBFromBounds(const glm::vec3& minBounds, const glm::vec3& maxBounds, const glm::mat4& transform) {
+    Obb obb;
+    
+    // Calculate center in local space
+    glm::vec3 localCenter = (minBounds + maxBounds) * 0.5f;
+    
+    // Transform center to world space
+    obb.center = glm::vec3(transform * glm::vec4(localCenter, 1.0f));
+    
+    // Calculate half extents in local space
+    obb.halfExtents = (maxBounds - minBounds) * 0.5f;
+    
+    // Extract rotation from transform matrix
+    glm::mat3 rotationMatrix = glm::mat3(transform);
+    
+    // Normalize the rotation matrix to remove scaling
+    glm::vec3 scale;
+    scale.x = glm::length(rotationMatrix[0]);
+    scale.y = glm::length(rotationMatrix[1]);
+    scale.z = glm::length(rotationMatrix[2]);
+    
+    rotationMatrix[0] /= scale.x;
+    rotationMatrix[1] /= scale.y;
+    rotationMatrix[2] /= scale.z;
+    
+    // Apply scaling to half extents
+    obb.halfExtents *= scale;
+    
+    // Convert rotation matrix to quaternion
+    obb.rotation = glm::quat_cast(rotationMatrix);
+    
+    return obb;
+}

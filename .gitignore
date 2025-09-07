@@ -362,5 +362,40 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# C++/CMake/OpenGL build and binary artifacts
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+IKRT
+compile_commands.json
+*.o
+*.obj
+*.so
+*.a
+*.bin
+*.log
+*.marks
+*.yaml
+
+# Vendor binaries
+vendor/assimp/bin/
+
+# Python cache
+*.pyc
+__pycache__/
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# Asset cache (if not source)
+assets/models/*/*.dae
+
+# Misc
+.DS_Store
+Thumbs.db
+
 
 ./assets/*

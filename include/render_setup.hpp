@@ -4,6 +4,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+// Constants
+#define MAX_INTERACTABLE_MODELS 10
+
 // Rendering context structure
 struct RenderContext {
     GLFWwindow* window;
@@ -12,6 +15,7 @@ struct RenderContext {
     
     // OpenGL objects
     GLuint orcunUBO;
+    GLuint interactable_bone_UBO;
    
     
     // Various VAOs and VBOs for different objects

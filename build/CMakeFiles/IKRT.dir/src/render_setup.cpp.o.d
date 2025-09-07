@@ -318,21 +318,43 @@ CMakeFiles/IKRT.dir/src/render_setup.cpp.o: \
  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/material.inl \
  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/anim.h \
  /home/kavulsulka/IKRT-/vendor/assimp/include/assimp/metadata.h \
- /home/kavulsulka/IKRT-/include/application_logic.hpp \
- /home/kavulsulka/IKRT-/include/shared_memory.hpp \
- /home/kavulsulka/IKRT-/include/Camera.h \
- /usr/include/glm/gtc/matrix_transform.hpp \
- /usr/include/glm/ext/matrix_projection.hpp \
- /usr/include/glm/gtc/constants.hpp \
+ /home/kavulsulka/IKRT-/include/collision.hpp \
+ /usr/include/glm/gtc/quaternion.hpp /usr/include/glm/gtc/constants.hpp \
  /usr/include/glm/ext/scalar_constants.hpp \
  /usr/include/glm/ext/scalar_constants.inl \
  /usr/include/glm/gtc/constants.inl \
+ /usr/include/glm/gtc/matrix_transform.hpp \
+ /usr/include/glm/ext/matrix_projection.hpp \
  /usr/include/glm/ext/matrix_projection.inl \
  /usr/include/glm/ext/matrix_clip_space.hpp \
  /usr/include/glm/ext/matrix_clip_space.inl \
  /usr/include/glm/ext/matrix_transform.hpp \
  /usr/include/glm/ext/matrix_transform.inl \
  /usr/include/glm/gtc/matrix_transform.inl \
+ /usr/include/glm/ext/vector_relational.hpp \
+ /usr/include/glm/ext/vector_relational.inl \
+ /usr/include/glm/detail/type_float.hpp \
+ /usr/include/glm/ext/quaternion_common.hpp \
+ /usr/include/glm/ext/quaternion_geometric.hpp \
+ /usr/include/glm/ext/quaternion_geometric.inl \
+ /usr/include/glm/ext/quaternion_common.inl \
+ /usr/include/glm/ext/quaternion_float.hpp \
+ /usr/include/glm/detail/type_quat.hpp \
+ /usr/include/glm/ext/quaternion_relational.hpp \
+ /usr/include/glm/ext/quaternion_relational.inl \
+ /usr/include/glm/detail/type_quat.inl \
+ /usr/include/glm/ext/quaternion_float_precision.hpp \
+ /usr/include/glm/ext/quaternion_double.hpp \
+ /usr/include/glm/ext/quaternion_double_precision.hpp \
+ /usr/include/glm/ext/quaternion_trigonometric.hpp \
+ /usr/include/glm/ext/quaternion_trigonometric.inl \
+ /usr/include/glm/ext/quaternion_transform.hpp \
+ /usr/include/glm/ext/quaternion_transform.inl \
+ /usr/include/glm/gtc/quaternion.inl /usr/include/glm/gtc/epsilon.hpp \
+ /usr/include/glm/detail/setup.hpp /usr/include/glm/gtc/epsilon.inl \
+ /home/kavulsulka/IKRT-/include/application_logic.hpp \
+ /home/kavulsulka/IKRT-/include/shared_memory.hpp \
+ /home/kavulsulka/IKRT-/include/Camera.h \
  /home/kavulsulka/IKRT-/include/Shader.h /usr/include/c++/13/fstream \
  /usr/include/c++/13/istream /usr/include/c++/13/ios \
  /usr/include/c++/13/exception /usr/include/c++/13/bits/exception_ptr.h \
@@ -374,29 +396,8 @@ CMakeFiles/IKRT.dir/src/render_setup.cpp.o: \
  /usr/include/c++/13/bits/fstream.tcc /usr/include/c++/13/sstream \
  /usr/include/c++/13/bits/sstream.tcc /usr/include/c++/13/iostream \
  /home/kavulsulka/IKRT-/include/model_bones.h \
- /usr/include/glm/gtc/type_ptr.hpp /usr/include/glm/gtc/quaternion.hpp \
- /usr/include/glm/ext/vector_relational.hpp \
- /usr/include/glm/ext/vector_relational.inl \
- /usr/include/glm/detail/type_float.hpp \
- /usr/include/glm/ext/quaternion_common.hpp \
- /usr/include/glm/ext/quaternion_geometric.hpp \
- /usr/include/glm/ext/quaternion_geometric.inl \
- /usr/include/glm/ext/quaternion_common.inl \
- /usr/include/glm/ext/quaternion_float.hpp \
- /usr/include/glm/detail/type_quat.hpp \
- /usr/include/glm/ext/quaternion_relational.hpp \
- /usr/include/glm/ext/quaternion_relational.inl \
- /usr/include/glm/detail/type_quat.inl \
- /usr/include/glm/ext/quaternion_float_precision.hpp \
- /usr/include/glm/ext/quaternion_double.hpp \
- /usr/include/glm/ext/quaternion_double_precision.hpp \
- /usr/include/glm/ext/quaternion_trigonometric.hpp \
- /usr/include/glm/ext/quaternion_trigonometric.inl \
- /usr/include/glm/ext/quaternion_transform.hpp \
- /usr/include/glm/ext/quaternion_transform.inl \
- /usr/include/glm/gtc/quaternion.inl /usr/include/glm/gtc/epsilon.hpp \
- /usr/include/glm/detail/setup.hpp /usr/include/glm/gtc/epsilon.inl \
- /usr/include/glm/gtc/vec1.hpp /usr/include/glm/ext/vector_bool1.hpp \
+ /usr/include/glm/gtc/type_ptr.hpp /usr/include/glm/gtc/vec1.hpp \
+ /usr/include/glm/ext/vector_bool1.hpp \
  /usr/include/glm/ext/vector_bool1_precision.hpp \
  /usr/include/glm/ext/vector_float1.hpp \
  /usr/include/glm/ext/vector_float1_precision.hpp \
@@ -413,6 +414,9 @@ CMakeFiles/IKRT.dir/src/render_setup.cpp.o: \
  /home/kavulsulka/IKRT-/include/Mesh.h \
  /home/kavulsulka/IKRT-/include/Shader.h \
  /home/kavulsulka/IKRT-/include/Texture.h \
+ /home/kavulsulka/IKRT-/include/Interaction.hpp /usr/include/c++/13/queue \
+ /usr/include/c++/13/deque /usr/include/c++/13/bits/stl_deque.h \
+ /usr/include/c++/13/bits/deque.tcc /usr/include/c++/13/bits/stl_queue.h \
  /home/kavulsulka/IKRT-/include/collision.hpp /usr/include/c++/13/map \
  /usr/include/c++/13/bits/stl_tree.h /usr/include/c++/13/bits/stl_map.h \
  /usr/include/c++/13/bits/stl_multimap.h \

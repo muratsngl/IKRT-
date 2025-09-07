@@ -29,6 +29,7 @@ set(SOURCES
     src/collision.cpp
     src/model_bones.cpp
     src/collision_visualizer.cpp
+    src/Interaction.cpp
 )
 
 # Include directories

@@ -58,5 +58,11 @@
   "command": "/usr/bin/g++  -I/home/kavulsulka/IKRT-/include -I/home/kavulsulka/IKRT- -I/home/kavulsulka/IKRT-/vendor/assimp/include -I/home/kavulsulka/IKRT-/vendor/stb_image -g -std=gnu++17 -o CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o -c /home/kavulsulka/IKRT-/src/collision_visualizer.cpp",
   "file": "/home/kavulsulka/IKRT-/src/collision_visualizer.cpp",
   "output": "CMakeFiles/IKRT.dir/src/collision_visualizer.cpp.o"
+},
+{
+  "directory": "/home/kavulsulka/IKRT-/build",
+  "command": "/usr/bin/g++  -I/home/kavulsulka/IKRT-/include -I/home/kavulsulka/IKRT- -I/home/kavulsulka/IKRT-/vendor/assimp/include -I/home/kavulsulka/IKRT-/vendor/stb_image -g -std=gnu++17 -o CMakeFiles/IKRT.dir/src/Interaction.cpp.o -c /home/kavulsulka/IKRT-/src/Interaction.cpp",
+  "file": "/home/kavulsulka/IKRT-/src/Interaction.cpp",
+  "output": "CMakeFiles/IKRT.dir/src/Interaction.cpp.o"
 }
 ]

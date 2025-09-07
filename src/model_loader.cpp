@@ -8,8 +8,9 @@
 static InteractorModelData model_data;
 static InteractorModel* current_model = nullptr;
 static std::vector<SceneElementModel> scene_element_model_arr;
-//static std::vector<InteractableModel> interactable_model_arr;
+static std::vector<InteractableModel> interactable_model_arr;
 static uint SceneElementModelCount = 0;
+static uint InteractableModelCount = 0;
 
 bool load_interactor_model(const char* path) {
     try {
@@ -82,6 +83,19 @@ bool load_scene_element_model(const char* path) {
     }
 }
 
+bool load_interactable_model(const char* path) {
+    try {
+        InteractableModel* newModel = new InteractableModel(path);
+        interactable_model_arr.push_back(*newModel);
+        InteractableModelCount++;
+        std::cout << "Successfully loaded InteractableModel: " << path << " with ID: " << newModel->id << std::endl;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading InteractableModel: " << e.what() << std::endl;
+        return false;
+    }
+}
+
 const InteractorModelData& get_interactor_model_data() {
     return model_data;
 }
@@ -93,11 +107,25 @@ InteractorModel* get_interactor_model() {
 const SceneElementModel&get_scene_element_model(size_t index) {
     return scene_element_model_arr[index];
 }
+
+const InteractableModel& get_interactable_model(size_t index) {
+    return interactable_model_arr[index];
+}
+
 size_t get_scene_element_model_count() {
     return SceneElementModelCount;
 }
+
+size_t get_interactable_model_count() {
+    return InteractableModelCount;
+}
+
+std::vector<Shape>& get_interactable_element_boxes() {
+    return interactable_element_boxes;
+}
+
 void update_bone_transforms(const std::vector<unsigned short>& indices) {
-    for (short i = 0; i < indices.size() - 1; i++) {
+    for (unsigned short i = 0; i < indices.size() - 1; i++) {
         glm::vec3 translateVector = (model_data.bind_pose_positions[indices[i]] - 
                                    model_data.bind_pose_positions_original[indices[i]]);
         
@@ -187,6 +215,19 @@ void end_effector_align(std::vector<unsigned short> indices) {
 void apply_root_offset_to_bones(const glm::vec3& rootOffset) {
     // Apply root offset to all bone positions
     for (size_t i = 0; i < model_data.bind_pose_positions.size(); i++) {
-        model_data.bind_pose_positions[i] +=rootOffset;
+        model_data.bind_pose_positions[i] += rootOffset;
+    }
+}
+
+// Helper functions for interactable models
+void draw_all_interactable_models(Shader& shader) {
+    for (size_t i = 0; i < interactable_model_arr.size(); i++) {
+        interactable_model_arr[i].Draw(shader);
+    }
+}
+
+void update_all_interactable_model_bounding_boxes(const std::vector<glm::mat4>& boneTransforms) {
+    for (size_t i = 0; i < interactable_model_arr.size(); i++) {
+        interactable_model_arr[i].UpdateBoundingBox(boneTransforms);
     }
 }

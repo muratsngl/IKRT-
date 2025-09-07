@@ -95,6 +95,16 @@ void init_buffers() {
     glBufferData(GL_UNIFORM_BUFFER, 4000, nullptr, GL_DYNAMIC_READ);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
+    // Create interactable bone UBO
+    // Size: 2 * MAX_INTERACTABLE_MODELS * sizeof(glm::mat4) matrices per interactable model
+    GLsizeiptr interactable_bone_buffer_size = 2 * MAX_INTERACTABLE_MODELS * sizeof(glm::mat4);
+    
+    glGenBuffers(1, &render_context.interactable_bone_UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.interactable_bone_UBO);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 2, render_context.interactable_bone_UBO);
+    glBufferData(GL_UNIFORM_BUFFER, interactable_bone_buffer_size, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
  
     
    
@@ -103,7 +113,7 @@ void init_buffers() {
 
 void render_frame() {
     // Clear the screen
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.8f, 0.4f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Set up matrices
@@ -160,7 +170,12 @@ void render_frame() {
             
         }
         
-        // Draw the scene element model
+        for(size_t i = 0;i<get_interactable_model_count();i++){
+            const InteractableModel& model = get_interactable_model(i);
+            model.Draw(*sceneElementShader);
+            
+        }
+      
         
     }
     
@@ -287,6 +302,10 @@ void cleanup_rendering() {
         delete collisionVisualizer;
         collisionVisualizer = nullptr;
     }
+    
+    // Clean up UBOs
+    glDeleteBuffers(1, &render_context.orcunUBO);
+    glDeleteBuffers(1, &render_context.interactable_bone_UBO);
     
     if (render_context.window) {
         glfwDestroyWindow(render_context.window);

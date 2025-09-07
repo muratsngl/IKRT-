@@ -172,7 +172,7 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader& shader)
+    void Draw(Shader& shader) const
     {
        
         shader.use();

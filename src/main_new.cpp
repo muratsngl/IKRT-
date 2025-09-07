@@ -36,8 +36,8 @@ int main() {
     // } //commeted out to flip the scene until the scenelementdata is being implemented
     
     
-    if(load_scene_element_model("assets/models/mug/mug.dae")==false){
-        std::cerr << "Failed to load scene element model" << std::endl;
+    if(load_interactable_model("assets/models/mug/mug.dae")==false){
+        std::cerr << "Failed to load interactable model" << std::endl;
         cleanup_rendering();
         cleanup_shared_memory();
         return -1;

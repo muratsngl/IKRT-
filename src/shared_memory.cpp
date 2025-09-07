@@ -122,7 +122,7 @@ void update_shared_memory() {
     }
 
     // Apply threshold filtering
-    const float threshold = 0.008f;
+    const float threshold = 0.016f;
     
     finger_data.deltaXIndex = fabs(finger_data.deltaXIndex) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaXIndex;
     finger_data.deltaYIndex = fabs(finger_data.deltaYIndex) < threshold || !finger_data.trueInput ? 0 : finger_data.deltaYIndex;
