@@ -174,6 +174,64 @@ void CollisionVisualizer::updateBoundingBoxes(const std::vector<Shape>& staticBo
     }
 }
 
+void CollisionVisualizer::updateBoundingBoxes(const std::vector<Shape>& staticBoxes, 
+                                             const std::vector<Shape>& interactableBoxes,
+                                             const std::vector<Shape>& dynamicBoxes) {
+    aabbTransforms.clear();
+    obbTransforms.clear();
+    obbInteractableTransforms.clear();
+    sphereTransforms.clear();
+    sphereRadii.clear();
+    
+    // Process static boxes (scene elements)
+    for (const auto& shape : staticBoxes) {
+        switch (shape.type) {
+            case AABB:
+                aabbTransforms.push_back(createAABBTransform(shape.aabb));
+                break;
+            case OBB:
+                obbTransforms.push_back(createOBBTransform(shape.obb));
+                break;
+            case SPHERE:
+                sphereTransforms.push_back(createSphereTransform(shape.sphere));
+                sphereRadii.push_back(shape.sphere.radius);
+                break;
+        }
+    }
+    
+    // Process interactable boxes (separate storage for different color)
+    for (const auto& shape : interactableBoxes) {
+        switch (shape.type) {
+            case AABB:
+                aabbTransforms.push_back(createAABBTransform(shape.aabb));
+                break;
+            case OBB:
+                obbInteractableTransforms.push_back(createOBBTransform(shape.obb));
+                break;
+            case SPHERE:
+                sphereTransforms.push_back(createSphereTransform(shape.sphere));
+                sphereRadii.push_back(shape.sphere.radius);
+                break;
+        }
+    }
+    
+    // Process dynamic boxes (bone colliders)
+    for (const auto& shape : dynamicBoxes) {
+        switch (shape.type) {
+            case AABB:
+                aabbTransforms.push_back(createAABBTransform(shape.aabb));
+                break;
+            case OBB:
+                obbTransforms.push_back(createOBBTransform(shape.obb));
+                break;
+            case SPHERE:
+                sphereTransforms.push_back(createSphereTransform(shape.sphere));
+                sphereRadii.push_back(shape.sphere.radius);
+                break;
+        }
+    }
+}
+
 void CollisionVisualizer::render(const glm::mat4& view, const glm::mat4& projection) {
     if (!wireframeShader) return;
     
@@ -186,6 +244,7 @@ void CollisionVisualizer::render(const glm::mat4& view, const glm::mat4& project
     
     renderAABBs(view, projection);
     renderOBBs(view, projection);
+    renderInteractableOBBs(view, projection);
     renderSpheres(view, projection);
     
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -208,6 +267,17 @@ void CollisionVisualizer::renderOBBs(const glm::mat4& view, const glm::mat4& pro
     
     glBindVertexArray(VAO_OBB);
     for (const auto& transform : obbTransforms) {
+        wireframeShader->setMat4("model", transform);
+        glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+    }
+    glBindVertexArray(0);
+}
+
+void CollisionVisualizer::renderInteractableOBBs(const glm::mat4& view, const glm::mat4& projection) {
+    wireframeShader->setVec3("color", glm::vec3(0.0f, 1.0f, 0.0f)); // Green for Interactable OBBs
+    
+    glBindVertexArray(VAO_OBB);
+    for (const auto& transform : obbInteractableTransforms) {
         wireframeShader->setMat4("model", transform);
         glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
     }

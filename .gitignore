@@ -398,4 +398,4 @@ assets/models/*/*.dae
 Thumbs.db
 
 
-./assets/*
+./assets/*build/

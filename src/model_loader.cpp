@@ -104,6 +104,10 @@ InteractorModel* get_interactor_model() {
     return current_model;
 }
 
+bool is_interactor_model_available() {
+    return current_model != nullptr;
+}
+
 const SceneElementModel&get_scene_element_model(size_t index) {
     return scene_element_model_arr[index];
 }

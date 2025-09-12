@@ -20,6 +20,11 @@ public:
     void updateBoundingBoxes(const std::vector<Shape>& staticBoxes, 
                            const std::vector<Shape>& dynamicBoxes);
     
+    // Update bounding boxes with separate interactable boxes
+    void updateBoundingBoxes(const std::vector<Shape>& staticBoxes, 
+                           const std::vector<Shape>& interactableBoxes,
+                           const std::vector<Shape>& dynamicBoxes);
+    
     // Render all bounding boxes
     void render(const glm::mat4& view, const glm::mat4& projection);
     
@@ -43,6 +48,7 @@ private:
     std::vector<glm::vec3> obbVertices;
     std::vector<unsigned int> obbIndices;
     std::vector<glm::mat4> obbTransforms;
+    std::vector<glm::mat4> obbInteractableTransforms;  // Separate storage for interactable OBBs
     
     std::vector<glm::vec3> sphereVertices;
     std::vector<unsigned int> sphereIndices;
@@ -57,6 +63,7 @@ private:
     
     void renderAABBs(const glm::mat4& view, const glm::mat4& projection);
     void renderOBBs(const glm::mat4& view, const glm::mat4& projection);
+    void renderInteractableOBBs(const glm::mat4& view, const glm::mat4& projection);
     void renderSpheres(const glm::mat4& view, const glm::mat4& projection);
     
     glm::mat4 createAABBTransform(const Aabb& aabb);

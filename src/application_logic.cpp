@@ -40,6 +40,28 @@ void update_finger_positions() {
 }
 
 void calculate_deltas() {
+    if (!is_shared_memory_available()) {
+        // Set all delta values to 0 when shared memory is not available
+        app_state.deltaIndex = glm::vec3(0.0f);
+        app_state.deltaRing = glm::vec3(0.0f);
+        app_state.deltaMiddle = glm::vec3(0.0f);
+        app_state.deltaPinky = glm::vec3(0.0f);
+        app_state.deltaRoot = glm::vec3(0.0f);
+        static bool notified = false;
+        if (!notified) {
+            std::cout << "Note: Hand tracking deltas set to zero - shared memory not available" << std::endl;
+            notified = true;
+        }
+        return;
+    } else {
+        // Reset notification flag when shared memory becomes available
+        static bool reset_notification = true;
+        if (reset_notification) {
+            std::cout << "Hand tracking deltas are now active - shared memory available" << std::endl;
+            reset_notification = false;
+        }
+    }
+
     const FingerData& finger_data = get_finger_data();
     
     // Calculate movement deltas with scaling factors
@@ -71,6 +93,10 @@ void calculate_deltas() {
 }
 
 void apply_fabrik() {
+    if (!is_interactor_model_available()) {
+        return; // Early return if model not available
+    }
+    
     const InteractorModelData& model_data = get_interactor_model_data();
     
     // Apply root offset to bone positions first, before FABRIK calculations
@@ -96,6 +122,10 @@ void apply_fabrik() {
 }
 
 void rearrange_finger_positions_based_on_collision(){
+    if (!is_interactor_model_available()) {
+        return; // Early return if model not available
+    }
+    
     const InteractorModelData& model_data = get_interactor_model_data();
     extern std::vector<Shape> scene_element_boxes;
     
@@ -104,9 +134,8 @@ void rearrange_finger_positions_based_on_collision(){
         Shape boneShape;
         boneShape.type = OBB;
         
-        glm::vec3 pos1 = model_data.bind_pose_positions[boneIndex1];
-        glm::vec3 pos2 = model_data.bind_pose_positions[boneIndex2];
-        
+        glm::vec3 pos1 = model_data.bind_pose_matrices[boneIndex1] * glm::vec4(model_data.bind_pose_positions_original[boneIndex1], 1.0f);
+        glm::vec3 pos2 = model_data.bind_pose_matrices[boneIndex2] * glm::vec4(model_data.bind_pose_positions_original[boneIndex2], 1.0f);
         // Center is midpoint between bones
         glm::vec3 center = (pos1 + pos2) * 0.5f;
         
@@ -179,45 +208,44 @@ void rearrange_finger_positions_based_on_collision(){
         return hasCollision;
     };
     
-    // Check collisions for all fingers and limbs with scene elements
-    checkSceneElementCollision(model_data.right_arm_indices, "Right Arm", 0.1f);
-    checkSceneElementCollision(model_data.left_arm_indices, "Left Arm", 0.1f);
+   // Check collisions for all limbs with scene elements
+    checkSceneElementCollision(model_data.right_arm_indices, "Right Arm", 0.085f);
+    checkSceneElementCollision(model_data.left_arm_indices, "Left Arm", 0.085f);
     checkSceneElementCollision(model_data.right_leg_indices, "Right Leg", 0.1f);
     checkSceneElementCollision(model_data.left_leg_indices, "Left Leg", 0.1f);
 
     // Check individual fingers with scene elements
-    checkSceneElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.02f);
-    checkSceneElementCollision(model_data.left_index_indices, "Left Index", 0.02f);
+    checkSceneElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.015f);
+    checkSceneElementCollision(model_data.left_index_indices, "Left Index", 0.015f);
     checkSceneElementCollision(model_data.left_middle_indices, "Left Middle", 0.02f);
     checkSceneElementCollision(model_data.left_ring_indices, "Left Ring", 0.02f);
     checkSceneElementCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f);
 
-    checkSceneElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.02f);
-    checkSceneElementCollision(model_data.right_index_indices, "Right Index", 0.02f);
-    checkSceneElementCollision(model_data.right_middle_indices, "Right Middle", 0.02f);
-    checkSceneElementCollision(model_data.right_ring_indices, "Right Ring", 0.02f);
-    checkSceneElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.02f);
+    checkSceneElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.015f);
+    checkSceneElementCollision(model_data.right_index_indices, "Right Index", 0.015f);
+    checkSceneElementCollision(model_data.right_middle_indices, "Right Middle", 0.015f);
+    checkSceneElementCollision(model_data.right_ring_indices, "Right Ring", 0.015f);
+    checkSceneElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.015f);
     
-    // Check collisions for all fingers and limbs with interactable elements
-    // checkInteractableElementCollision(model_data.right_arm_indices, "Right Arm", 0.1f, RIGHT_HAND);
-    // checkInteractableElementCollision(model_data.left_arm_indices, "Left Arm", 0.1f, LEFT_HAND);
+    // Check collisions for all limbs with interactable elements
+    // checkInteractableElementCollision(model_data.right_arm_indices, "Right Arm", 0.085f, RIGHT_HAND);
+    // checkInteractableElementCollision(model_data.left_arm_indices, "Left Arm", 0.085f, LEFT_HAND);
     // checkInteractableElementCollision(model_data.right_leg_indices, "Right Leg", 0.1f, RIGHT_LEG);
     // checkInteractableElementCollision(model_data.left_leg_indices, "Left Leg", 0.1f, LEFT_LEG);
 
     // Check individual fingers with interactable elements
-    checkInteractableElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.02f, LEFT_HAND);
-    checkInteractableElementCollision(model_data.left_index_indices, "Left Index", 0.02f, LEFT_HAND);
+    checkInteractableElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.015f, LEFT_HAND);
+    checkInteractableElementCollision(model_data.left_index_indices, "Left Index", 0.015f, LEFT_HAND);
     checkInteractableElementCollision(model_data.left_middle_indices, "Left Middle", 0.02f, LEFT_HAND);
     checkInteractableElementCollision(model_data.left_ring_indices, "Left Ring", 0.02f, LEFT_HAND);
     checkInteractableElementCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f, LEFT_HAND);
 
-    checkInteractableElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.02f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_index_indices, "Right Index", 0.02f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_middle_indices, "Right Middle", 0.02f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_ring_indices, "Right Ring", 0.02f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.02f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.015f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_index_indices, "Right Index", 0.015f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_middle_indices, "Right Middle", 0.015f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_ring_indices, "Right Ring", 0.015f, RIGHT_HAND);
+    checkInteractableElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.015f, RIGHT_HAND);
     
-    // Test interaction selection for each end effector
     int selected_model_id;
     
     if (choose_interaction(RIGHT_HAND, selected_model_id)) {
@@ -240,6 +268,10 @@ void rearrange_finger_positions_based_on_collision(){
 
 
 void update_transforms() {
+    if (!is_interactor_model_available()) {
+        return; // Early return if model not available
+    }
+    
     const InteractorModelData& model_data = get_interactor_model_data();
     
     // Update bone transforms for each limb

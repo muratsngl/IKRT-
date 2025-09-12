@@ -129,13 +129,15 @@ void render_frame() {
     
     // Update uniform buffer with bone transforms
     //Room for optimization this could be done in a single memory access;
-    const InteractorModelData& model_data = get_interactor_model_data();
-    glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
-    for (short i = 0; i < model_data.bind_pose_matrices.size(); i++) {
-        if (i < model_data.bind_pose_matrices.size()) {
-            glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), 
-                          sizeof(glm::mat4), 
-                          glm::value_ptr(model_data.bind_pose_matrices[i]));
+    if (is_interactor_model_available()) {
+        const InteractorModelData& model_data = get_interactor_model_data();
+        glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
+        for (short i = 0; i < model_data.bind_pose_matrices.size(); i++) {
+            if (i < model_data.bind_pose_matrices.size()) {
+                glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), 
+                              sizeof(glm::mat4), 
+                              glm::value_ptr(model_data.bind_pose_matrices[i]));
+            }
         }
     }
 
@@ -145,7 +147,10 @@ void render_frame() {
         skeletonShader->setMat4("model", model);
         skeletonShader->setMat4("view", view);
         skeletonShader->setMat4("projection", projection);
-        get_interactor_model()->Draw(*skeletonShader);
+        
+        if (is_interactor_model_available()) {
+            get_interactor_model()->Draw(*skeletonShader);
+        }
         
     }
 
@@ -181,11 +186,16 @@ void render_frame() {
     
     // Render collision boxes at the end of draw calls
     if (collisionVisualizer) {
-        extern std::vector<Shape> scene_element_boxes;
+        // Get collision boxes from model loading phase
+        std::vector<Shape> sceneBoxes = scene_element_boxes;  // Scene element boxes (red)
+        std::vector<Shape> interactableBoxes = interactable_element_boxes;  // Interactable boxes (green)
         
         // Create dynamic boxes from current bone positions
         std::vector<Shape> dynamicBoxes;
-        const InteractorModelData& model_data = get_interactor_model_data();
+        
+        if (is_interactor_model_available()) {
+            const InteractorModelData& model_data = get_interactor_model_data();
+        
         
         // Create bone OBBs for visualization
         auto createBoneOBB = [&](int boneIndex1, int boneIndex2, float halfExtentXZ) -> Shape {
@@ -274,9 +284,11 @@ void render_frame() {
     for (size_t i = 1; i < model_data.left_pinky_indices.size(); i++) {
         dynamicBoxes.push_back(createBoneOBB(model_data.left_pinky_indices[i - 1], model_data.left_pinky_indices[i], 0.02f));
     }
+    
+        } // End of interactor model availability check
 
         // Update and render collision boxes
-        collisionVisualizer->updateBoundingBoxes(scene_element_boxes, dynamicBoxes);
+        collisionVisualizer->updateBoundingBoxes(sceneBoxes, interactableBoxes, dynamicBoxes);
         collisionVisualizer->render(view, projection);
     }
     
@@ -361,14 +373,29 @@ void process_input(GLFWwindow* window) {
         camera.ProcessKeyboard(RIGHT, app_state.deltaTime);
     //DEBUG: CURRENTLY TOGGLES ROOT LOCK RANDOMLY BECAUSE OF BUTTON DEBOUNCING//SOLVED WITH SCHMIDT TRIGGER
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        if (!spaceKeyPressed) { // Key was not previously pressed
+        if (!spaceKeyPressed && is_shared_memory_available()) { // Key was not previously pressed and shared memory is available
             get_finger_data().rootLock = !get_finger_data().rootLock; // Toggle root lock
             std::cout << "rootLock toggled to: " << get_finger_data().rootLock << std::endl;
             spaceKeyPressed = true; // Mark the key as pressed
+        } else if (!spaceKeyPressed && !is_shared_memory_available()) {
+            static bool notified = false;
+            if (!notified) {
+                std::cout << "Note: Root lock toggle disabled - shared memory not available" << std::endl;
+                notified = true;
+            }
+            spaceKeyPressed = true;
         }
-        } else {
-            spaceKeyPressed = false; // Reset the key state when released
+    } else {
+        spaceKeyPressed = false; // Reset the key state when released
+        // Reset notification when shared memory becomes available again
+        if (is_shared_memory_available()) {
+            static bool reset_notification = true;
+            if (reset_notification) {
+                std::cout << "Root lock toggle is now active - shared memory available" << std::endl;
+                reset_notification = false;
+            }
         }
+    }
 
 
   

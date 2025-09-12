@@ -84,18 +84,18 @@ bool testAABBOBB(const Aabb& aabb, const Obb& obb) {
         
         // Project AABB onto axis
         float aabbProjection = 
-            std::abs(glm::dot(aabbHalfExtents.x * aabbAxes[0], axis)) +
-            std::abs(glm::dot(aabbHalfExtents.y * aabbAxes[1], axis)) +
-            std::abs(glm::dot(aabbHalfExtents.z * aabbAxes[2], axis));
+            fabs(glm::dot(aabbHalfExtents.x * aabbAxes[0], axis)) +
+            fabs(glm::dot(aabbHalfExtents.y * aabbAxes[1], axis)) +
+            fabs(glm::dot(aabbHalfExtents.z * aabbAxes[2], axis));
         
         // Project OBB onto axis
         float obbProjection = 
-            std::abs(glm::dot(obb.halfExtents.x * obbAxes[0], axis)) +
-            std::abs(glm::dot(obb.halfExtents.y * obbAxes[1], axis)) +
-            std::abs(glm::dot(obb.halfExtents.z * obbAxes[2], axis));
+            fabs(glm::dot(obb.halfExtents.x * obbAxes[0], axis)) +
+            fabs(glm::dot(obb.halfExtents.y * obbAxes[1], axis)) +
+            fabs(glm::dot(obb.halfExtents.z * obbAxes[2], axis));
         
         // Project distance onto axis
-        float distanceProjection = std::abs(glm::dot(distance, axis));
+        float distanceProjection = fabs(glm::dot(distance, axis));
         
         // If projected distance is greater than sum of projections, no overlap
         if (distanceProjection > aabbProjection + obbProjection) {
@@ -252,17 +252,17 @@ bool testSeparatingAxis(const glm::vec3& axis, const Obb& a, const Obb& b, const
     // Project A's half extents onto the axis
     float ra = 0.0f;
     for (int i = 0; i < 3; i++) {
-        ra += a.halfExtents[i] * abs(glm::dot(axis, rotA[i]));
+        ra += a.halfExtents[i] * fabs(glm::dot(axis, rotA[i]));
     }
     
     // Project B's half extents onto the axis
     float rb = 0.0f;
     for (int i = 0; i < 3; i++) {
-        rb += b.halfExtents[i] * abs(glm::dot(axis, rotB[i]));
+        rb += b.halfExtents[i] * fabs(glm::dot(axis, rotB[i]));
     }
     
     // Project separation vector onto the axis
-    float distance = abs(glm::dot(T, axis));
+    float distance = fabs(glm::dot(T, axis));
     
     // Check if projections overlap
     return distance <= ra + rb;

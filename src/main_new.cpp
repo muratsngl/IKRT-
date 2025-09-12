@@ -7,13 +7,15 @@
 int main() {
     // Initialize all systems
     if (!setup_shared_memory()) {
-        std::cerr << "Failed to setup shared memory" << std::endl;
-        return -1;
+        std::cout << "Warning: Shared memory not available. Hand tracking disabled." << std::endl;
+        std::cout << "The application will continue without hand input." << std::endl;
     }
     
     if (!init_rendering()) {
         std::cerr << "Failed to initialize rendering" << std::endl;
-        cleanup_shared_memory();
+        if (is_shared_memory_available()) {
+            cleanup_shared_memory();
+        }
         return -1;
     }
     
@@ -22,12 +24,14 @@ int main() {
     init_buffers();
     
     //Load the model
-    if (!load_interactor_model("assets/models/man_with_bones/quit.dae")) {
-        std::cerr << "Failed to load model" << std::endl;
-        cleanup_rendering();
-        cleanup_shared_memory();
-        return -1;
-    }
+    // if (!load_interactor_model("assets/models/man_with_bones/quit.dae")) {
+    //     std::cerr << "Failed to load model" << std::endl;
+    //     cleanup_rendering();
+    //     if (is_shared_memory_available()) {
+    //         cleanup_shared_memory();
+    //     }
+    //     return -1;
+    // }
     // if(load_scene_element_model("assets/models/watermelon/scene.gltf") == false){
     //     std::cerr << "Failed to load scene element model" << std::endl;
     //     cleanup_rendering();
@@ -36,12 +40,14 @@ int main() {
     // } //commeted out to flip the scene until the scenelementdata is being implemented
     
     
-    if(load_interactable_model("assets/models/mug/mug.dae")==false){
-        std::cerr << "Failed to load interactable model" << std::endl;
-        cleanup_rendering();
-        cleanup_shared_memory();
-        return -1;
-    }
+    // if(load_interactable_model("assets/models/mug/mugR.glb")==false){
+    //     std::cerr << "Failed to load interactable model" << std::endl;
+    //     cleanup_rendering();
+    //     if (is_shared_memory_available()) {
+    //         cleanup_shared_memory();
+    //     }
+    //     return -1;
+    // }
 
 
 
@@ -53,14 +59,27 @@ int main() {
     
     // Main loop
     while (!should_close_window()) {
+        // Check if shared memory is available, attempt to reinitialize if not
+        if (!is_shared_memory_available()) {
+            static bool retry_notified = false;
+            if (setup_shared_memory()) {
+                std::cout << "Shared memory successfully initialized! Hand tracking is now active." << std::endl;
+                retry_notified = false; // Reset notification flag
+            } else if (!retry_notified) {
+                std::cout << "Note: Shared memory still not available. Retrying each frame..." << std::endl;
+                retry_notified = true; // Only show this message once
+            }
+        }
+        
         // Update shared memory data
         update_shared_memory();
         // Update application logic
         update_finger_positions();
         calculate_deltas();
         apply_fabrik();
-        rearrange_finger_positions_based_on_collision();
         update_transforms();
+        rearrange_finger_positions_based_on_collision();
+        
         
         // Render frame
         render_frame();
@@ -68,7 +87,9 @@ int main() {
     
     // Cleanup
     cleanup_rendering();
-    cleanup_shared_memory();
+    if (is_shared_memory_available()) {
+        cleanup_shared_memory();
+    }
     
     return 0;
 }

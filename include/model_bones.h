@@ -24,6 +24,8 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <algorithm>
+#include <float.h>
 #include <cfloat>
 using namespace std;
 
@@ -63,6 +65,8 @@ inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* from)
 class InteractableModelCreator {
 private:
     std::vector<TextureInfo> textures_loaded;
+    std::map<string, BoneInfo> local_bone_info_map;  // Local bone info for this model
+    int local_bone_counter = 0;  // Local bone counter for this model
 
     void SetVertexBoneDataToDefault(DynamicVertex& vertex)
     {
@@ -92,24 +96,25 @@ private:
         {
             int boneID = -1;
             std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
-            if (global_bone_info_map.find(boneName) == global_bone_info_map.end())
+            if (local_bone_info_map.find(boneName) == local_bone_info_map.end())
             {
                 BoneInfo newBoneInfo;
-                newBoneInfo.id = global_bone_counter;
-                std::cout << newBoneInfo.id << " " << boneName << std::endl;
+                newBoneInfo.id = local_bone_counter;
+                std::cout << "Interactable Model Bone: " << newBoneInfo.id << " " << boneName << std::endl;
                 newBoneInfo.offset = aiMatrix4x4ToGlm(
                     &mesh->mBones[boneIndex]->mOffsetMatrix);
                 glm::mat4 currentTransform = glm::inverse(newBoneInfo.offset);
                 bindPoseMatrices.push_back(glm::mat4(1.0f));
                 bindPosePositions.push_back(currentTransform * glm::vec4(0.f, 0.f, 0.f, 1.0f));
                 
-                global_bone_info_map[boneName] = newBoneInfo;
-                boneID = global_bone_counter;
-                global_bone_counter++;
+                local_bone_info_map[boneName] = newBoneInfo;
+                boneID = local_bone_counter;
+                local_bone_counter++;
+                
             }
             else
             {
-                boneID = global_bone_info_map[boneName].id;
+                boneID = local_bone_info_map[boneName].id;
             }
             assert(boneID != -1);
             auto weights = mesh->mBones[boneIndex]->mWeights;
@@ -152,7 +157,7 @@ private:
         return textures;
     }
 
-    void processNode(aiNode* node, const aiScene* scene, vector<Mesh>& meshes, string& directory, vector<glm::vec3>& bindPosePositions, vector<glm::mat4>& bindPoseMatrices)
+    void processNode(aiNode* node, const aiScene* scene, vector<Mesh>& meshes, string& directory, vector<glm::vec3>& bindPosePositions, vector<glm::mat4>& bindPoseMatrices, glm::vec3& minBounds, glm::vec3& maxBounds)
     {
         // process each mesh located at the current node
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -160,16 +165,16 @@ private:
             // the node object only contains indices to index the actual objects in the scene. 
             // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            meshes.push_back(processMesh(mesh, scene, directory, bindPosePositions, bindPoseMatrices));
+            meshes.push_back(processMesh(mesh, scene, directory, bindPosePositions, bindPoseMatrices, minBounds, maxBounds));
         }
         // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
         for (unsigned int i = 0; i < node->mNumChildren; i++)
         {
-            processNode(node->mChildren[i], scene, meshes, directory, bindPosePositions, bindPoseMatrices);
+            processNode(node->mChildren[i], scene, meshes, directory, bindPosePositions, bindPoseMatrices, minBounds, maxBounds);
         }
     }
 
-    Mesh processMesh(aiMesh* mesh, const aiScene* scene, string& directory, vector<glm::vec3>& bindPosePositions, vector<glm::mat4>& bindPoseMatrices)
+    Mesh processMesh(aiMesh* mesh, const aiScene* scene, string& directory, vector<glm::vec3>& bindPosePositions, vector<glm::mat4>& bindPoseMatrices, glm::vec3& minBounds, glm::vec3& maxBounds)
     {
         // data to fill
         vector<DynamicVertex> vertices;
@@ -186,6 +191,15 @@ private:
             vector.y = mesh->mVertices[i].y;
             vector.z = mesh->mVertices[i].z;
             vertex.Position = vector;
+
+            // Update bounds as we process vertices
+            minBounds.x = std::min(minBounds.x, vector.x);
+            minBounds.y = std::min(minBounds.y, vector.y);
+            minBounds.z = std::min(minBounds.z, vector.z);
+            
+            maxBounds.x = std::max(maxBounds.x, vector.x);
+            maxBounds.y = std::max(maxBounds.y, vector.y);
+            maxBounds.z = std::max(maxBounds.z, vector.z);
             // normals
             if (mesh->HasNormals())
             {
@@ -229,7 +243,11 @@ private:
 public:
     string directory;
 
-    void loadModel(string const& path, vector<Mesh>& meshes, vector<glm::vec3>& bindPosePos, vector<glm::mat4>& bindPoseMat, std::vector<TextureInfo>& texLoaded)
+    // Getter for local bone info map
+    std::map<string, BoneInfo>& getLocalBoneInfoMap() { return local_bone_info_map; }
+    int getLocalBoneCount() { return local_bone_counter; }
+
+    void loadModel(string const& path, vector<Mesh>& meshes, vector<glm::vec3>& bindPosePos, vector<glm::mat4>& bindPoseMat, std::vector<TextureInfo>& texLoaded, std::map<string, BoneInfo>& boneInfoMap, int modelId)
     {
         // read file via ASSIMP
         Assimp::Importer importer;
@@ -243,11 +261,29 @@ public:
         // retrieve the directory path of the filepath
         directory = path.substr(0, path.find_last_of('/'));
 
+        // Initialize bounds tracking
+        glm::vec3 minBounds(FLT_MAX);
+        glm::vec3 maxBounds(-FLT_MAX);
+
         // process ASSIMP's root node recursively
-        processNode(scene->mRootNode, scene, meshes, directory, bindPosePos, bindPoseMat);
+        processNode(scene->mRootNode, scene, meshes, directory, bindPosePos, bindPoseMat, minBounds, maxBounds);
+
+        // Create OBB from calculated bounds
+        if (minBounds.x != FLT_MAX) { // Check if we found any vertices
+            Shape s;
+            s.type = OBB;
+            s.id = modelId;
+            
+            // Create OBB with identity transform
+            glm::mat4 identityTransform = glm::mat4(1.0f);
+            s.obb = createOBBFromBounds(minBounds, maxBounds, identityTransform);
+            
+            interactable_element_boxes.push_back(s);
+        }
 
         // Copy data back
         texLoaded = textures_loaded;
+        boneInfoMap = local_bone_info_map;  // Copy local bone map to model
     }
 };
 
@@ -262,15 +298,16 @@ public:
     vector<glm::mat4> bindPoseMatrices;
     std::vector<TextureInfo> textures_loaded; // Store loaded textures to prevent duplicates
     std::vector<Interaction> model_interactions;
+    std::map<string, BoneInfo> local_bone_info_map;  // Local bone info for this model
     int id;
     // constructor, expects a filepath to a 3D model.
     InteractableModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
         InteractableModelCreator creator;
-        creator.loadModel(path, meshes, bindPosePositions, bindPoseMatrices, textures_loaded);
-        directory = creator.directory;
         id = interactable_element_count++;
-        CreateBoundingBox(); // Create initial bounding box after loading
+        creator.loadModel(path, meshes, bindPosePositions, bindPoseMatrices, textures_loaded, local_bone_info_map, id);
+        directory = creator.directory;
+        // Bounding box is now created during model loading
     }
 
     // draws the model, and thus all its meshes
@@ -280,43 +317,12 @@ public:
             meshes[i].Draw(shader);
     }
 
-    // Access to global bone info map for consistent bone indices
-    auto& GetBoneInfoMap() { return global_bone_info_map; }
-
-    // Create bounding box for the interactable model
-    void CreateBoundingBox() {
-        if (meshes.empty()) return;
-        
-        // Calculate overall bounding box from all meshes
-        glm::vec3 minBounds(FLT_MAX);
-        glm::vec3 maxBounds(-FLT_MAX);
-        bool hasVertices = false;
-        
-        for (const auto& mesh : meshes) {
-            // Access mesh vertex data to calculate actual bounds
-            // Note: This assumes you have access to vertex positions from the mesh
-            // You might need to modify this based on your Mesh class implementation
-            
-            // For now, use default bounds - you should replace this with actual vertex iteration
-            if (!hasVertices) {
-                minBounds = glm::vec3(-1.0f);
-                maxBounds = glm::vec3(1.0f);
-                hasVertices = true;
-            }
-        }
-        
-        // Create OBB instead of AABB
-        Shape s;
-        s.type = OBB;
-        s.id = id; // Use the model's ID
-        
-        // Create OBB with identity transform initially
-        glm::mat4 identityTransform = glm::mat4(1.0f);
-        s.obb = createOBBFromBounds(minBounds, maxBounds, identityTransform);
-        
-        interactable_element_boxes.push_back(s);
-    }
+    // Access to local bone info map for this model
+    auto& GetBoneInfoMap() { return local_bone_info_map; }
     
+    // Get local bone count
+    int GetBoneCount() { return local_bone_info_map.size(); }
+
     // Update bounding box based on bone transformations
     void UpdateBoundingBox(const std::vector<glm::mat4>& boneTransforms) {
         // Find the bounding box in the vector that belongs to this model
@@ -398,6 +404,7 @@ private:
                 m_BoneInfoMap[boneName] = newBoneInfo;
                 boneID = m_BoneCounter;
                 m_BoneCounter++;
+                
             }
             else
             {

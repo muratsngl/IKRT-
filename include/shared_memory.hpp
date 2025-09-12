@@ -37,5 +37,6 @@ bool setup_shared_memory();
 void update_shared_memory();
 void cleanup_shared_memory();
 FingerData& get_finger_data();
+bool is_shared_memory_available(); // New function to check availability
 
 #endif

@@ -5,9 +5,12 @@ layout(location = 1) in vec3 norm;
 layout(location = 2) in ivec4 boneID;
 layout(location = 3) in vec4 boneWeights;
 
+
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 model;
+
+
 
 layout(std140,binding = 1) uniform bone_transforms{
 mat4 bone_matrices[50];

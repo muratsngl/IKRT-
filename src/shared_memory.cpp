@@ -10,20 +10,23 @@
 static int shm_fd = -1;
 static void* pBuf = nullptr;
 static FingerData finger_data = {};
+static bool shared_memory_available = false;
 
 bool setup_shared_memory() {
     const std::string shm_name = "handPositionData";
     shm_fd = shm_open(shm_name.c_str(), O_RDONLY, 0666);
     if (shm_fd == -1) {
-        perror("shm_open");
-        std::cerr << "Could not open shared memory" << std::endl;
+        // perror("shm_open");
+        // std::cerr << "Could not open shared memory" << std::endl;
+        shared_memory_available = false;
         return false;
     }
 
     pBuf = mmap(nullptr, 62, PROT_READ, MAP_SHARED, shm_fd, 0);
     if (pBuf == MAP_FAILED) {
-        std::cerr << "Could not map view of file" << std::endl;
+        // std::cerr << "Could not map view of file" << std::endl;
         close(shm_fd);
+        shared_memory_available = false;
         return false;
     }
     
@@ -31,12 +34,21 @@ bool setup_shared_memory() {
     finger_data.isMiddleized = false;
     finger_data.firstTrue = false;
     finger_data.trueInput = false;
+    shared_memory_available = true;
     
     return true;
 }
 
 void update_shared_memory() {
-    if (pBuf == nullptr) return;
+    if (!shared_memory_available || pBuf == nullptr) {
+        // Set all delta values to 0 when shared memory is not available
+        finger_data.deltaXRoot = finger_data.deltaYRoot = finger_data.deltaZRoot = 0;
+        finger_data.deltaXIndex = finger_data.deltaYIndex = finger_data.deltaZIndex = 0;
+        finger_data.deltaXMiddle = finger_data.deltaYMiddle = finger_data.deltaZMiddle = 0;
+        finger_data.deltaXRing = finger_data.deltaYRing = finger_data.deltaZRing = 0;
+        finger_data.deltaXPinky = finger_data.deltaYPinky = finger_data.deltaZPinky = 0;
+        return;
+    }
     
     // Store previous values
     finger_data.prevCxIndex = finger_data.cxIndex;
@@ -154,8 +166,13 @@ void cleanup_shared_memory() {
         close(shm_fd);
         shm_fd = -1;
     }
+    shared_memory_available = false;
 }
 
 FingerData& get_finger_data() {
     return finger_data;
+}
+
+bool is_shared_memory_available() {
+    return shared_memory_available;
 }

@@ -68,4 +68,7 @@ void draw_all_interactable_models(Shader& shader);
 void update_all_interactable_model_bounding_boxes(const std::vector<glm::mat4>& boneTransforms);
 void sync_data_from_main(const std::vector<glm::vec3>& main_positions, const std::vector<glm::mat4>& main_matrices);
 
+// Helper function to check if interactor model is available
+bool is_interactor_model_available();
+
 #endif
