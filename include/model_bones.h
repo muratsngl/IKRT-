@@ -704,11 +704,11 @@ private:
         // Load material textures
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         
-        // Diffuse maps
+        // Diffuse maps (legacy support)
         std::vector<TextureInfo> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
         
-        // Specular maps
+        // Specular maps (legacy support)
         std::vector<TextureInfo> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
         
@@ -719,6 +719,23 @@ private:
         // Height maps
         std::vector<TextureInfo> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+        
+        // PBR textures
+        // Base color / Albedo maps (PBR)
+        std::vector<TextureInfo> albedoMaps = loadMaterialTextures(material, aiTextureType_BASE_COLOR, "texture_albedo");
+        textures.insert(textures.end(), albedoMaps.begin(), albedoMaps.end());
+        
+        // Metallic maps (PBR)
+        std::vector<TextureInfo> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
+        textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
+        
+        // Roughness maps (PBR) - often combined with metallic in ORM texture
+        std::vector<TextureInfo> roughnessMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
+        textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+        
+        // Ambient Occlusion maps (PBR)
+        std::vector<TextureInfo> aoMaps = loadMaterialTextures(material, aiTextureType_LIGHTMAP, "texture_ao");
+        textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
 
         // Return a StaticMesh object created from the extracted mesh data
         return StaticMesh(vertices, indices, textures);

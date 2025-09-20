@@ -1,6 +1,9 @@
 #include "collision_visualizer.hpp"
 #include <iostream>
 
+// Static member definition
+bool CollisionVisualizer::isEnabled = true;
+
 CollisionVisualizer::CollisionVisualizer() 
     : VAO_AABB(0), VBO_AABB(0), EBO_AABB(0),
       VAO_OBB(0), VBO_OBB(0), EBO_OBB(0),
@@ -233,7 +236,7 @@ void CollisionVisualizer::updateBoundingBoxes(const std::vector<Shape>& staticBo
 }
 
 void CollisionVisualizer::render(const glm::mat4& view, const glm::mat4& projection) {
-    if (!wireframeShader) return;
+    if (!isEnabled || !wireframeShader) return;
     
     glDisable(GL_DEPTH_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

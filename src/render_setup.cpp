@@ -12,11 +12,18 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
+// ImGui includes
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include "include/IO.hpp"
+
 static RenderContext render_context;
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
+static Shader* pbrShader = nullptr;
 static CollisionVisualizer* collisionVisualizer = nullptr;
 
 // Mouse and timing variables
@@ -56,7 +63,7 @@ bool init_rendering() {
     glfwSetFramebufferSizeCallback(render_context.window, framebuffer_size_callback);
     glfwSetCursorPosCallback(render_context.window, mouse_callback);
     glfwSetScrollCallback(render_context.window, scroll_callback);
-    glfwSetInputMode(render_context.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(render_context.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
@@ -71,12 +78,64 @@ bool init_rendering() {
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     
+    // Initialize ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    
+    // Setup Dear ImGui style with green theme and transparency
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // Set alpha/transparency for the entire UI
+    style.Alpha = 0.85f;  // Slightly transparent
+    
+    // Set window background to transparent green
+    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.1f, 0.2f, 0.1f, 0.8f);  // Dark green with transparency
+    style.Colors[ImGuiCol_TitleBg] = ImVec4(0.15f, 0.3f, 0.15f, 0.9f);  // Slightly lighter green for title
+    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.2f, 0.4f, 0.2f, 0.95f);  // Active title
+    
+    // Header colors (collapsible sections)
+    style.Colors[ImGuiCol_Header] = ImVec4(0.2f, 0.4f, 0.2f, 0.8f);
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.5f, 0.25f, 0.9f);
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.3f, 0.6f, 0.3f, 1.0f);
+    
+    // Button colors
+    style.Colors[ImGuiCol_Button] = ImVec4(0.2f, 0.4f, 0.2f, 0.8f);
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.3f, 0.6f, 0.3f, 0.9f);
+    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.4f, 0.7f, 0.4f, 1.0f);
+    
+    // Frame colors (input fields, etc.)
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.15f, 0.25f, 0.15f, 0.7f);
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.2f, 0.35f, 0.2f, 0.8f);
+    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.45f, 0.25f, 0.9f);
+    
+    // Text colors
+    style.Colors[ImGuiCol_Text] = ImVec4(0.9f, 1.0f, 0.9f, 1.0f);  // Light green text
+    style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.5f, 0.7f, 0.5f, 0.8f);
+    
+    // Border colors
+    style.Colors[ImGuiCol_Border] = ImVec4(0.3f, 0.5f, 0.3f, 0.5f);
+    
+    // Popup/modal colors
+    style.Colors[ImGuiCol_PopupBg] = ImVec4(0.1f, 0.2f, 0.1f, 0.9f);
+    
+    // Scrollbar colors
+    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.1f, 0.2f, 0.1f, 0.5f);
+    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.3f, 0.5f, 0.3f, 0.8f);
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.4f, 0.6f, 0.4f, 0.9f);
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
+    
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(render_context.window, true);
+    ImGui_ImplOpenGL3_Init("#version 460");
+    
     return true;
 }
 
 void load_shaders() {
     skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
     sceneElementShader = new Shader("assets/shaders/model.vert", "assets/shaders/model.frag");
+    pbrShader = new Shader("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
     
     // Initialize collision visualizer
     collisionVisualizer = new CollisionVisualizer();
@@ -124,8 +183,7 @@ void render_frame() {
                                           0.1f, 100.0f);
     glm::mat4 model = glm::mat4(1.0f);
     
-    
-    
+   
     
     // Update uniform buffer with bone transforms
     //Room for optimization this could be done in a single memory access;
@@ -183,9 +241,35 @@ void render_frame() {
       
         
     }
+
+    // Render scene elements with PBR shader
+    if(pbrShader){
+        pbrShader->use();
+        pbrShader->setMat4("model", model);
+        pbrShader->setMat4("view", view);
+        pbrShader->setMat4("projection", projection);
+
+        // Set camera position for PBR lighting
+        glm::vec3 cameraPos = glm::vec3(glm::inverse(view)[3]);
+        pbrShader->setCameraPosition(cameraPos);
+
+        // Set some basic lights for PBR
+        pbrShader->setLight(0, glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
+        pbrShader->setLight(1, glm::vec3(-10.0f, 10.0f, 10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
+        pbrShader->setLight(2, glm::vec3(10.0f, -10.0f, 10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
+        pbrShader->setLight(3, glm::vec3(10.0f, 10.0f, -10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
+
+        // Set default PBR material properties
+        pbrShader->setPBRMaterial(glm::vec3(0.5f, 0.5f, 0.5f), 0.0f, 0.5f, 1.0f);
+
+        for(size_t i = 0;i<get_scene_element_model_count();i++){
+            const SceneElementModel& sceneModel = get_scene_element_model(i);
+            sceneModel.Draw(*pbrShader);
+        }
+    }
     
     // Render collision boxes at the end of draw calls
-    if (collisionVisualizer) {
+    if (CollisionVisualizer::getEnabled()) {
         // Get collision boxes from model loading phase
         std::vector<Shape> sceneBoxes = scene_element_boxes;  // Scene element boxes (red)
         std::vector<Shape> interactableBoxes = interactable_element_boxes;  // Interactable boxes (green)
@@ -292,6 +376,18 @@ void render_frame() {
         collisionVisualizer->render(view, projection);
     }
     
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    
+    // Call your model loader widget here
+    RenderModelLoaderWidget();
+    
+    // Render ImGui
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    
     // Process input and swap buffers
     process_input(render_context.window);
     glfwSwapBuffers(render_context.window);
@@ -307,8 +403,14 @@ bool should_close_window() {
 }
 
 void cleanup_rendering() {
+    // Cleanup ImGui
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    
     delete skeletonShader;
     delete sceneElementShader;
+    delete pbrShader;
     
     if (collisionVisualizer) {
         delete collisionVisualizer;

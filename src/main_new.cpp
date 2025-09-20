@@ -23,33 +23,6 @@ int main() {
     load_shaders();
     init_buffers();
     
-    //Load the model
-    // if (!load_interactor_model("assets/models/man_with_bones/quit.dae")) {
-    //     std::cerr << "Failed to load model" << std::endl;
-    //     cleanup_rendering();
-    //     if (is_shared_memory_available()) {
-    //         cleanup_shared_memory();
-    //     }
-    //     return -1;
-    // }
-    if(load_scene_element_model("assets/models/robot/robot_from_the_series_love_death_and_robots.glb") == false){
-        std::cerr << "Failed to load scene element model" << std::endl;
-        cleanup_rendering();
-        cleanup_shared_memory();
-        return -1;
-    } //commeted out to flip the scene until the scenelementdata is being implemented
-    
-    
-    // if(load_interactable_model("assets/models/mug/mugR.glb")==false){
-    //     std::cerr << "Failed to load interactable model" << std::endl;
-    //     cleanup_rendering();
-    //     if (is_shared_memory_available()) {
-    //         cleanup_shared_memory();
-    //     }
-    //     return -1;
-    // }
-
-
 
     // Initialize application state
     init_application_state();

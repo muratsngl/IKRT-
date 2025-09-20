@@ -31,6 +31,11 @@ public:
     // Cleanup resources
     void cleanup();
     
+    // Enable/disable collision visualization
+    static void setEnabled(bool enabled) { isEnabled = enabled; }
+    static bool getEnabled() { return isEnabled; }
+    static void toggleEnabled() { isEnabled = !isEnabled; }
+    
 private:
     // OpenGL objects
     GLuint VAO_AABB, VBO_AABB, EBO_AABB;
@@ -39,6 +44,9 @@ private:
     
     // Shader for wireframe rendering
     Shader* wireframeShader;
+    
+    // Enable/disable flag (static so accessible globally)
+    static bool isEnabled;
     
     // Vertex data for different primitive types
     std::vector<glm::vec3> aabbVertices;

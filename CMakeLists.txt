@@ -30,6 +30,7 @@ add_library(imgui STATIC
     ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/imgui_impl_opengl3.cpp
+    ${IMGUI_DIR}/ImGuiFileDialog.cpp
 )
 
 # 3. Provide include directories for ImGui
@@ -60,6 +61,7 @@ set(SOURCES
     src/collision_visualizer.cpp
     src/Interaction.cpp
     src/stb_image.cpp
+    IO.cpp
 )
 
 # Include directories (Original Setup)
