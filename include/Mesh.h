@@ -66,46 +66,35 @@ public:
         setupStaticMesh();
     }
 
-    // Add a draw function for StaticMesh
+    // UPDATED: Draw function now binds PBR textures to specific samplers
     void Draw(Shader& shader) const {
-        // Bind appropriate textures
-        unsigned int diffuseNr = 1;
-        unsigned int specularNr = 1;
-        unsigned int normalNr = 1;
-        unsigned int heightNr = 1;
-        unsigned int albedoNr = 1;
-        unsigned int metallicNr = 1;
-        unsigned int roughnessNr = 1;
-        unsigned int aoNr = 1;
-        
+        // Bind appropriate textures for PBR
         for (unsigned int i = 0; i < textures.size(); i++) {
-            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
-            // retrieve texture number (the N in diffuse_textureN)
-            string number;
+            glActiveTexture(GL_TEXTURE0 + i); // Activate proper texture unit before binding
+            
             string name = textures[i].type;
-            if (name == "texture_diffuse")
-                number = std::to_string(diffuseNr++);
-            else if (name == "texture_specular")
-                number = std::to_string(specularNr++); // transfer unsigned int to stream
-            else if (name == "texture_normal")
-                number = std::to_string(normalNr++); // transfer unsigned int to stream
-            else if (name == "texture_height")
-                number = std::to_string(heightNr++); // transfer unsigned int to stream
-            else if (name == "texture_albedo")
-                number = std::to_string(albedoNr++);
-            else if (name == "texture_metallic")
-                number = std::to_string(metallicNr++);
-            else if (name == "texture_roughness")
-                number = std::to_string(roughnessNr++);
-            else if (name == "texture_ao")
-                number = std::to_string(aoNr++);
+            string uniformName;
 
-            // now set the sampler to the correct texture unit
-            glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
-            // and finally bind the texture
-            glBindTexture(GL_TEXTURE_2D, textures[i].id);
+            // Map texture type to a PBR shader uniform
+            if (name == "texture_albedo")
+                uniformName = "albedoMap";
+            else if (name == "texture_metallic")
+                uniformName = "metallicMap";
+            else if (name == "texture_roughness")
+                uniformName = "roughnessMap";
+            else if (name == "texture_normal")
+                uniformName = "normalMap";
+            else if (name == "texture_ao")
+                uniformName = "aoMap";
+
+            // Set the sampler to the correct texture unit and bind the texture
+            if (!uniformName.empty()) {
+                glUniform1i(glGetUniformLocation(shader.ID, uniformName.c_str()), i);
+                glBindTexture(GL_TEXTURE_2D, textures[i].id);
+            }
         }
 
+        // Draw the mesh
         shader.use();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
@@ -247,4 +236,3 @@ private:
     }
 };
 #endif
-

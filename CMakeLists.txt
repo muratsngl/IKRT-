@@ -61,7 +61,7 @@ set(SOURCES
     src/collision_visualizer.cpp
     src/Interaction.cpp
     src/stb_image.cpp
-    IO.cpp
+    src/UI.cpp
 )
 
 # Include directories (Original Setup)

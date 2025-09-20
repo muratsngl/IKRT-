@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <IO.hpp>
+#include <UI.hpp>
 
 // Constants
 #define MAX_INTERACTABLE_MODELS 10

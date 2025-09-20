@@ -16,14 +16,13 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include "include/IO.hpp"
+#include "include/UI.hpp"
 
 static RenderContext render_context;
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
-static Shader* pbrShader = nullptr;
 static CollisionVisualizer* collisionVisualizer = nullptr;
 
 // Mouse and timing variables
@@ -44,6 +43,7 @@ bool init_rendering() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4); 
 
     // Create window
     render_context.screen_width = 1240;
@@ -134,8 +134,7 @@ bool init_rendering() {
 
 void load_shaders() {
     skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
-    sceneElementShader = new Shader("assets/shaders/model.vert", "assets/shaders/model.frag");
-    pbrShader = new Shader("assets/shaders/pbr.vert", "assets/shaders/pbr.frag");
+    sceneElementShader = new Shader("assets/shaders/pbr.vs", "assets/shaders/pbr.fs");
     
     // Initialize collision visualizer
     collisionVisualizer = new CollisionVisualizer();
@@ -172,8 +171,9 @@ void init_buffers() {
 
 void render_frame() {
     // Clear the screen
-    glClearColor(0.8f, 0.4f, 0.2f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_MULTISAMPLE); // Enable multisampling for anti-aliasing
     
     // Set up matrices
     glm::mat4 view = camera.GetViewMatrix();
@@ -226,6 +226,33 @@ void render_frame() {
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
 
+        // Set up PBR lighting
+        // Define 4 point lights positioned around the scene
+        glm::vec3 lightPositions[4] = {
+            glm::vec3(-10.0f,  10.0f, 10.0f),   // Top-left front
+            glm::vec3( 10.0f,  10.0f, 10.0f),   // Top-right front  
+            glm::vec3(-10.0f, -10.0f, 10.0f),   // Bottom-left front
+            glm::vec3( 10.0f, -10.0f, 10.0f)    // Bottom-right front
+        };
+        
+        glm::vec3 lightColors[4] = {
+            glm::vec3(300.0f, 250.0f, 200.0f),  // Warm white light
+            glm::vec3(250.0f, 300.0f, 300.0f),  // Cool white light
+            glm::vec3(300.0f, 200.0f, 250.0f),  // Slightly magenta light
+            glm::vec3(200.0f, 300.0f, 250.0f)   // Slightly green light
+        };
+
+        // Set light uniforms
+        for (int i = 0; i < 4; ++i) {
+            sceneElementShader->setVec3("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
+            sceneElementShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+        }
+
+        // Set camera position for view direction calculation
+        sceneElementShader->setVec3("camPos", camera.Position);
+
+        // Note: PBR material texture samplers are now handled dynamically in Mesh::Draw()
+
 
         for(size_t i = 0;i<get_scene_element_model_count();i++){
             const SceneElementModel& model = get_scene_element_model(i);
@@ -240,32 +267,6 @@ void render_frame() {
         }
       
         
-    }
-
-    // Render scene elements with PBR shader
-    if(pbrShader){
-        pbrShader->use();
-        pbrShader->setMat4("model", model);
-        pbrShader->setMat4("view", view);
-        pbrShader->setMat4("projection", projection);
-
-        // Set camera position for PBR lighting
-        glm::vec3 cameraPos = glm::vec3(glm::inverse(view)[3]);
-        pbrShader->setCameraPosition(cameraPos);
-
-        // Set some basic lights for PBR
-        pbrShader->setLight(0, glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
-        pbrShader->setLight(1, glm::vec3(-10.0f, 10.0f, 10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
-        pbrShader->setLight(2, glm::vec3(10.0f, -10.0f, 10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
-        pbrShader->setLight(3, glm::vec3(10.0f, 10.0f, -10.0f), glm::vec3(300.0f, 300.0f, 300.0f));
-
-        // Set default PBR material properties
-        pbrShader->setPBRMaterial(glm::vec3(0.5f, 0.5f, 0.5f), 0.0f, 0.5f, 1.0f);
-
-        for(size_t i = 0;i<get_scene_element_model_count();i++){
-            const SceneElementModel& sceneModel = get_scene_element_model(i);
-            sceneModel.Draw(*pbrShader);
-        }
     }
     
     // Render collision boxes at the end of draw calls
@@ -410,7 +411,6 @@ void cleanup_rendering() {
     
     delete skeletonShader;
     delete sceneElementShader;
-    delete pbrShader;
     
     if (collisionVisualizer) {
         delete collisionVisualizer;

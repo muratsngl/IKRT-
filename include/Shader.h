@@ -137,31 +137,6 @@ public:
         glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
 
-    // PBR-specific convenience methods
-    // ------------------------------------------------------------------------
-    void setPBRMaterial(const glm::vec3& albedo, float metallic, float roughness, float ao) const
-    {
-        setVec3("albedo", albedo);
-        setFloat("metallic", metallic);
-        setFloat("roughness", roughness);
-        setFloat("ao", ao);
-    }
-
-    // ------------------------------------------------------------------------
-    void setLight(int index, const glm::vec3& position, const glm::vec3& color) const
-    {
-        std::string posName = "lightPositions[" + std::to_string(index) + "]";
-        std::string colorName = "lightColors[" + std::to_string(index) + "]";
-        setVec3(posName, position);
-        setVec3(colorName, color);
-    }
-
-    // ------------------------------------------------------------------------
-    void setCameraPosition(const glm::vec3& position) const
-    {
-        setVec3("camPos", position);
-    }
-
 private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------

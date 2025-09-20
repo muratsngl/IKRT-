@@ -524,11 +524,6 @@ private:
                 indices.push_back(face.mIndices[j]);
         }
         
-
-
-
-        
-
         ExtractBoneWeightForVertices(vertices, mesh, scene);
         // return a mesh object created from the extracted mesh data
         std::cout << m_BoneCounter;
@@ -591,21 +586,56 @@ public:
     }
 
 private:
-    // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
-     //
-    
-
     auto& GetBoneInfoMap() { return m_BoneInfoMap; }
-
 };
  
-
-
-
+//=====================================================================================
+// MODIFIED SECTION FOR PBR AND EMBEDDED TEXTURES
+//=====================================================================================
 
 class SceneElementModelCreator {
 private:
     std::vector<TextureInfo> textures_loaded;
+
+    // Helper function to load texture from memory (for embedded textures)
+    unsigned int LoadTextureFromData(const aiTexture* texture) {
+        unsigned int textureID;
+        glGenTextures(1, &textureID);
+
+        int width, height, nrComponents;
+        // Use stbi_load_from_memory to load the image data from the buffer
+        // For compressed formats (like png/jpg), texture->mWidth holds the size of the buffer in bytes.
+        // If texture->mHeight is 0, it's a compressed format.
+        unsigned char *data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth, &width, &height, &nrComponents, 0);
+        if (data) {
+            GLenum format;
+            if (nrComponents == 1)
+                format = GL_RED;
+            else if (nrComponents == 3)
+                format = GL_RGB;
+            else if (nrComponents == 4)
+                format = GL_RGBA;
+            else
+                format = GL_RGB; // Default case
+
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(data);
+            std::cout << "Loaded embedded texture successfully." << std::endl;
+        } else {
+            std::cout << "Embedded texture failed to load: " << stbi_failure_reason() << std::endl;
+            stbi_image_free(data);
+        }
+
+        return textureID;
+    }
 
     void processNode(aiNode* node, const aiScene* scene, vector<StaticMesh>& meshes, string& directory)
     {
@@ -629,14 +659,7 @@ private:
         std::vector<unsigned int> indices;
         std::vector<TextureInfo> textures;
         Aabb boundingBox;
-        // Initialize bounding box min/max to first vertex or large/small values
-        if (mesh->mNumVertices > 0) {
-            boundingBox.min = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
-            boundingBox.max = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
-        } else {
-            boundingBox.min = glm::vec3(0.0f);
-            boundingBox.max = glm::vec3(0.0f);
-        }
+        
         // Walk through each of the mesh's vertices
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
@@ -701,52 +724,34 @@ private:
                 indices.push_back(face.mIndices[j]);
         }
 
-        // Load material textures
+        // Load PBR material textures, passing the 'scene' pointer
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         
-        // Diffuse maps (legacy support)
-        std::vector<TextureInfo> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        
-        // Specular maps (legacy support)
-        std::vector<TextureInfo> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-        
-        // Normal maps
-        std::vector<TextureInfo> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-        
-        // Height maps
-        std::vector<TextureInfo> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-        
-        // PBR textures
-        // Base color / Albedo maps (PBR)
-        std::vector<TextureInfo> albedoMaps = loadMaterialTextures(material, aiTextureType_BASE_COLOR, "texture_albedo");
+        vector<TextureInfo> albedoMaps = loadMaterialTextures(material, scene, aiTextureType_DIFFUSE, "texture_albedo");
         textures.insert(textures.end(), albedoMaps.begin(), albedoMaps.end());
         
-        // Metallic maps (PBR)
-        std::vector<TextureInfo> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
+        vector<TextureInfo> metallicMaps = loadMaterialTextures(material, scene, aiTextureType_METALNESS, "texture_metallic");
         textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
-        
-        // Roughness maps (PBR) - often combined with metallic in ORM texture
-        std::vector<TextureInfo> roughnessMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
+
+        vector<TextureInfo> roughnessMaps = loadMaterialTextures(material, scene, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
         textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
         
-        // Ambient Occlusion maps (PBR)
-        std::vector<TextureInfo> aoMaps = loadMaterialTextures(material, aiTextureType_LIGHTMAP, "texture_ao");
+        vector<TextureInfo> normalMaps = loadMaterialTextures(material, scene, aiTextureType_NORMALS, "texture_normal");
+        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+        
+        vector<TextureInfo> aoMaps = loadMaterialTextures(material, scene, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
         textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
 
-        // Return a StaticMesh object created from the extracted mesh data
         return StaticMesh(vertices, indices, textures);
     }
 
-    std::vector<TextureInfo> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName) {
+    // Function now accepts the 'scene' pointer to handle embedded textures
+    std::vector<TextureInfo> loadMaterialTextures(aiMaterial* mat, const aiScene* scene, aiTextureType type, std::string typeName) {
         std::vector<TextureInfo> textures;
         for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
             aiString str;
             mat->GetTexture(type, i, &str);
-            // Prevent duplicate loading of textures
+            
             bool skip = false;
             for (unsigned int j = 0; j < textures_loaded.size(); j++) {
                 if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0) {
@@ -756,13 +761,24 @@ private:
                 }
             }
             if (!skip) {
-                // If texture hasn't been loaded already, load it
                 TextureInfo texture;
-                texture.id = LoadTexture(str.C_Str(), directory);
+                // Check if the texture is an embedded texture (path starts with '*')
+                if (str.C_Str()[0] == '*') {
+                    int textureIndex = std::stoi(std::string(str.C_Str()).substr(1));
+                    if (textureIndex < scene->mNumTextures) {
+                        texture.id = LoadTextureFromData(scene->mTextures[textureIndex]);
+                    } else {
+                        std::cout << "Invalid embedded texture index: " << textureIndex << std::endl;
+                        continue;
+                    }
+                } else {
+                    // It's a regular file-based texture
+                    texture.id = LoadTexture(str.C_Str(), directory);
+                }
                 texture.type = typeName;
                 texture.path = str.C_Str();
                 textures.push_back(texture);
-                textures_loaded.push_back(texture); // Add to loaded textures
+                textures_loaded.push_back(texture);
             }
         }
         return textures;
@@ -777,7 +793,7 @@ public:
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
         // Check for errors
-        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
+        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
             std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
             return;
@@ -821,8 +837,4 @@ public:
 private:
 };
  
-
-
-
-
 #endif
