@@ -8,6 +8,16 @@
 // Constants
 #define MAX_INTERACTABLE_MODELS 10
 
+// Application mode enum
+enum MODE {
+    EDIT_SCENE,
+    FREE_VIEW,
+    ANIMATE
+};
+
+// Global application mode variable
+extern MODE app_mode;
+
 // Rendering context structure
 struct RenderContext {
     GLFWwindow* window;
@@ -38,6 +48,11 @@ void render_frame();
 void cleanup_rendering();
 bool should_close_window();
 RenderContext& get_render_context();
+
+// Mode utility functions
+const char* get_mode_name(MODE mode);
+MODE get_app_mode();
+void set_app_mode(MODE mode);
 
 // Callback functions
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

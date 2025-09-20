@@ -31,6 +31,7 @@ add_library(imgui STATIC
     ${IMGUI_DIR}/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/imgui_impl_opengl3.cpp
     ${IMGUI_DIR}/ImGuiFileDialog.cpp
+    ${IMGUI_DIR}/ImGuizmo.cpp
 )
 
 # 3. Provide include directories for ImGui

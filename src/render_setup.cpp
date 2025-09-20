@@ -12,14 +12,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-// ImGui includes
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 #include "include/UI.hpp"
 
+// Global application mode variable definition
+MODE app_mode = EDIT_SCENE;  // Default to edit scene mode
+
 static RenderContext render_context;
-static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// Initialize camera with edit mode default position
+static Camera camera(glm::vec3(0.0f, -0.5f, 4.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
@@ -78,56 +78,11 @@ bool init_rendering() {
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     
-    // Initialize ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    
-    // Setup Dear ImGui style with green theme and transparency
-    ImGuiStyle& style = ImGui::GetStyle();
-    
-    // Set alpha/transparency for the entire UI
-    style.Alpha = 0.85f;  // Slightly transparent
-    
-    // Set window background to transparent green
-    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.1f, 0.2f, 0.1f, 0.8f);  // Dark green with transparency
-    style.Colors[ImGuiCol_TitleBg] = ImVec4(0.15f, 0.3f, 0.15f, 0.9f);  // Slightly lighter green for title
-    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.2f, 0.4f, 0.2f, 0.95f);  // Active title
-    
-    // Header colors (collapsible sections)
-    style.Colors[ImGuiCol_Header] = ImVec4(0.2f, 0.4f, 0.2f, 0.8f);
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.5f, 0.25f, 0.9f);
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.3f, 0.6f, 0.3f, 1.0f);
-    
-    // Button colors
-    style.Colors[ImGuiCol_Button] = ImVec4(0.2f, 0.4f, 0.2f, 0.8f);
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.3f, 0.6f, 0.3f, 0.9f);
-    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.4f, 0.7f, 0.4f, 1.0f);
-    
-    // Frame colors (input fields, etc.)
-    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.15f, 0.25f, 0.15f, 0.7f);
-    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.2f, 0.35f, 0.2f, 0.8f);
-    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.45f, 0.25f, 0.9f);
-    
-    // Text colors
-    style.Colors[ImGuiCol_Text] = ImVec4(0.9f, 1.0f, 0.9f, 1.0f);  // Light green text
-    style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.5f, 0.7f, 0.5f, 0.8f);
-    
-    // Border colors
-    style.Colors[ImGuiCol_Border] = ImVec4(0.3f, 0.5f, 0.3f, 0.5f);
-    
-    // Popup/modal colors
-    style.Colors[ImGuiCol_PopupBg] = ImVec4(0.1f, 0.2f, 0.1f, 0.9f);
-    
-    // Scrollbar colors
-    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.1f, 0.2f, 0.1f, 0.5f);
-    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.3f, 0.5f, 0.3f, 0.8f);
-    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.4f, 0.6f, 0.4f, 0.9f);
-    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
-    
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(render_context.window, true);
-    ImGui_ImplOpenGL3_Init("#version 460");
+    // Initialize UI system
+    if (!init_ui(render_context.window)) {
+        std::cerr << "Failed to initialize UI" << std::endl;
+        return false;
+    }
     
     return true;
 }
@@ -174,14 +129,30 @@ void render_frame() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_MULTISAMPLE); // Enable multisampling for anti-aliasing
+    //glEnable(GL_FRAMEBUFFER_SRGB); // Enable sRGB for correct color space
     
-    // Set up matrices
-    glm::mat4 view = camera.GetViewMatrix();
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), 
-                                          (float)render_context.screen_width / 
-                                          (float)render_context.screen_height, 
-                                          0.1f, 100.0f);
+    // Set up matrices based on application mode using unified camera
+    glm::mat4 view, projection;
     glm::mat4 model = glm::mat4(1.0f);
+    
+    if (app_mode == EDIT_SCENE) {
+        // Edit mode: Use camera position but override target to look at origin
+        glm::vec3 editCameraTarget(0.0f, 0.0f, 0.0f);
+        glm::vec3 editCameraUp(0.0f, 1.0f, 0.0f);
+        
+        view = glm::lookAt(camera.Position, editCameraTarget, editCameraUp);
+        projection = glm::perspective(glm::radians(45.0f), 
+                                    (float)render_context.screen_width / 
+                                    (float)render_context.screen_height, 
+                                    0.1f, 100.0f);
+    } else {
+        // Free view or animate mode - use camera's natural view matrix
+        view = camera.GetViewMatrix();
+        projection = glm::perspective(glm::radians(camera.Zoom), 
+                                    (float)render_context.screen_width / 
+                                    (float)render_context.screen_height, 
+                                    0.1f, 100.0f);
+    }
     
    
     
@@ -216,11 +187,8 @@ void render_frame() {
         
         
         sceneElementShader->use();
-         // Add quaternion rotations for model transformations THIS WAS MADE FOR 
-        // glm::quat rotationX = glm::angleAxis(glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-        // glm::quat rotationZ = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, -1.0f));
         
-    // Apply the rotations to the model matrix
+        // Apply the rotations to the model matrix
         sceneElementShader->setMat4("model", model);
 
         sceneElementShader->setMat4("view", view);
@@ -236,10 +204,10 @@ void render_frame() {
         };
         
         glm::vec3 lightColors[4] = {
-            glm::vec3(300.0f, 250.0f, 200.0f),  // Warm white light
-            glm::vec3(250.0f, 300.0f, 300.0f),  // Cool white light
-            glm::vec3(300.0f, 200.0f, 250.0f),  // Slightly magenta light
-            glm::vec3(200.0f, 300.0f, 250.0f)   // Slightly green light
+            glm::vec3(30.0f, 25.0f, 20.0f),  // Warm white light
+            glm::vec3(25.0f, 30.0f, 30.0f),  // Cool white light
+            glm::vec3(30.0f, 20.0f, 25.f),  // Slightly magenta light
+            glm::vec3(20.0f, 30.0f, 25.0f)   // Slightly green light
         };
 
         // Set light uniforms
@@ -248,7 +216,7 @@ void render_frame() {
             sceneElementShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
         }
 
-        // Set camera position for view direction calculation
+        // Set camera position for view direction calculation (unified camera position)
         sceneElementShader->setVec3("camPos", camera.Position);
 
         // Note: PBR material texture samplers are now handled dynamically in Mesh::Draw()
@@ -377,17 +345,8 @@ void render_frame() {
         collisionVisualizer->render(view, projection);
     }
     
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    
-    // Call your model loader widget here
-    RenderModelLoaderWidget();
-    
-    // Render ImGui
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    // Render all UI components
+    render_ui();
     
     // Process input and swap buffers
     process_input(render_context.window);
@@ -404,10 +363,8 @@ bool should_close_window() {
 }
 
 void cleanup_rendering() {
-    // Cleanup ImGui
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    // Cleanup UI system
+    cleanup_ui();
     
     delete skeletonShader;
     delete sceneElementShader;
@@ -431,12 +388,37 @@ RenderContext& get_render_context() {
     return render_context;
 }
 
+// Mode utility functions
+const char* get_mode_name(MODE mode) {
+    const char* mode_names[] = {"Edit Scene", "Free View", "Animate"};
+    return mode_names[mode];
+}
+
+MODE get_app_mode() {
+    return app_mode;
+}
+
+void set_app_mode(MODE mode) {
+    app_mode = mode;
+}
+
 // Callback implementations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    // Only process mouse camera movement if not in EDIT_SCENE mode
+    if (app_mode == EDIT_SCENE) {
+        return;
+    }
+    
+    // Only process mouse movement when left mouse button is held down
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) != GLFW_PRESS) {
+        firstMouse = true;  // Reset first mouse flag when button is released
+        return;
+    }
+    
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 
@@ -456,7 +438,10 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    // Only process mouse scroll for camera zoom if not in EDIT_SCENE mode
+    if (app_mode != EDIT_SCENE) {
+        camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    }
 }
 
 void process_input(GLFWwindow* window) {
@@ -465,14 +450,17 @@ void process_input(GLFWwindow* window) {
 
     const ApplicationState& app_state = get_application_state();
     
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, app_state.deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, app_state.deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, app_state.deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, app_state.deltaTime);
+    // Only process camera movement if not in EDIT_SCENE mode
+    if (app_mode != EDIT_SCENE) {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.ProcessKeyboard(FORWARD, app_state.deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.ProcessKeyboard(BACKWARD, app_state.deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.ProcessKeyboard(LEFT, app_state.deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.ProcessKeyboard(RIGHT, app_state.deltaTime);
+    }
     //DEBUG: CURRENTLY TOGGLES ROOT LOCK RANDOMLY BECAUSE OF BUTTON DEBOUNCING//SOLVED WITH SCHMIDT TRIGGER
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         if (!spaceKeyPressed && is_shared_memory_available()) { // Key was not previously pressed and shared memory is available
