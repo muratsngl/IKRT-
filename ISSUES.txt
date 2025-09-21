@@ -3,3 +3,5 @@ RENDERING
         1.For SceneElements bounding boxes are not consistent and extend themselves to infinity
     PBR:
         2.The specular component of the radiance seems too flashy.
+DATA_ORGANIZATION:
+    MODEL_REMOVAL: There is no such mechanism, having creative seizures while thinking of it. better keep it simple.

@@ -300,6 +300,8 @@ public:
     std::vector<Interaction> model_interactions;
     std::map<string, BoneInfo> local_bone_info_map;  // Local bone info for this model
     int id;
+    unsigned int model_index;  // UBO model matrix index
+    
     // constructor, expects a filepath to a 3D model.
     InteractableModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
@@ -307,12 +309,15 @@ public:
         id = interactable_element_count++;
         creator.loadModel(path, meshes, bindPosePositions, bindPoseMatrices, textures_loaded, local_bone_info_map, id);
         directory = creator.directory;
+        model_index = 0; // Will be set during loading
         // Bounding box is now created during model loading
     }
 
     // draws the model, and thus all its meshes
     void Draw(Shader& shader) const
     {
+        // Set the model index uniform using this model's stored index
+        shader.setUInt("modelIndex", model_index);
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
@@ -818,6 +823,8 @@ public:
     std::string directory;
     std::vector<TextureInfo> textures_loaded;
     int id;
+    unsigned int model_index;  // UBO model matrix index
+    
     // Constructor, expects a filepath to a 3D model.
     SceneElementModel(std::string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
@@ -825,10 +832,13 @@ public:
         creator.loadModel(path, meshes, textures_loaded);
         directory = creator.directory;
         id = scene_element_count;
+        model_index = 0; // Will be set during loading
     }
 
     // Add a draw function to the SceneElementModel class
     void Draw(Shader& shader) const {
+        // Set the model index uniform using this model's stored index
+        shader.setUInt("modelIndex", model_index);
         for (unsigned int i = 0; i < meshes.size(); i++) {
             meshes[i].Draw(shader);
         }

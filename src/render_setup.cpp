@@ -25,6 +25,9 @@ static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
 static CollisionVisualizer* collisionVisualizer = nullptr;
 
+// Model matrix storage for UBO (50 matrices max)
+static std::vector<glm::mat4> modelMatrices(50, glm::mat4(1.0f));
+
 // Mouse and timing variables
 static float lastX = 1240.0f / 2.0f;
 static float lastY = 720.0f / 2.0f;
@@ -118,13 +121,33 @@ void init_buffers() {
     glBufferData(GL_UNIFORM_BUFFER, interactable_bone_buffer_size, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
- 
-    
-   
-   
+    // Create scene element model UBO
+    GLsizeiptr scene_element_model_buffer_size = 50 * sizeof(glm::mat4);
+
+    glGenBuffers(1, &render_context.scene_element_model_UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.scene_element_model_UBO);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 3, render_context.scene_element_model_UBO);
+    glBufferData(GL_UNIFORM_BUFFER, scene_element_model_buffer_size, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0); 
+}
+
+// Function to get unique model index for each model (called only once per model)
+unsigned int get_model_index() {
+    static unsigned int modelIndexCounter = 0;
+    return modelIndexCounter++;
+}
+
+// Function to upload model matrices to UBO (called every frame)
+void upload_model_matrices() {
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.scene_element_model_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, modelMatrices.size() * sizeof(glm::mat4), modelMatrices.data());
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void render_frame() {
+    // Upload model matrices to UBO every frame
+    upload_model_matrices();
+    
     // Clear the screen
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -188,8 +211,8 @@ void render_frame() {
         
         sceneElementShader->use();
         
-        // Apply the rotations to the model matrix
-        sceneElementShader->setMat4("model", model);
+        // Store the main model matrix in the UBO at index 0
+        modelMatrices[0] = model;
 
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
@@ -221,17 +244,16 @@ void render_frame() {
 
         // Note: PBR material texture samplers are now handled dynamically in Mesh::Draw()
 
-
-        for(size_t i = 0;i<get_scene_element_model_count();i++){
+        // Render scene element models (each model sets its own index)
+        for(size_t i = 0; i < get_scene_element_model_count(); i++){
             const SceneElementModel& model = get_scene_element_model(i);
             model.Draw(*sceneElementShader);
-            
         }
         
-        for(size_t i = 0;i<get_interactable_model_count();i++){
+        // Render interactable models (each model sets its own index)
+        for(size_t i = 0; i < get_interactable_model_count(); i++){
             const InteractableModel& model = get_interactable_model(i);
             model.Draw(*sceneElementShader);
-            
         }
       
         

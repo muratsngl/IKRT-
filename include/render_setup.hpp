@@ -24,10 +24,10 @@ struct RenderContext {
     unsigned int screen_width;
     unsigned int screen_height;
     
-    // OpenGL objects
+    // OpenGL Uniform Buffer Objects
     GLuint orcunUBO;
     GLuint interactable_bone_UBO;
-   
+    GLuint scene_element_model_UBO;
     
     // Various VAOs and VBOs for different objects
     
@@ -48,6 +48,10 @@ void render_frame();
 void cleanup_rendering();
 bool should_close_window();
 RenderContext& get_render_context();
+
+// Model matrix management functions
+unsigned int get_model_index();
+void upload_model_matrices();
 
 // Mode utility functions
 const char* get_mode_name(MODE mode);

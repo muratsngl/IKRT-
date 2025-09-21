@@ -64,8 +64,7 @@ void apply_root_offset_to_bones(const glm::vec3& rootOffset);
 void sync_data_to_main(std::vector<glm::vec3>& main_positions, std::vector<glm::mat4>& main_matrices);
 
 // Helper functions for interactable models
-void draw_all_interactable_models(Shader& shader);
-void update_all_interactable_model_bounding_boxes(const std::vector<glm::mat4>& boneTransforms);
+
 void sync_data_from_main(const std::vector<glm::vec3>& main_positions, const std::vector<glm::mat4>& main_matrices);
 
 // Helper function to check if interactor model is available

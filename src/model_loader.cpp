@@ -1,5 +1,6 @@
 #include "include/model_loader.hpp"
 #include "include/model_bones.h"
+#include "include/render_setup.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -74,8 +75,13 @@ model_data.right_pinky_indices = {18, 46, 47, 48, 58};
 bool load_scene_element_model(const char* path) {
     try {
         SceneElementModel* newModel = new SceneElementModel(path);
+        
+        // Assign model index using the shared UBO index system
+        newModel->model_index = get_model_index();
+        
         scene_element_model_arr.push_back(*newModel);
         SceneElementModelCount++;
+        std::cout << "Successfully loaded SceneElementModel: " << path << " with model index: " << newModel->model_index << std::endl;
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error loading SceneElementModel: " << e.what() << std::endl;
@@ -86,9 +92,13 @@ bool load_scene_element_model(const char* path) {
 bool load_interactable_model(const char* path) {
     try {
         InteractableModel* newModel = new InteractableModel(path);
+        
+        // Assign model index using the shared UBO index system
+        newModel->model_index = get_model_index();
+        
         interactable_model_arr.push_back(*newModel);
         InteractableModelCount++;
-        std::cout << "Successfully loaded InteractableModel: " << path << " with ID: " << newModel->id << std::endl;
+        std::cout << "Successfully loaded InteractableModel: " << path << " with ID: " << newModel->id << " and model index: " << newModel->model_index << std::endl;
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error loading InteractableModel: " << e.what() << std::endl;
@@ -224,14 +234,3 @@ void apply_root_offset_to_bones(const glm::vec3& rootOffset) {
 }
 
 // Helper functions for interactable models
-void draw_all_interactable_models(Shader& shader) {
-    for (size_t i = 0; i < interactable_model_arr.size(); i++) {
-        interactable_model_arr[i].Draw(shader);
-    }
-}
-
-void update_all_interactable_model_bounding_boxes(const std::vector<glm::mat4>& boneTransforms) {
-    for (size_t i = 0; i < interactable_model_arr.size(); i++) {
-        interactable_model_arr[i].UpdateBoundingBox(boneTransforms);
-    }
-}

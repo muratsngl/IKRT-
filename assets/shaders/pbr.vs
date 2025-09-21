@@ -1,4 +1,4 @@
-#version 330 core
+#version 460 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoords;
@@ -13,10 +13,18 @@ out VS_OUT {
 
 uniform mat4 projection;
 uniform mat4 view;
-uniform mat4 model;
+uniform uint modelIndex;
+
+// UBO for model matrices (buffer base 3, holds 50 mat4s)
+layout(std140, binding = 3) uniform ModelMatrices {
+    mat4 models[50];
+};
 
 void main()
 {
+    // Get the model matrix from the UBO using the index
+    mat4 model = models[modelIndex];
+    
     // Calculate world position of the vertex
     vs_out.FragPos = vec3(model * vec4(aPos, 1.0));
     vs_out.TexCoords = aTexCoords;
