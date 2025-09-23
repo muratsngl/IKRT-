@@ -79,9 +79,12 @@ bool load_scene_element_model(const char* path) {
         // Assign model index using the shared UBO index system
         newModel->model_index = get_model_index();
         
+        // Register the model ID to index mapping
+        register_model_id_to_index(newModel->id, newModel->model_index);
+        
         scene_element_model_arr.push_back(*newModel);
         SceneElementModelCount++;
-        std::cout << "Successfully loaded SceneElementModel: " << path << " with model index: " << newModel->model_index << std::endl;
+        std::cout << "Successfully loaded SceneElementModel: " << path << " with ID: " << newModel->id << " and model index: " << newModel->model_index << std::endl;
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error loading SceneElementModel: " << e.what() << std::endl;
@@ -95,6 +98,9 @@ bool load_interactable_model(const char* path) {
         
         // Assign model index using the shared UBO index system
         newModel->model_index = get_model_index();
+        
+        // Register the model ID to index mapping
+        register_model_id_to_index(newModel->id, newModel->model_index);
         
         interactable_model_arr.push_back(*newModel);
         InteractableModelCount++;

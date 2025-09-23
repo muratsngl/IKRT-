@@ -13,6 +13,9 @@
 #include <assimp/MathFunctions.h>
 
 #include "Mesh.h"
+
+// Forward declaration to avoid circular dependency
+
 #include "Shader.h"
 #include "Texture.h"
 #include "Interaction.hpp"
@@ -316,8 +319,9 @@ public:
     // draws the model, and thus all its meshes
     void Draw(Shader& shader) const
     {
-        // Set the model index uniform using this model's stored index
-        shader.setUInt("modelIndex", model_index);
+        // Get the model index using the ID from the hashmap
+        unsigned int index = model_index;
+        shader.setUInt("modelIndex", index);
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
@@ -664,6 +668,9 @@ private:
         std::vector<unsigned int> indices;
         std::vector<TextureInfo> textures;
         Aabb boundingBox;
+        // Initialize bounding box with proper extreme values
+        boundingBox.min = glm::vec3(FLT_MAX);
+        boundingBox.max = glm::vec3(-FLT_MAX);
         
         // Walk through each of the mesh's vertices
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -717,8 +724,10 @@ private:
         {
             Shape s;
             s.type = AABB;
-            s.id = scene_element_count++; // Assign unique ID to each scene element
-            s.aabb = boundingBox;
+            s.id = scene_element_count; // Assign unique ID to each scene element
+            //PRESUMES THAT THE MODEL HAS NO ROTATION OR SCALE APPLIED TO IT
+            s.aabb.min = boundingBox.min;
+            s.aabb.max = boundingBox.max;
             scene_element_boxes.push_back(s);
         }
         // Walk through each of the mesh's faces and retrieve the corresponding vertex indices
@@ -831,14 +840,15 @@ public:
         SceneElementModelCreator creator;
         creator.loadModel(path, meshes, textures_loaded);
         directory = creator.directory;
-        id = scene_element_count;
+        id = scene_element_count++;
         model_index = 0; // Will be set during loading
     }
 
     // Add a draw function to the SceneElementModel class
     void Draw(Shader& shader) const {
-        // Set the model index uniform using this model's stored index
-        shader.setUInt("modelIndex", model_index);
+        // Get the model index using the ID from the hashmap
+        unsigned int index = model_index;
+        shader.setUInt("modelIndex", index);
         for (unsigned int i = 0; i < meshes.size(); i++) {
             meshes[i].Draw(shader);
         }

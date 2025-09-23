@@ -63,6 +63,7 @@ set(SOURCES
     src/Interaction.cpp
     src/stb_image.cpp
     src/UI.cpp
+    src/raycast.cpp
 )
 
 # Include directories (Original Setup)

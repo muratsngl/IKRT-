@@ -7,10 +7,12 @@
 #include "include/model_bones.h" 
 #include "include/application_logic.hpp"// Include the Model class definition
 #include "include/collision_visualizer.hpp"
+#include "include/raycast.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <unordered_map>
 
 #include "include/UI.hpp"
 
@@ -27,6 +29,8 @@ static CollisionVisualizer* collisionVisualizer = nullptr;
 
 // Model matrix storage for UBO (50 matrices max)
 static std::vector<glm::mat4> modelMatrices(50, glm::mat4(1.0f));
+// Hashmap to map model IDs to their UBO matrix indices (CREATED FOR GIZMO FAST LOOKUP AND CHANGE OF MODEL MATRIX)
+static std::unordered_map<int, unsigned int> modelIdToIndexMap;
 
 // Mouse and timing variables
 static float lastX = 1240.0f / 2.0f;
@@ -65,6 +69,7 @@ bool init_rendering() {
     glfwMakeContextCurrent(render_context.window);
     glfwSetFramebufferSizeCallback(render_context.window, framebuffer_size_callback);
     glfwSetCursorPosCallback(render_context.window, mouse_callback);
+    glfwSetMouseButtonCallback(render_context.window, mouse_button_callback);
     glfwSetScrollCallback(render_context.window, scroll_callback);
     glfwSetInputMode(render_context.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
@@ -137,11 +142,32 @@ unsigned int get_model_index() {
     return modelIndexCounter++;
 }
 
+// Function to register model ID to index mapping
+void register_model_id_to_index(int model_id, unsigned int model_index) {
+    modelIdToIndexMap[model_id] = model_index;
+}
+
+// Function to get model index by model ID
+unsigned int get_model_index_by_id(int model_id) {
+    auto it = modelIdToIndexMap.find(model_id);
+    if (it != modelIdToIndexMap.end()) {
+        return it->second;
+    }
+    // Return 0 as fallback if ID not found
+    std::cerr << "Warning: Model ID " << model_id << " not found in index map, using index 0" << std::endl;
+    return 0;
+}
+
 // Function to upload model matrices to UBO (called every frame)
 void upload_model_matrices() {
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.scene_element_model_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, modelMatrices.size() * sizeof(glm::mat4), modelMatrices.data());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+// Function to get access to model matrices (for raycasting)
+const std::vector<glm::mat4>& get_model_matrices() {
+    return modelMatrices;
 }
 
 void render_frame() {
@@ -158,25 +184,12 @@ void render_frame() {
     glm::mat4 view, projection;
     glm::mat4 model = glm::mat4(1.0f);
     
-    if (app_mode == EDIT_SCENE) {
-        // Edit mode: Use camera position but override target to look at origin
-        glm::vec3 editCameraTarget(0.0f, 0.0f, 0.0f);
-        glm::vec3 editCameraUp(0.0f, 1.0f, 0.0f);
-        
-        view = glm::lookAt(camera.Position, editCameraTarget, editCameraUp);
-        projection = glm::perspective(glm::radians(45.0f), 
-                                    (float)render_context.screen_width / 
-                                    (float)render_context.screen_height, 
-                                    0.1f, 100.0f);
-    } else {
-        // Free view or animate mode - use camera's natural view matrix
-        view = camera.GetViewMatrix();
-        projection = glm::perspective(glm::radians(camera.Zoom), 
-                                    (float)render_context.screen_width / 
-                                    (float)render_context.screen_height, 
-                                    0.1f, 100.0f);
-    }
-    
+   // Both modes should use the same projection calculation
+   projection = glm::perspective(glm::radians(camera.Zoom), 
+                            (float)render_context.screen_width / 
+                            (float)render_context.screen_height, 
+                            0.1f, 100.0f);
+    view = camera.GetViewMatrix();
    
     
     // Update uniform buffer with bone transforms
@@ -463,6 +476,50 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     // Only process mouse scroll for camera zoom if not in EDIT_SCENE mode
     if (app_mode != EDIT_SCENE) {
         camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    }
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS&& app_mode == EDIT_SCENE) {
+        // Get current mouse position
+        double mouse_x, mouse_y;
+        glfwGetCursorPos(window, &mouse_x, &mouse_y);
+        
+        // Get current camera matrices - need to recreate the same logic from render_frame
+        glm::mat4 view, projection;
+        
+        
+            
+            view = camera.GetViewMatrix();
+            projection = glm::perspective(glm::radians(camera.Zoom), 
+                                        (float)render_context.screen_width / 
+                                        (float)render_context.screen_height, 
+                                        0.1f, 100.0f);
+        
+        
+        // Generate ray from mouse position
+        Ray ray = generate_ray(static_cast<float>(mouse_x), static_cast<float>(mouse_y), 
+                              view, projection, camera.Position,
+                              render_context.screen_width, render_context.screen_height);
+        
+        // Collect all shapes for intersection testing
+        std::vector<Shape> all_shapes;
+        
+        
+        
+        // Add interactable element boxes
+        
+        
+        // Perform raycast intersection
+        int hit_model_id = intersect_ray(ray, scene_element_boxes);
+        
+        if (hit_model_id != -1) {
+            std::cout << "Raycast hit model ID: " << hit_model_id << std::endl;
+            std::cout << "Ray origin: (" << ray.origin.x << ", " << ray.origin.y << ", " << ray.origin.z << ")" << std::endl;
+            std::cout << "Ray direction: (" << ray.direction.x << ", " << ray.direction.y << ", " << ray.direction.z << ")" << std::endl;
+        } else {
+            std::cout << "Raycast hit nothing" << std::endl;
+        }
     }
 }
 

@@ -51,7 +51,10 @@ RenderContext& get_render_context();
 
 // Model matrix management functions
 unsigned int get_model_index();
+void register_model_id_to_index(int model_id, unsigned int model_index);
+unsigned int get_model_index_by_id(int model_id);
 void upload_model_matrices();
+const std::vector<glm::mat4>& get_model_matrices();
 
 // Mode utility functions
 const char* get_mode_name(MODE mode);
@@ -61,6 +64,7 @@ void set_app_mode(MODE mode);
 // Callback functions
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void process_input(GLFWwindow* window);
 
