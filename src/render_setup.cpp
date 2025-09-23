@@ -40,6 +40,9 @@ static bool firstMouse = true;
 // Add static variables to track the key state
 static bool spaceKeyPressed = false;
 
+// Gizmo state variables
+static int selected_model_id = -1;
+
 bool init_rendering() {
     // Initialize GLFW
     if (!glfwInit()) {
@@ -170,6 +173,42 @@ const std::vector<glm::mat4>& get_model_matrices() {
     return modelMatrices;
 }
 
+// Gizmo management functions
+void set_selected_object(int model_id) {
+    selected_model_id = model_id;
+}
+
+int get_selected_object_id() {
+    return selected_model_id;
+}
+
+glm::mat4& get_selected_object_matrix() {
+    if (selected_model_id != -1) {
+        unsigned int model_index = get_model_index_by_id(selected_model_id);
+        if (model_index < modelMatrices.size()) {
+            return modelMatrices[model_index];
+        }
+    }
+    // Return a static identity matrix as fallback (should not happen in normal usage)
+    static glm::mat4 identity = glm::mat4(1.0f);
+    return identity;
+}
+
+void clear_selection() {
+    selected_model_id = -1;
+}
+
+void get_current_camera_matrices(glm::mat4& view, glm::mat4& projection) {
+    
+        // Free view or animate mode - use camera's natural view matrix
+        view = camera.GetViewMatrix();
+        projection = glm::perspective(glm::radians(camera.Zoom), 
+                                     (float)render_context.screen_width / 
+                                     (float)render_context.screen_height, 
+                                     0.1f, 100.0f);
+    
+}
+
 void render_frame() {
     // Upload model matrices to UBO every frame
     upload_model_matrices();
@@ -224,8 +263,7 @@ void render_frame() {
         
         sceneElementShader->use();
         
-        // Store the main model matrix in the UBO at index 0
-        modelMatrices[0] = model;
+
 
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
@@ -443,6 +481,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
+    // Let ImGui handle mouse input if it wants to capture it
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.WantCaptureMouse) {
+        return;
+    }
+    
     // Only process mouse camera movement if not in EDIT_SCENE mode
     if (app_mode == EDIT_SCENE) {
         return;
@@ -473,6 +517,12 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    // Let ImGui handle mouse input if it wants to capture it
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.WantCaptureMouse) {
+        return;
+    }
+    
     // Only process mouse scroll for camera zoom if not in EDIT_SCENE mode
     if (app_mode != EDIT_SCENE) {
         camera.ProcessMouseScroll(static_cast<float>(yoffset));
@@ -480,7 +530,18 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS&& app_mode == EDIT_SCENE) {
+    // Let ImGui handle mouse input if it wants to capture it
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.WantCaptureMouse) {
+        return;
+    }
+    
+    // Check if ImGuizmo is being used first
+    if (ImGuizmo::IsUsing()) {
+        return; // Let ImGuizmo handle the input
+    }
+    
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && app_mode == EDIT_SCENE) {
         // Get current mouse position
         double mouse_x, mouse_y;
         glfwGetCursorPos(window, &mouse_x, &mouse_y);
@@ -488,8 +549,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         // Get current camera matrices - need to recreate the same logic from render_frame
         glm::mat4 view, projection;
         
-        
-            
+
+            // Free view or animate mode - use camera's natural view matrix
             view = camera.GetViewMatrix();
             projection = glm::perspective(glm::radians(camera.Zoom), 
                                         (float)render_context.screen_width / 
@@ -503,22 +564,21 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                               render_context.screen_width, render_context.screen_height);
         
         // Collect all shapes for intersection testing
-        std::vector<Shape> all_shapes;
+
         
+
         
+   
         
-        // Add interactable element boxes
-        
-        
-        // Perform raycast intersection
-        int hit_model_id = intersect_ray(ray, scene_element_boxes);
-        
+        int hit_model_id = intersect_ray(ray,scene_element_boxes);
         if (hit_model_id != -1) {
-            std::cout << "Raycast hit model ID: " << hit_model_id << std::endl;
-            std::cout << "Ray origin: (" << ray.origin.x << ", " << ray.origin.y << ", " << ray.origin.z << ")" << std::endl;
-            std::cout << "Ray direction: (" << ray.direction.x << ", " << ray.direction.y << ", " << ray.direction.z << ")" << std::endl;
+            // Set the selected object for gizmo manipulation
+            set_selected_object(hit_model_id);
+            std::cout << "Selected object ID: " << hit_model_id << std::endl;
         } else {
-            std::cout << "Raycast hit nothing" << std::endl;
+            // Clear selection if nothing was hit
+            clear_selection();
+            std::cout << "Selection cleared" << std::endl;
         }
     }
 }

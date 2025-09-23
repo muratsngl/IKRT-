@@ -33,5 +33,6 @@ ImGuiStyle create_gui_style();
 // --- Individual UI Component Functions ---
 void RenderModelLoaderWidget();
 void RenderModeSwitcher();
+void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjection, glm::mat4& objectMatrix);
 
 #endif

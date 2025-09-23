@@ -1,7 +1,16 @@
 #include "include/UI.hpp"
 #include "include/collision_visualizer.hpp"
+#include "include/render_setup.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+// --- ImGuizmo Integration Start ---
+#include "ImGuizmo.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+// --- ImGuizmo Integration End ---
+
 
 // --- UI System Functions ---
 
@@ -60,6 +69,9 @@ bool init_ui(GLFWwindow* window) {
     ImGuiStyle& style = ImGui::GetStyle();
     style = create_gui_style();
     
+    // Set the ImGui context for ImGuizmo
+    ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
+
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
@@ -74,15 +86,40 @@ void cleanup_ui() {
     ImGui::DestroyContext();
 }
 
+
+// --- ImGuizmo Integration Change ---
+// 1. UPDATE THE FORWARD DECLARATION
+void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjection, glm::mat4& objectMatrix);
+// --- End Change ---
+
+
 void render_ui() {
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    
+
+    // Begin the ImGuizmo frame
+    ImGuizmo::BeginFrame();
+
     // Render all UI components
     RenderModeSwitcher();
     RenderModelLoaderWidget();
+
+    // --- ImGuizmo Integration Change ---
+    // Only render gizmo if an object is selected
+    if (get_selected_object_id() != -1) {
+        // Get the actual camera matrices from the render system
+        glm::mat4 cameraView, cameraProjection;
+        get_current_camera_matrices(cameraView, cameraProjection);
+        
+        // Get direct reference to the selected object's matrix
+        glm::mat4& objectMatrix = get_selected_object_matrix();
+        
+        // Render the gizmo with real matrices - it will directly modify the reference
+        RenderGizmoUI(cameraView, cameraProjection, objectMatrix);
+    }
+    // --- End Change ---
     
     // Render ImGui
     ImGui::Render();
@@ -91,7 +128,6 @@ void render_ui() {
 
 // --- Individual UI Component Functions ---
 
-// --- Your main UI rendering function ---
 void RenderModelLoaderWidget() {
     // Create a small collapsible operations panel in the top-left corner
     static bool show_operations = true;
@@ -148,15 +184,9 @@ void RenderModelLoaderWidget() {
 
 
     // 2. DISPLAY AND HANDLE THE FILE DIALOG
-    // =======================================
-    // This part is crucial. It displays the dialog if it's open and
-    // handles the user's selection.
     if (ImGuiFileDialog::Instance()->Display("ChooseModelFileDlgKey")) {
-        // Check if the user clicked "OK"
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string file_path = ImGuiFileDialog::Instance()->GetFilePathName();
-
-            // Based on the state we saved earlier, call the correct function
             switch (current_model_type_to_load) {
                 case ModelType::SceneElement:
                     load_scene_element_model(file_path.c_str());
@@ -168,21 +198,15 @@ void RenderModelLoaderWidget() {
                     load_interactable_model(file_path.c_str());
                     break;
                 case ModelType::None:
-                    break; // Should not happen
+                    break;
             }
-
-            // Reset the state for the next time
             current_model_type_to_load = ModelType::None;
         }
-
-        // Close the dialog instance
         ImGuiFileDialog::Instance()->Close();
     }
 }
 
-// --- Mode switcher UI function ---
 void RenderModeSwitcher() {
-    // Render minimalistic mode switcher at the top
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(200, 35), ImGuiCond_Always);
     
@@ -193,14 +217,12 @@ void RenderModeSwitcher() {
         ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoScrollbar);
     
-    // Mode names for the combo box
     const char* mode_names[] = {"Edit Scene", "Free View", "Animate"};
     static int current_mode_index = get_app_mode();
     
     ImGui::Text("Mode:");
     ImGui::SameLine();
     
-    // Set combo box width to fill remaining space
     ImGui::SetNextItemWidth(-1);
     
     if (ImGui::Combo("##mode_combo", &current_mode_index, mode_names, 3)) {
@@ -209,3 +231,67 @@ void RenderModeSwitcher() {
     
     ImGui::End();
 }
+
+
+// --- ImGuizmo Integration Change ---
+// 3. UPDATE FUNCTION TO ACCEPT MATRICES AS PARAMETERS
+void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjection, glm::mat4& objectMatrix) {
+    // Set the gizmo to draw on the full viewport
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+    
+    // --- Gizmo Controls Window ---
+    static ImGuizmo::OPERATION currentOperation = ImGuizmo::TRANSLATE;
+    static ImGuizmo::MODE currentMode = ImGuizmo::WORLD;
+
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 260, 45), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(250, 0), ImGuiCond_FirstUseEver); // Auto-resize height
+    ImGui::Begin("Gizmo Controls");
+
+    // Radio buttons for operation type
+    if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE))
+        currentOperation = ImGuizmo::TRANSLATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE))
+        currentOperation = ImGuizmo::ROTATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE))
+        currentOperation = ImGuizmo::SCALE;
+
+    // Radio buttons for coordinate system mode
+    if (currentOperation != ImGuizmo::SCALE) {
+        if (ImGui::RadioButton("Local", currentMode == ImGuizmo::LOCAL))
+            currentMode = ImGuizmo::LOCAL;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("World", currentMode == ImGuizmo::WORLD))
+            currentMode = ImGuizmo::WORLD;
+    }
+
+    ImGui::Separator();
+
+    // The core gizmo function call
+    ImGuizmo::Manipulate(
+        glm::value_ptr(cameraView),
+        glm::value_ptr(cameraProjection),
+        currentOperation,
+        currentMode,
+        glm::value_ptr(objectMatrix) // Note: objectMatrix is now a parameter
+    );
+
+    // Decompose matrix and display values for feedback
+    if (ImGuizmo::IsUsing()) {
+        glm::vec3 scale, translation;
+        glm::quat rotation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(objectMatrix, scale, rotation, translation, skew, perspective);
+
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Object Transform");
+        ImGui::Text("Translation: %.3f, %.3f, %.3f", translation.x, translation.y, translation.z);
+        ImGui::Text("Rotation: %.3f, %.3f, %.3f, %.3f", rotation.w, rotation.x, rotation.y, rotation.z);
+        ImGui::Text("Scale: %.3f, %.3f, %.3f", scale.x, scale.y, scale.z);
+    }
+
+    ImGui::End();
+}
+// --- End Change ---

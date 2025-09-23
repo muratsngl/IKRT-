@@ -100,11 +100,11 @@ int intersect_ray(const Ray& ray, const std::vector<Shape>& shapes) {
         Ray local_ray;
         
         // Transform ray origin to local space
-        glm::vec4 local_origin = model_matrix * glm::vec4(ray.origin, 1.0f);
+        glm::vec4 local_origin = inverse_model_matrix * glm::vec4(ray.origin, 1.0f);
         local_ray.origin = glm::vec3(local_origin);
         
         // Transform ray direction to local space (use w=0 for directions)
-        glm::vec4 local_direction = model_matrix * glm::vec4(ray.direction, 0.0f);
+        glm::vec4 local_direction = inverse_model_matrix * glm::vec4(ray.direction, 0.0f);
         local_ray.direction = glm::normalize(glm::vec3(local_direction));
         
         // Perform intersection test in local space

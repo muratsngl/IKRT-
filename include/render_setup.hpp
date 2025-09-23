@@ -56,6 +56,14 @@ unsigned int get_model_index_by_id(int model_id);
 void upload_model_matrices();
 const std::vector<glm::mat4>& get_model_matrices();
 
+// Gizmo management functions
+// Gizmo and selection management functions
+void set_selected_object(int model_id);
+int get_selected_object_id();
+glm::mat4& get_selected_object_matrix();
+void clear_selection();
+void get_current_camera_matrices(glm::mat4& view, glm::mat4& projection);
+
 // Mode utility functions
 const char* get_mode_name(MODE mode);
 MODE get_app_mode();

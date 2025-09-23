@@ -1,7 +1,17 @@
 RENDERING
     COLLISION_DETECTION:
-        1.For SceneElements bounding boxes are not consistent and extend themselves to infinity
+        1. Visualization code is not well written. lots of redundant operations.
+        2. DATA IS NOT CENTRALIZED THERE ARE COPIES OF BBOXES FOR VISUALIZATION AND THE ACTUAL LOGIC
     PBR:
         2.The specular component of the radiance seems too flashy.
 DATA_ORGANIZATION:
     MODEL_REMOVAL: There is no such mechanism, having creative seizures while thinking of it. better keep it simple.
+
+
+
+
+
+
+
+SOLVED:
+    For SceneElements bounding boxes are not consistent and extend themselves to infinity[UNINITIALIZED VARIABLE]
