@@ -1,14 +1,39 @@
 #include "collision_visualizer.hpp"
+#include "model_bones.h"
+#include "render_setup.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-// Static member definition
-bool CollisionVisualizer::isEnabled = true;
+// Static member initialization
+bool CollisionVisualizer::isEnabled = false;
+
+// Cube vertices (8 corners of a unit cube centered at origin)
+const float CollisionVisualizer::cubeVertices[8 * 3] = {
+    // Bottom face
+    -0.5f, -0.5f, -0.5f,  // 0
+     0.5f, -0.5f, -0.5f,  // 1
+     0.5f, -0.5f,  0.5f,  // 2
+    -0.5f, -0.5f,  0.5f,  // 3
+    // Top face
+    -0.5f,  0.5f, -0.5f,  // 4
+     0.5f,  0.5f, -0.5f,  // 5
+     0.5f,  0.5f,  0.5f,  // 6
+    -0.5f,  0.5f,  0.5f   // 7
+};
+
+// Wireframe cube indices (24 indices for 12 edges)
+const unsigned int CollisionVisualizer::cubeIndices[24] = {
+    // Bottom face edges
+    0, 1,  1, 2,  2, 3,  3, 0,
+    // Top face edges
+    4, 5,  5, 6,  6, 7,  7, 4,
+    // Vertical edges
+    0, 4,  1, 5,  2, 6,  3, 7
+};
 
 CollisionVisualizer::CollisionVisualizer() 
-    : VAO_AABB(0), VBO_AABB(0), EBO_AABB(0),
-      VAO_OBB(0), VBO_OBB(0), EBO_OBB(0),
-      VAO_Sphere(0), VBO_Sphere(0), EBO_Sphere(0),
-      wireframeShader(nullptr) {
+    : VAO(0), VBO(0), EBO(0), bboxShader(nullptr), isInitialized(false) {
 }
 
 CollisionVisualizer::~CollisionVisualizer() {
@@ -16,326 +41,136 @@ CollisionVisualizer::~CollisionVisualizer() {
 }
 
 void CollisionVisualizer::init() {
-    createWireframeShader();
-    setupAABBGeometry();
-    setupOBBGeometry();
-    setupSphereGeometry();
-}
-
-void CollisionVisualizer::createWireframeShader() {
-    // Use the existing Shader class to load from files
-    wireframeShader = new Shader("assets/shaders/bbox_visualize.vs", "assets/shaders/bbox_visualize.fs");
-}
-
-void CollisionVisualizer::setupAABBGeometry() {
-    // Unit cube vertices (will be transformed to actual AABB)
-    std::vector<glm::vec3> vertices = {
-        // Bottom face
-        glm::vec3(-0.5f, -0.5f, -0.5f),
-        glm::vec3( 0.5f, -0.5f, -0.5f),
-        glm::vec3( 0.5f, -0.5f,  0.5f),
-        glm::vec3(-0.5f, -0.5f,  0.5f),
-        // Top face
-        glm::vec3(-0.5f,  0.5f, -0.5f),
-        glm::vec3( 0.5f,  0.5f, -0.5f),
-        glm::vec3( 0.5f,  0.5f,  0.5f),
-        glm::vec3(-0.5f,  0.5f,  0.5f)
-    };
+    if (isInitialized) return;
     
-    // Wireframe indices
-    std::vector<unsigned int> indices = {
-        // Bottom face
-        0, 1, 1, 2, 2, 3, 3, 0,
-        // Top face
-        4, 5, 5, 6, 6, 7, 7, 4,
-        // Vertical edges
-        0, 4, 1, 5, 2, 6, 3, 7
-    };
+    // Create and load shader
+    try {
+        bboxShader = new Shader("assets/shaders/bbox_visualize.vs", "assets/shaders/bbox_visualize.fs");
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to create bbox shader: " << e.what() << std::endl;
+        return;
+    }
     
-    glGenVertexArrays(1, &VAO_AABB);
-    glGenBuffers(1, &VBO_AABB);
-    glGenBuffers(1, &EBO_AABB);
+    // Generate VAO, VBO, and EBO
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
     
-    glBindVertexArray(VAO_AABB);
+    // Bind VAO
+    glBindVertexArray(VAO);
     
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_AABB);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+    // Upload vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_AABB);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    // Upload index data
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    // Set vertex attributes (position only)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     
+    // Unbind VAO
     glBindVertexArray(0);
-}
-
-void CollisionVisualizer::setupOBBGeometry() {
-    // Same as AABB - unit cube that will be transformed
-    setupAABBGeometry(); // Reuse the same geometry
-    VAO_OBB = VAO_AABB;
-    VBO_OBB = VBO_AABB;
-    EBO_OBB = EBO_AABB;
-}
-
-void CollisionVisualizer::setupSphereGeometry() {
-    std::vector<glm::vec3> vertices;
-    std::vector<unsigned int> indices;
     
-    // Create a wireframe sphere with latitude/longitude lines
-    const int latitudeLines = 8;
-    const int longitudeLines = 16;
-    const float radius = 1.0f;
-    
-    // Generate vertices
-    for (int i = 0; i <= latitudeLines; ++i) {
-        float theta = i * glm::pi<float>() / latitudeLines;
-        for (int j = 0; j <= longitudeLines; ++j) {
-            float phi = j * 2.0f * glm::pi<float>() / longitudeLines;
-            
-            float x = radius * sin(theta) * cos(phi);
-            float y = radius * cos(theta);
-            float z = radius * sin(theta) * sin(phi);
-            
-            vertices.push_back(glm::vec3(x, y, z));
-        }
-    }
-    
-    // Generate indices for wireframe
-    for (int i = 0; i < latitudeLines; ++i) {
-        for (int j = 0; j < longitudeLines; ++j) {
-            int current = i * (longitudeLines + 1) + j;
-            int next = current + longitudeLines + 1;
-            
-            // Horizontal lines
-            indices.push_back(current);
-            indices.push_back(current + 1);
-            
-            // Vertical lines
-            if (i < latitudeLines) {
-                indices.push_back(current);
-                indices.push_back(next);
-            }
-        }
-    }
-    
-    glGenVertexArrays(1, &VAO_Sphere);
-    glGenBuffers(1, &VBO_Sphere);
-    glGenBuffers(1, &EBO_Sphere);
-    
-    glBindVertexArray(VAO_Sphere);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_Sphere);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_Sphere);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-    glEnableVertexAttribArray(0);
-    
-    glBindVertexArray(0);
-}
-
-void CollisionVisualizer::updateBoundingBoxes(const std::vector<Shape>& staticBoxes, 
-                                             const std::vector<Shape>& dynamicBoxes) {
-    aabbTransforms.clear();
-    obbTransforms.clear();
-    sphereTransforms.clear();
-    sphereRadii.clear();
-    
-    // Process static boxes
-    for (const auto& shape : staticBoxes) {
-        switch (shape.type) {
-            case AABB:
-                aabbTransforms.push_back(createAABBTransform(shape.aabb));
-                break;
-            case OBB:
-                obbTransforms.push_back(createOBBTransform(shape.obb));
-                break;
-            case SPHERE:
-                sphereTransforms.push_back(createSphereTransform(shape.sphere));
-                sphereRadii.push_back(shape.sphere.radius);
-                break;
-        }
-    }
-    
-    // Process dynamic boxes
-    for (const auto& shape : dynamicBoxes) {
-        switch (shape.type) {
-            case AABB:
-                aabbTransforms.push_back(createAABBTransform(shape.aabb));
-                break;
-            case OBB:
-                obbTransforms.push_back(createOBBTransform(shape.obb));
-                break;
-            case SPHERE:
-                sphereTransforms.push_back(createSphereTransform(shape.sphere));
-                sphereRadii.push_back(shape.sphere.radius);
-                break;
-        }
-    }
-}
-
-void CollisionVisualizer::updateBoundingBoxes(const std::vector<Shape>& staticBoxes, 
-                                             const std::vector<Shape>& interactableBoxes,
-                                             const std::vector<Shape>& dynamicBoxes) {
-    aabbTransforms.clear();
-    obbTransforms.clear();
-    obbInteractableTransforms.clear();
-    sphereTransforms.clear();
-    sphereRadii.clear();
-    
-    // Process static boxes (scene elements)
-    for (const auto& shape : staticBoxes) {
-        switch (shape.type) {
-            case AABB:
-                aabbTransforms.push_back(createAABBTransform(shape.aabb));
-                break;
-            case OBB:
-                obbTransforms.push_back(createOBBTransform(shape.obb));
-                break;
-            case SPHERE:
-                sphereTransforms.push_back(createSphereTransform(shape.sphere));
-                sphereRadii.push_back(shape.sphere.radius);
-                break;
-        }
-    }
-    
-    // Process interactable boxes (separate storage for different color)
-    for (const auto& shape : interactableBoxes) {
-        switch (shape.type) {
-            case AABB:
-                aabbTransforms.push_back(createAABBTransform(shape.aabb));
-                break;
-            case OBB:
-                obbInteractableTransforms.push_back(createOBBTransform(shape.obb));
-                break;
-            case SPHERE:
-                sphereTransforms.push_back(createSphereTransform(shape.sphere));
-                sphereRadii.push_back(shape.sphere.radius);
-                break;
-        }
-    }
-    
-    // Process dynamic boxes (bone colliders)
-    for (const auto& shape : dynamicBoxes) {
-        switch (shape.type) {
-            case AABB:
-                aabbTransforms.push_back(createAABBTransform(shape.aabb));
-                break;
-            case OBB:
-                obbTransforms.push_back(createOBBTransform(shape.obb));
-                break;
-            case SPHERE:
-                sphereTransforms.push_back(createSphereTransform(shape.sphere));
-                sphereRadii.push_back(shape.sphere.radius);
-                break;
-        }
-    }
-}
-
-void CollisionVisualizer::render(const glm::mat4& view, const glm::mat4& projection) {
-    if (!isEnabled || !wireframeShader) return;
-    
-    glDisable(GL_DEPTH_TEST);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
-    wireframeShader->use();
-    wireframeShader->setMat4("view", view);
-    wireframeShader->setMat4("projection", projection);
-    
-    renderAABBs(view, projection);
-    renderOBBs(view, projection);
-    renderInteractableOBBs(view, projection);
-    renderSpheres(view, projection);
-    
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_DEPTH_TEST);
-}
-
-void CollisionVisualizer::renderAABBs(const glm::mat4& view, const glm::mat4& projection) {
-    wireframeShader->setVec3("color", glm::vec3(0.0f, 1.0f, 0.0f)); // Green for AABBs
-    
-    glBindVertexArray(VAO_AABB);
-    for (const auto& transform : aabbTransforms) {
-        wireframeShader->setMat4("model", transform);
-        glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
-    }
-    glBindVertexArray(0);
-}
-
-void CollisionVisualizer::renderOBBs(const glm::mat4& view, const glm::mat4& projection) {
-    wireframeShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red for OBBs
-    
-    glBindVertexArray(VAO_OBB);
-    for (const auto& transform : obbTransforms) {
-        wireframeShader->setMat4("model", transform);
-        glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
-    }
-    glBindVertexArray(0);
-}
-
-void CollisionVisualizer::renderInteractableOBBs(const glm::mat4& view, const glm::mat4& projection) {
-    wireframeShader->setVec3("color", glm::vec3(0.0f, 1.0f, 0.0f)); // Green for Interactable OBBs
-    
-    glBindVertexArray(VAO_OBB);
-    for (const auto& transform : obbInteractableTransforms) {
-        wireframeShader->setMat4("model", transform);
-        glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
-    }
-    glBindVertexArray(0);
-}
-
-void CollisionVisualizer::renderSpheres(const glm::mat4& view, const glm::mat4& projection) {
-    wireframeShader->setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f)); // Blue for Spheres
-    
-    glBindVertexArray(VAO_Sphere);
-    for (size_t i = 0; i < sphereTransforms.size(); ++i) {
-        glm::mat4 scaleTransform = glm::scale(sphereTransforms[i], glm::vec3(sphereRadii[i]));
-        wireframeShader->setMat4("model", scaleTransform);
-        glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0); // Adjust count based on sphere geometry
-    }
-    glBindVertexArray(0);
-}
-
-glm::mat4 CollisionVisualizer::createAABBTransform(const Aabb& aabb) {
-    glm::vec3 center = (aabb.min + aabb.max) * 0.5f;
-    glm::vec3 size = aabb.max - aabb.min;
-    
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), center);
-    transform = glm::scale(transform, size);
-    
-    return transform;
-}
-
-glm::mat4 CollisionVisualizer::createOBBTransform(const Obb& obb) {
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), obb.center);
-    transform = transform * glm::mat4_cast(obb.rotation);
-    transform = glm::scale(transform, obb.halfExtents * 2.0f);
-    
-    return transform;
-}
-
-glm::mat4 CollisionVisualizer::createSphereTransform(const Sphere& sphere) {
-    return glm::translate(glm::mat4(1.0f), sphere.center);
+    isInitialized = true;
+    std::cout << "Collision visualizer initialized successfully" << std::endl;
 }
 
 void CollisionVisualizer::cleanup() {
-    if (VAO_AABB != 0) {
-        glDeleteVertexArrays(1, &VAO_AABB);
-        glDeleteBuffers(1, &VBO_AABB);
-        glDeleteBuffers(1, &EBO_AABB);
+    if (!isInitialized) return;
+    
+    if (VAO != 0) {
+        glDeleteVertexArrays(1, &VAO);
+        VAO = 0;
+    }
+    if (VBO != 0) {
+        glDeleteBuffers(1, &VBO);
+        VBO = 0;
+    }
+    if (EBO != 0) {
+        glDeleteBuffers(1, &EBO);
+        EBO = 0;
     }
     
-    if (VAO_Sphere != 0) {
-        glDeleteVertexArrays(1, &VAO_Sphere);
-        glDeleteBuffers(1, &VBO_Sphere);
-        glDeleteBuffers(1, &EBO_Sphere);
+    delete bboxShader;
+    bboxShader = nullptr;
+    
+    isInitialized = false;
+}
+
+void CollisionVisualizer::renderCollisionGeometry(const glm::mat4& view, const glm::mat4& projection) {
+    if (!isEnabled || !isInitialized || !bboxShader) return;
+    
+    // Get model matrices for transforming collision boxes
+    const std::vector<glm::mat4>& modelMatrices = get_model_matrices();
+    
+    // Enable wireframe mode and line drawing
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(2.0f);
+    
+    // Use bbox shader
+    bboxShader->use();
+    bboxShader->setMat4("view", view);
+    bboxShader->setMat4("projection", projection);
+    bboxShader->setVec3("color", glm::vec3(0.0f, 1.0f, 0.0f)); // Green wireframe
+    
+    glBindVertexArray(VAO);
+    
+    // Render scene element boxes (AABB type)
+    for (const Shape& shape : scene_element_boxes) {
+        if (shape.type == AABB) {
+            // Get the model matrix for this shape
+            unsigned int modelIndex = get_model_index_by_id(shape.id);
+            if (modelIndex >= modelMatrices.size()) continue;
+            
+            const glm::mat4& modelMatrix = modelMatrices[modelIndex];
+            
+            // Calculate size and center from AABB
+            glm::vec3 size = shape.aabb.max - shape.aabb.min;
+            glm::vec3 center = (shape.aabb.min + shape.aabb.max) * 0.5f;
+            
+            // Create transformation matrix
+            glm::mat4 bboxTransform = modelMatrix;
+            bboxTransform = glm::translate(bboxTransform, center);
+            bboxTransform = glm::scale(bboxTransform, size);
+            
+            bboxShader->setMat4("model", bboxTransform);
+            glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+        }
     }
     
-    if (wireframeShader) {
-        delete wireframeShader;
-        wireframeShader = nullptr;
+    // Render interactable element boxes (OBB type)
+    bboxShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red wireframe for OBBs
+    
+    for (const Shape& shape : interactable_element_boxes) {
+        if (shape.type == OBB) {
+            // Get the model matrix for this shape
+            unsigned int modelIndex = get_model_index_by_id(shape.id);
+            if (modelIndex >= modelMatrices.size()) continue;
+            
+            const glm::mat4& modelMatrix = modelMatrices[modelIndex];
+            
+            // Create OBB transformation matrix
+            glm::mat4 bboxTransform = modelMatrix;
+            bboxTransform = glm::translate(bboxTransform, shape.obb.center);
+            
+            // Apply OBB rotation
+            glm::mat4 rotationMatrix = glm::mat4_cast(shape.obb.rotation);
+            bboxTransform = bboxTransform * rotationMatrix;
+            
+            // Scale by half extents (since our cube goes from -0.5 to 0.5)
+            bboxTransform = glm::scale(bboxTransform, shape.obb.halfExtents * 2.0f);
+            
+            bboxShader->setMat4("model", bboxTransform);
+            glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+        }
     }
+    
+    glBindVertexArray(0);
+    
+    // Restore fill mode
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glLineWidth(1.0f);
 }

@@ -6,7 +6,7 @@
 #include "include/Shader.h"
 #include "include/model_bones.h" 
 #include "include/application_logic.hpp"// Include the Model class definition
-#include "include/collision_visualizer.hpp"
+
 #include "include/raycast.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -25,7 +25,10 @@ static Camera camera(glm::vec3(0.0f, -0.5f, 4.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
-static CollisionVisualizer* collisionVisualizer = nullptr;
+
+// Collision visualizer instance
+static CollisionVisualizer collisionVisualizer;
+
 
 // Model matrix storage for UBO (50 matrices max)
 static std::vector<glm::mat4> modelMatrices(50, glm::mat4(1.0f));
@@ -102,9 +105,7 @@ void load_shaders() {
     skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
     sceneElementShader = new Shader("assets/shaders/pbr.vs", "assets/shaders/pbr.fs");
     
-    // Initialize collision visualizer
-    collisionVisualizer = new CollisionVisualizer();
-    collisionVisualizer->init();
+   
 
 }
 
@@ -137,6 +138,9 @@ void init_buffers() {
     glBindBufferBase(GL_UNIFORM_BUFFER, 3, render_context.scene_element_model_UBO);
     glBufferData(GL_UNIFORM_BUFFER, scene_element_model_buffer_size, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0); 
+    
+    // Initialize collision visualizer
+    collisionVisualizer.init(); 
 }
 
 // Function to get unique model index for each model (called only once per model)
@@ -310,113 +314,8 @@ void render_frame() {
         
     }
     
-    // Render collision boxes at the end of draw calls
-    if (CollisionVisualizer::getEnabled()) {
-        // Get collision boxes from model loading phase
-        std::vector<Shape> sceneBoxes = scene_element_boxes;  // Scene element boxes (red)
-        std::vector<Shape> interactableBoxes = interactable_element_boxes;  // Interactable boxes (green)
-        
-        // Create dynamic boxes from current bone positions
-        std::vector<Shape> dynamicBoxes;
-        
-        if (is_interactor_model_available()) {
-            const InteractorModelData& model_data = get_interactor_model_data();
-        
-        
-        // Create bone OBBs for visualization
-        auto createBoneOBB = [&](int boneIndex1, int boneIndex2, float halfExtentXZ) -> Shape {
-            Shape boneShape;
-            boneShape.type = OBB;
-
-            glm::vec3 pos1 = model_data.bind_pose_matrices[boneIndex1] * glm::vec4(model_data.bind_pose_positions_original[boneIndex1], 1.0f);
-            glm::vec3 pos2 = model_data.bind_pose_matrices[boneIndex2] * glm::vec4(model_data.bind_pose_positions_original[boneIndex2], 1.0f);
-
-            glm::vec3 center = (pos1 + pos2) * 0.5f;
-            glm::vec3 direction = pos2 - pos1;
-            float length = glm::length(direction);
-            
-            if (length > 0.0001f) {
-                direction = glm::normalize(direction);
-            } else {
-                direction = glm::vec3(1, 0, 0);
-            }
-            
-            // Create a proper rotation matrix where the bone direction is the Y-axis (up)
-            glm::vec3 up = direction;  // Bone direction becomes the up vector
-            glm::vec3 forward = glm::vec3(0, 0, 1);  // Default forward
-            
-            // If bone direction is too close to forward, use a different forward
-            if (abs(glm::dot(up, forward)) > 0.99f) {
-                forward = glm::vec3(1, 0, 0);
-            }
-            
-            glm::vec3 right = glm::normalize(glm::cross(up, forward));
-            forward = glm::normalize(glm::cross(right, up));
-            
-            // Build rotation matrix: right=X, up=Y, forward=Z
-            glm::mat3 rotMatrix(right, up, forward);
-            glm::quat rotation = glm::quat_cast(rotMatrix);
-            
-            boneShape.obb.center = center;
-            boneShape.obb.rotation = rotation;
-            // Half extents: parameterized width/depth (X,Z), length along bone direction (Y)
-            boneShape.obb.halfExtents = glm::vec3(halfExtentXZ, length * 0.5f, halfExtentXZ);
-            
-            return boneShape;
-        };
-        
-        // Add bone OBBs for all limbs
-    for (size_t i = 1; i < model_data.right_arm_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.right_arm_indices[i - 1], model_data.right_arm_indices[i], 0.085f));
-    }
-    for (size_t i = 1; i < model_data.left_arm_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.left_arm_indices[i - 1], model_data.left_arm_indices[i], 0.085f));
-    }
-    for (size_t i = 1; i < model_data.right_leg_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.right_leg_indices[i - 1], model_data.right_leg_indices[i], 0.1f));
-    }
-    for (size_t i = 1; i < model_data.left_leg_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.left_leg_indices[i - 1], model_data.left_leg_indices[i], 0.1f));
-    }
-
-    for (size_t i = 1; i < model_data.right_thumb_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.right_thumb_indices[i - 1], model_data.right_thumb_indices[i], 0.015f));
-    }
-    for (size_t i = 1; i < model_data.right_index_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.right_index_indices[i - 1], model_data.right_index_indices[i], 0.015f));
-    }
-    for (size_t i = 1; i < model_data.right_middle_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.right_middle_indices[i - 1], model_data.right_middle_indices[i], 0.015f));
-    }
-    for (size_t i = 1; i < model_data.right_ring_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.right_ring_indices[i - 1], model_data.right_ring_indices[i], 0.015f));
-    }
-    for (size_t i = 1; i < model_data.right_pinky_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.right_pinky_indices[i - 1], model_data.right_pinky_indices[i], 0.015f));
-    }
-
-    for (size_t i = 1; i < model_data.left_thumb_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.left_thumb_indices[i - 1], model_data.left_thumb_indices[i], 0.015f));
-    }
-    for (size_t i = 1; i < model_data.left_index_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.left_index_indices[i - 1], model_data.left_index_indices[i], 0.015f));
-    }
-    for (size_t i = 1; i < model_data.left_middle_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.left_middle_indices[i - 1], model_data.left_middle_indices[i], 0.02f));
-    }
-    for (size_t i = 1; i < model_data.left_ring_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.left_ring_indices[i - 1], model_data.left_ring_indices[i], 0.02f));
-    }
-    for (size_t i = 1; i < model_data.left_pinky_indices.size(); i++) {
-        dynamicBoxes.push_back(createBoneOBB(model_data.left_pinky_indices[i - 1], model_data.left_pinky_indices[i], 0.02f));
-    }
-    
-        } // End of interactor model availability check
-
-        // Update and render collision boxes
-        collisionVisualizer->updateBoundingBoxes(sceneBoxes, interactableBoxes, dynamicBoxes);
-        collisionVisualizer->render(view, projection);
-    }
+    // Render collision geometry if enabled
+    collisionVisualizer.renderCollisionGeometry(view, projection);
     
     // Render all UI components
     render_ui();
@@ -439,13 +338,13 @@ void cleanup_rendering() {
     // Cleanup UI system
     cleanup_ui();
     
+    // Cleanup collision visualizer
+    collisionVisualizer.cleanup();
+    
     delete skeletonShader;
     delete sceneElementShader;
     
-    if (collisionVisualizer) {
-        delete collisionVisualizer;
-        collisionVisualizer = nullptr;
-    }
+   
     
     // Clean up UBOs
     glDeleteBuffers(1, &render_context.orcunUBO);
@@ -625,7 +524,17 @@ void process_input(GLFWwindow* window) {
             }
         }
     }
+}
 
+// Collision visualization functions
+void init_collision_visualizer() {
+    collisionVisualizer.init();
+}
 
-  
+void cleanup_collision_visualizer() {
+    collisionVisualizer.cleanup();
+}
+
+CollisionVisualizer& get_collision_visualizer() {
+    return collisionVisualizer;
 }

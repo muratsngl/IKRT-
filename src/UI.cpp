@@ -1,6 +1,6 @@
 #include "include/UI.hpp"
-#include "include/collision_visualizer.hpp"
 #include "include/render_setup.hpp"
+#include "include/collision_visualizer.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -170,14 +170,12 @@ void RenderModelLoaderWidget() {
 
     if (ImGui::CollapsingHeader("Debug")) {
         // Collision geometry toggle using static methods
-        static bool renderCollisionGeometry = CollisionVisualizer::getEnabled();
-        
+        static bool renderCollisionGeometry = false;
         if (ImGui::Checkbox("Render Collision Geometry", &renderCollisionGeometry)) {
-            CollisionVisualizer::setEnabled(renderCollisionGeometry);
+            CollisionVisualizer::isEnabled = renderCollisionGeometry;
         }
         
-        // Sync checkbox state with collision visualizer state
-        renderCollisionGeometry = CollisionVisualizer::getEnabled();
+        
     }
 
     ImGui::End();

@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <UI.hpp>
+#include "collision_visualizer.hpp"
 
 // Constants
 #define MAX_INTERACTABLE_MODELS 10
@@ -68,6 +69,11 @@ void get_current_camera_matrices(glm::mat4& view, glm::mat4& projection);
 const char* get_mode_name(MODE mode);
 MODE get_app_mode();
 void set_app_mode(MODE mode);
+
+// Collision visualization functions
+void init_collision_visualizer();
+void cleanup_collision_visualizer();
+CollisionVisualizer& get_collision_visualizer();
 
 // Callback functions
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

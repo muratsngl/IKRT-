@@ -58,8 +58,8 @@ set(SOURCES
     src/application_logic.cpp
     src/Texture.cpp
     src/collision.cpp
-    src/model_bones.cpp
     src/collision_visualizer.cpp
+    src/model_bones.cpp
     src/Interaction.cpp
     src/stb_image.cpp
     src/UI.cpp
