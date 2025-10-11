@@ -65,6 +65,10 @@ glm::mat4& get_selected_object_matrix();
 void clear_selection();
 void get_current_camera_matrices(glm::mat4& view, glm::mat4& projection);
 
+// Cycle selection functions
+void cycle_to_next_object();
+bool is_same_click_location(double mouse_x, double mouse_y);
+
 // Mode utility functions
 const char* get_mode_name(MODE mode);
 MODE get_app_mode();

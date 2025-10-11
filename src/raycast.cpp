@@ -124,3 +124,63 @@ int intersect_ray(const Ray& ray, const std::vector<Shape>& shapes) {
     
     return closest_model_id;
 }
+
+std::vector<int> intersect_ray_all(const Ray& ray, const std::vector<Shape>& shapes) {
+    std::vector<std::pair<float, int>> hit_objects; // pair of (distance, model_id)
+    
+    // Get access to model matrices for transformation to local space
+    const std::vector<glm::mat4>& model_matrices = get_model_matrices();
+    
+    for (const Shape& shape : shapes) {
+        // Currently only handle AABB shapes
+        if (shape.type != AABB) {
+            continue;
+        }
+        
+        // Get the model matrix for this shape using the existing ID-to-index mapping
+        unsigned int model_index = get_model_index_by_id(shape.id);
+        
+        // Make sure the model index is valid
+        if (model_index >= model_matrices.size()) {
+            std::cerr << "Warning: Model index " << model_index << " out of bounds for model ID " << shape.id << std::endl;
+            continue;
+        }
+        
+        // Get the model matrix and calculate its inverse
+        const glm::mat4& model_matrix = model_matrices[model_index];
+        glm::mat4 inverse_model_matrix = glm::inverse(model_matrix);
+        
+        // Transform ray to local space
+        Ray local_ray;
+        
+        // Transform ray origin to local space
+        glm::vec4 local_origin = inverse_model_matrix * glm::vec4(ray.origin, 1.0f);
+        local_ray.origin = glm::vec3(local_origin);
+        
+        // Transform ray direction to local space (use w=0 for directions)
+        glm::vec4 local_direction = inverse_model_matrix * glm::vec4(ray.direction, 0.0f);
+        local_ray.direction = glm::normalize(glm::vec3(local_direction));
+        
+        // Perform intersection test in local space
+        float t_min, t_max;
+        if (ray_aabb_intersect(local_ray, shape.aabb, t_min, t_max)) {
+            // Transform intersection distance back to world space
+            if (t_min >= 0.0f) {
+                glm::vec3 world_intersection_point = ray.origin + ray.direction * t_min;
+                float world_distance = glm::length(world_intersection_point - ray.origin);
+                hit_objects.push_back(std::make_pair(world_distance, shape.id));
+            }
+        }
+    }
+    
+    // Sort by distance (nearest first)
+    std::sort(hit_objects.begin(), hit_objects.end());
+    
+    // Extract just the model IDs in sorted order
+    std::vector<int> sorted_model_ids;
+    for (const auto& hit : hit_objects) {
+        sorted_model_ids.push_back(hit.second);
+    }
+    
+    return sorted_model_ids;
+}

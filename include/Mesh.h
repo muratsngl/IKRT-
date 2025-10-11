@@ -161,12 +161,14 @@ public:
     // mesh Data
     vector<DynamicVertex>       vertices;
     vector<unsigned int> indices;
+    vector<TextureInfo> textures;
     unsigned int VAO;
     // constructor
-    Mesh(vector<DynamicVertex> vertices, vector<unsigned int> indices)
+    Mesh(vector<DynamicVertex> vertices, vector<unsigned int> indices, vector<TextureInfo> textures = {})
     {
         this->vertices = vertices;
         this->indices = indices;
+        this->textures = textures;
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
@@ -175,7 +177,34 @@ public:
     // render the mesh
     void Draw(Shader& shader) const
     {
-       
+        // Bind appropriate textures for PBR
+        for (unsigned int i = 0; i < textures.size(); i++) {
+            glActiveTexture(GL_TEXTURE0 + i); // Activate proper texture unit before binding
+            
+            string name = textures[i].type;
+            string uniformName;
+
+            // Map texture type to a PBR shader uniform
+            if (name == "texture_albedo")
+                uniformName = "albedoMap";
+            else if (name == "texture_metallic")
+                uniformName = "metallicMap";
+            else if (name == "texture_roughness")
+                uniformName = "roughnessMap";
+            else if (name == "texture_normal")
+                uniformName = "normalMap";
+            else if (name == "texture_ao")
+                uniformName = "aoMap";
+            else
+                continue; // Skip unknown texture types
+
+            // Set the sampler uniform to the texture unit
+            shader.setInt(uniformName, i);
+            
+            // Bind the texture
+            glBindTexture(GL_TEXTURE_2D, textures[i].id);
+        }
+        
         shader.use();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
@@ -214,23 +243,23 @@ private:
         // vertex normals
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, Normal));
-
-        // bone IDs
-        glEnableVertexAttribArray(2);
-        glVertexAttribIPointer(2, 4, GL_INT, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, m_BoneIDs));
-
-        // weights
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, m_Weights));
        // vertex texture coordinates
-       glEnableVertexAttribArray(4);
-       glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, TexCoords));
+       glEnableVertexAttribArray(2);
+       glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, TexCoords));
        // vertex tangent
-       glEnableVertexAttribArray(5);
-       glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, Tangent));
+       glEnableVertexAttribArray(3);
+       glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, Tangent));
        // vertex bitangent
-       glEnableVertexAttribArray(6);
-       glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, Bitangent));
+       glEnableVertexAttribArray(4);
+       glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, Bitangent));
+
+        // bone IDs (moved to end, after PBR attributes)
+        glEnableVertexAttribArray(5);
+        glVertexAttribIPointer(5, 4, GL_INT, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, m_BoneIDs));
+
+        // weights (moved to end, after PBR attributes)
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(DynamicVertex), (void*)offsetof(DynamicVertex, m_Weights));
         glBindVertexArray(0);
         vertices.clear();
     }

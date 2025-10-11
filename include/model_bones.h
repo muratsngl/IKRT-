@@ -38,6 +38,19 @@ extern std::vector<Shape> interactable_element_boxes;
 extern int interactable_element_count;
 extern int scene_element_count;
 
+// Global unique model ID counter
+extern int global_model_id_counter;
+
+// Function to get next unique model ID
+inline int get_next_unique_model_id() {
+    return global_model_id_counter++;
+}
+
+// Function to get current model ID counter value (next ID that will be assigned)
+inline int get_current_model_id_counter() {
+    return global_model_id_counter;
+}
+
 struct BoneInfo
 {
     /*id is index in finalBoneMatrices*/
@@ -160,7 +173,7 @@ private:
         return textures;
     }
 
-    void processNode(aiNode* node, const aiScene* scene, vector<Mesh>& meshes, string& directory, vector<glm::vec3>& bindPosePositions, vector<glm::mat4>& bindPoseMatrices, glm::vec3& minBounds, glm::vec3& maxBounds)
+        void processNode(aiNode* node, const aiScene* scene, vector<Mesh>& meshes, string& directory, vector<glm::vec3>& bindPosePos, vector<glm::mat4>& bindPoseMat, glm::vec3& minBounds, glm::vec3& maxBounds)
     {
         // process each mesh located at the current node
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -168,16 +181,121 @@ private:
             // the node object only contains indices to index the actual objects in the scene. 
             // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            meshes.push_back(processMesh(mesh, scene, directory, bindPosePositions, bindPoseMatrices, minBounds, maxBounds));
+            meshes.push_back(processMesh(mesh, scene, directory, bindPosePos, bindPoseMat, minBounds, maxBounds));
         }
         // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
         for (unsigned int i = 0; i < node->mNumChildren; i++)
         {
-            processNode(node->mChildren[i], scene, meshes, directory, bindPosePositions, bindPoseMatrices, minBounds, maxBounds);
+            processNode(node->mChildren[i], scene, meshes, directory, bindPosePos, bindPoseMat, minBounds, maxBounds);
         }
     }
+    
+    // Texture loading methods (copied from SceneElementModelCreator)
+    unsigned int LoadTexture(char const* path, const std::string& directory) {
+        std::string filename = std::string(path);
+        filename = directory + '/' + filename;
 
-    Mesh processMesh(aiMesh* mesh, const aiScene* scene, string& directory, vector<glm::vec3>& bindPosePositions, vector<glm::mat4>& bindPoseMatrices, glm::vec3& minBounds, glm::vec3& maxBounds)
+        unsigned int textureID;
+        glGenTextures(1, &textureID);
+
+        int width, height, nrComponents;
+        unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+        if (data) {
+            GLenum format;
+            if (nrComponents == 1)
+                format = GL_RED;
+            else if (nrComponents == 3)
+                format = GL_RGB;
+            else if (nrComponents == 4)
+                format = GL_RGBA;
+
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(data);
+        } else {
+            std::cout << "Texture failed to load at path: " << path << std::endl;
+            stbi_image_free(data);
+        }
+
+        return textureID;
+    }
+
+    unsigned int LoadTextureFromData(const aiTexture* texture) {
+        unsigned int textureID;
+        glGenTextures(1, &textureID);
+
+        int width, height, nrComponents;
+        unsigned char* data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texture->pcData), texture->mWidth, &width, &height, &nrComponents, 0);
+        if (data) {
+            GLenum format;
+            if (nrComponents == 1)
+                format = GL_RED;
+            else if (nrComponents == 3)
+                format = GL_RGB;
+            else if (nrComponents == 4)
+                format = GL_RGBA;
+
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            stbi_image_free(data);
+        } else {
+            std::cout << "Failed to load embedded texture" << std::endl;
+        }
+
+        return textureID;
+    }
+
+    std::vector<TextureInfo> loadMaterialTextures(aiMaterial* mat, const aiScene* scene, aiTextureType type, std::string typeName) {
+        std::vector<TextureInfo> textures;
+        for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
+            aiString str;
+            mat->GetTexture(type, i, &str);
+            
+            bool skip = false;
+            for (unsigned int j = 0; j < textures_loaded.size(); j++) {
+                if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0) {
+                    textures.push_back(textures_loaded[j]);
+                    skip = true;
+                    break;
+                }
+            }
+            if (!skip) {
+                TextureInfo texture;
+                if (str.C_Str()[0] == '*') {
+                    int textureIndex = std::stoi(std::string(str.C_Str()).substr(1));
+                    if (textureIndex < scene->mNumTextures) {
+                        texture.id = LoadTextureFromData(scene->mTextures[textureIndex]);
+                    } else {
+                        std::cout << "Invalid embedded texture index: " << textureIndex << std::endl;
+                        continue;
+                    }
+                } else {
+                    texture.id = LoadTexture(str.C_Str(), directory);
+                }
+                texture.type = typeName;
+                texture.path = str.C_Str();
+                textures.push_back(texture);
+                textures_loaded.push_back(texture);
+            }
+        }
+        return textures;
+    }
+
+    Mesh processMesh(aiMesh* mesh, const aiScene* scene, string& directory, vector<glm::vec3>& bindPosePos, vector<glm::mat4>& bindPoseMat, glm::vec3& minBounds, glm::vec3& maxBounds)
     {
         // data to fill
         vector<DynamicVertex> vertices;
@@ -238,9 +356,29 @@ private:
                 indices.push_back(face.mIndices[j]);
         }
 
-        ExtractBoneWeightForVertices(vertices, mesh, scene, bindPosePositions, bindPoseMatrices);
+        ExtractBoneWeightForVertices(vertices, mesh, scene, bindPosePos, bindPoseMat);
+        
+        // Load PBR material textures, similar to SceneElementModelCreator
+        vector<TextureInfo> textures;
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        
+        vector<TextureInfo> albedoMaps = loadMaterialTextures(material, scene, aiTextureType_DIFFUSE, "texture_albedo");
+        textures.insert(textures.end(), albedoMaps.begin(), albedoMaps.end());
+        
+        vector<TextureInfo> metallicMaps = loadMaterialTextures(material, scene, aiTextureType_METALNESS, "texture_metallic");
+        textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
+
+        vector<TextureInfo> roughnessMaps = loadMaterialTextures(material, scene, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
+        textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+        
+        vector<TextureInfo> normalMaps = loadMaterialTextures(material, scene, aiTextureType_NORMALS, "texture_normal");
+        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+        
+        vector<TextureInfo> aoMaps = loadMaterialTextures(material, scene, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
+        textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
+        
         // return a mesh object created from the extracted mesh data
-        return Mesh(vertices, indices);
+        return Mesh(vertices, indices, textures);
     }
 
 public:
@@ -271,15 +409,15 @@ public:
         // process ASSIMP's root node recursively
         processNode(scene->mRootNode, scene, meshes, directory, bindPosePos, bindPoseMat, minBounds, maxBounds);
 
-        // Create OBB from calculated bounds
+        // Create AABB from calculated bounds
         if (minBounds.x != FLT_MAX) { // Check if we found any vertices
             Shape s;
-            s.type = OBB;
+            s.type = AABB;
             s.id = modelId;
             
-            // Create OBB with identity transform
-            glm::mat4 identityTransform = glm::mat4(1.0f);
-            s.obb = createOBBFromBounds(minBounds, maxBounds, identityTransform);
+            // Create AABB directly from bounds
+            s.aabb.min = minBounds;
+            s.aabb.max = maxBounds;
             
             interactable_element_boxes.push_back(s);
         }
@@ -309,7 +447,8 @@ public:
     InteractableModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
         InteractableModelCreator creator;
-        id = interactable_element_count++;
+        id = get_next_unique_model_id();  // Use utility function for unique ID
+        interactable_element_count++;     // Keep count for other purposes
         creator.loadModel(path, meshes, bindPosePositions, bindPoseMatrices, textures_loaded, local_bone_info_map, id);
         directory = creator.directory;
         model_index = 0; // Will be set during loading
@@ -646,31 +785,27 @@ private:
         return textureID;
     }
 
-    void processNode(aiNode* node, const aiScene* scene, vector<StaticMesh>& meshes, string& directory)
+    void processNode(aiNode* node, const aiScene* scene, vector<StaticMesh>& meshes, string& directory, int modelId, glm::vec3& minBounds, glm::vec3& maxBounds)
     {
         // Process each mesh located at the current node
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
         {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            meshes.push_back(processMesh(mesh, scene, directory));
+            meshes.push_back(processMesh(mesh, scene, directory, modelId, minBounds, maxBounds));
         }
         // Recursively process each of the children nodes
         for (unsigned int i = 0; i < node->mNumChildren; i++)
         {
-            processNode(node->mChildren[i], scene, meshes, directory);
+            processNode(node->mChildren[i], scene, meshes, directory, modelId, minBounds, maxBounds);
         }
     }
 
-    StaticMesh processMesh(aiMesh* mesh, const aiScene* scene, string& directory)
+    StaticMesh processMesh(aiMesh* mesh, const aiScene* scene, string& directory, int modelId, glm::vec3& minBounds, glm::vec3& maxBounds)
     {
         // Data to fill
         std::vector<StaticVertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<TextureInfo> textures;
-        Aabb boundingBox;
-        // Initialize bounding box with proper extreme values
-        boundingBox.min = glm::vec3(FLT_MAX);
-        boundingBox.max = glm::vec3(-FLT_MAX);
         
         // Walk through each of the mesh's vertices
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -682,13 +817,15 @@ private:
             vector.y = mesh->mVertices[i].y;
             vector.z = mesh->mVertices[i].z;
             vertex.Position = vector;
-            // Update bounding box
-            boundingBox.min.x = std::min(boundingBox.min.x, vector.x);
-            boundingBox.min.y = std::min(boundingBox.min.y, vector.y);
-            boundingBox.min.z = std::min(boundingBox.min.z, vector.z);
-            boundingBox.max.x = std::max(boundingBox.max.x, vector.x);
-            boundingBox.max.y = std::max(boundingBox.max.y, vector.y);
-            boundingBox.max.z = std::max(boundingBox.max.z, vector.z);
+            
+            // Update model bounds (accumulate across all meshes)
+            minBounds.x = std::min(minBounds.x, vector.x);
+            minBounds.y = std::min(minBounds.y, vector.y);
+            minBounds.z = std::min(minBounds.z, vector.z);
+            maxBounds.x = std::max(maxBounds.x, vector.x);
+            maxBounds.y = std::max(maxBounds.y, vector.y);
+            maxBounds.z = std::max(maxBounds.z, vector.z);
+            
             // Normals
             if (mesh->HasNormals())
             {
@@ -721,15 +858,7 @@ private:
 
             vertices.push_back(vertex);
         }
-        {
-            Shape s;
-            s.type = AABB;
-            s.id = scene_element_count; // Assign unique ID to each scene element
-            //PRESUMES THAT THE MODEL HAS NO ROTATION OR SCALE APPLIED TO IT
-            s.aabb.min = boundingBox.min;
-            s.aabb.max = boundingBox.max;
-            scene_element_boxes.push_back(s);
-        }
+        
         // Walk through each of the mesh's faces and retrieve the corresponding vertex indices
         for (unsigned int i = 0; i < mesh->mNumFaces; i++)
         {
@@ -801,7 +930,7 @@ private:
 public:
     string directory;
 
-    void loadModel(std::string const& path, vector<StaticMesh>& meshes, std::vector<TextureInfo>& texLoaded)
+    void loadModel(std::string const& path, vector<StaticMesh>& meshes, std::vector<TextureInfo>& texLoaded, int modelId)
     {
         // Read file via ASSIMP
         Assimp::Importer importer;
@@ -815,8 +944,25 @@ public:
         // Retrieve the directory path of the filepath
         directory = path.substr(0, path.find_last_of('/'));
 
+        // Initialize bounds tracking for the entire model
+        glm::vec3 minBounds(FLT_MAX);
+        glm::vec3 maxBounds(-FLT_MAX);
+
         // Process ASSIMP's root node recursively
-        processNode(scene->mRootNode, scene, meshes, directory);
+        processNode(scene->mRootNode, scene, meshes, directory, modelId, minBounds, maxBounds);
+
+        // Create one AABB for the entire model after processing all meshes
+        if (minBounds.x != FLT_MAX) { // Check if we found any vertices
+            Shape s;
+            s.type = AABB;
+            s.id = modelId;
+            
+            // Create AABB from calculated bounds
+            s.aabb.min = minBounds;
+            s.aabb.max = maxBounds;
+            
+            scene_element_boxes.push_back(s);
+        }
 
         // Copy data back
         texLoaded = textures_loaded;
@@ -838,9 +984,10 @@ public:
     SceneElementModel(std::string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
         SceneElementModelCreator creator;
-        creator.loadModel(path, meshes, textures_loaded);
+        id = get_next_unique_model_id();  // Use utility function for unique ID
+        scene_element_count++;            // Keep count for other purposes
+        creator.loadModel(path, meshes, textures_loaded, id);
         directory = creator.directory;
-        id = scene_element_count++;
         model_index = 0; // Will be set during loading
     }
 

@@ -23,6 +23,9 @@ Ray generate_ray(float mouse_x, float mouse_y,
 // Returns -1 if no intersection found
 int intersect_ray(const Ray& ray, const std::vector<Shape>& shapes);
 
+// Intersect ray with a collection of shapes and return ALL hit model IDs sorted by distance
+std::vector<int> intersect_ray_all(const Ray& ray, const std::vector<Shape>& shapes);
+
 // Helper function for ray-AABB intersection test
 bool ray_aabb_intersect(const Ray& ray, const Aabb& aabb, float& t_min, float& t_max);
 

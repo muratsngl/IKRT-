@@ -7,6 +7,17 @@
 #include "collision.hpp"
 #include "Shader.h"
 
+/**
+ * @brief A collision visualizer class for rendering bounding boxes as wireframes
+ * 
+ * This class provides functionality to visualize collision geometry for debugging purposes.
+ * It renders:
+ * - Scene element AABBs as green wireframes
+ * - Interactable element AABBs as red wireframes
+ * 
+ * The visualizer uses a single VAO/VBO setup for efficiency and transforms each
+ * bounding box using the appropriate model matrix.
+ */
 class CollisionVisualizer {
 private:
     // OpenGL resources

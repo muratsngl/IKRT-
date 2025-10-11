@@ -15,8 +15,8 @@ uniform sampler2D normalMap;
 uniform sampler2D aoMap;
 
 // Lights
-uniform vec3 lightPositions[4];
-uniform vec3 lightColors[4];
+uniform vec3 lightPositions[5];
+uniform vec3 lightColors[5];
 
 // Camera
 uniform vec3 camPos;
@@ -100,7 +100,7 @@ void main()
     // 2. Calculate direct lighting contribution
     // --------------------------------------------------
     vec3 Lo = vec3(0.0); // Outgoing radiance
-    for(int i = 0; i < 4; ++i) 
+    for(int i = 0; i < 5; ++i) 
     {
         // Calculate per-light vectors
         vec3 L = normalize(lightPositions[i] - fs_in.FragPos);
@@ -135,7 +135,7 @@ void main()
     // 3. Calculate ambient lighting
     // --------------------------------------------------
     // This is a simple ambient term. For full PBR, this would be replaced with Image-Based Lighting (IBL).
-    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 ambient = vec3(1) * albedo * ao;
     vec3 color = ambient + Lo;
 	
     // 4. Final Color Correction

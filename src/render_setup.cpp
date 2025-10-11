@@ -21,7 +21,7 @@ MODE app_mode = EDIT_SCENE;  // Default to edit scene mode
 
 static RenderContext render_context;
 // Initialize camera with edit mode default position
-static Camera camera(glm::vec3(0.0f, -0.5f, 4.0f));
+static Camera camera(glm::vec3(0.0f, 5.5f, 30.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
@@ -45,6 +45,13 @@ static bool spaceKeyPressed = false;
 
 // Gizmo state variables
 static int selected_model_id = -1;
+
+// Cycle selection state variables
+static std::vector<int> hit_objects_list;
+static int current_selection_index = 0;
+static double last_mouse_x = -1.0;
+static double last_mouse_y = -1.0;
+static const double CLICK_THRESHOLD = 25.0; // Pixels tolerance for "same location"
 
 bool init_rendering() {
     // Initialize GLFW
@@ -200,6 +207,33 @@ glm::mat4& get_selected_object_matrix() {
 
 void clear_selection() {
     selected_model_id = -1;
+    hit_objects_list.clear();
+    current_selection_index = 0;
+}
+
+bool is_same_click_location(double mouse_x, double mouse_y) {
+    if (last_mouse_x < 0 || last_mouse_y < 0) {
+        return false; // No previous click recorded
+    }
+    
+    double dx = mouse_x - last_mouse_x;
+    double dy = mouse_y - last_mouse_y;
+    double distance = dx * dx + dy * dy;
+    
+    return distance <= CLICK_THRESHOLD;
+}
+
+void cycle_to_next_object() {
+    if (!hit_objects_list.empty()) {
+        // Move to next object in the list
+        current_selection_index = (current_selection_index + 1) % hit_objects_list.size();
+        
+        // Update selection
+        selected_model_id = hit_objects_list[current_selection_index];
+        std::cout << "Cycled to object ID: " << selected_model_id 
+                  << " (index " << current_selection_index + 1 
+                  << " of " << hit_objects_list.size() << ")" << std::endl;
+    }
 }
 
 void get_current_camera_matrices(glm::mat4& view, glm::mat4& projection) {
@@ -273,23 +307,25 @@ void render_frame() {
         sceneElementShader->setMat4("projection", projection);
 
         // Set up PBR lighting
-        // Define 4 point lights positioned around the scene
-        glm::vec3 lightPositions[4] = {
-            glm::vec3(-10.0f,  10.0f, 10.0f),   // Top-left front
+        // Define 5 point lights positioned around the scene
+        glm::vec3 lightPositions[5] = {
+            camera.Position,                     // Powerful camera light - follows camera position
             glm::vec3( 10.0f,  10.0f, 10.0f),   // Top-right front  
             glm::vec3(-10.0f, -10.0f, 10.0f),   // Bottom-left front
-            glm::vec3( 10.0f, -10.0f, 10.0f)    // Bottom-right front
+            glm::vec3( 10.0f, -10.0f, 10.0f),   // Bottom-right front
+            glm::vec3(  0.0f,  50.0f,  0.0f)    // Positive Y direction light (overhead)
         };
         
-        glm::vec3 lightColors[4] = {
-            glm::vec3(30.0f, 25.0f, 20.0f),  // Warm white light
-            glm::vec3(25.0f, 30.0f, 30.0f),  // Cool white light
-            glm::vec3(30.0f, 20.0f, 25.f),  // Slightly magenta light
-            glm::vec3(20.0f, 30.0f, 25.0f)   // Slightly green light
+        glm::vec3 lightColors[5] = {
+            glm::vec3(1500.0f, 1500.0f, 1500.0f),  // Powerful camera light with huge intensity
+            glm::vec3(25.0f, 30.0f, 30.0f),        // Cool white light
+            glm::vec3(30.0f, 20.0f, 25.f),         // Slightly magenta light
+            glm::vec3(20.0f, 30.0f, 25.0f),        // Slightly green light
+            glm::vec3(200.0f, 200.0f, 180.0f)      // Bright overhead light with warm tone
         };
 
         // Set light uniforms
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 5; ++i) {
             sceneElementShader->setVec3("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
             sceneElementShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
         }
@@ -445,39 +481,53 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         double mouse_x, mouse_y;
         glfwGetCursorPos(window, &mouse_x, &mouse_y);
         
-        // Get current camera matrices - need to recreate the same logic from render_frame
-        glm::mat4 view, projection;
+        // Check if this is a repeat click at the same location
+        bool is_repeat_click = is_same_click_location(mouse_x, mouse_y);
         
-
+        if (!is_repeat_click || hit_objects_list.empty()) {
+            // This is a new query - clear previous selection and perform new raycast
+            clear_selection();
+            
+            // Get current camera matrices - need to recreate the same logic from render_frame
+            glm::mat4 view, projection;
+            
             // Free view or animate mode - use camera's natural view matrix
             view = camera.GetViewMatrix();
             projection = glm::perspective(glm::radians(camera.Zoom), 
                                         (float)render_context.screen_width / 
                                         (float)render_context.screen_height, 
                                         0.1f, 100.0f);
-        
-        
-        // Generate ray from mouse position
-        Ray ray = generate_ray(static_cast<float>(mouse_x), static_cast<float>(mouse_y), 
-                              view, projection, camera.Position,
-                              render_context.screen_width, render_context.screen_height);
-        
-        // Collect all shapes for intersection testing
-
-        
-
-        
-   
-        
-        int hit_model_id = intersect_ray(ray,scene_element_boxes);
-        if (hit_model_id != -1) {
-            // Set the selected object for gizmo manipulation
-            set_selected_object(hit_model_id);
-            std::cout << "Selected object ID: " << hit_model_id << std::endl;
+            
+            // Generate ray from mouse position
+            Ray ray = generate_ray(static_cast<float>(mouse_x), static_cast<float>(mouse_y), 
+                                  view, projection, camera.Position,
+                                  render_context.screen_width, render_context.screen_height);
+            
+            // Collect all shapes for intersection testing
+            std::vector<Shape> allShapes;
+            allShapes.insert(allShapes.end(), scene_element_boxes.begin(), scene_element_boxes.end());
+            allShapes.insert(allShapes.end(), get_interactable_element_boxes().begin(), get_interactable_element_boxes().end());
+            
+            // Find all objects the ray hits and sort them by distance (nearest first)
+            hit_objects_list = intersect_ray_all(ray, allShapes);
+            
+            if (!hit_objects_list.empty()) {
+                // Select the first item
+                current_selection_index = 0;
+                selected_model_id = hit_objects_list[current_selection_index];
+                std::cout << "Selected object ID: " << selected_model_id 
+                          << " (1 of " << hit_objects_list.size() << " objects at this location)" << std::endl;
+            } else {
+                // Clicked on empty space
+                std::cout << "Selection cleared - clicked on empty space" << std::endl;
+            }
+            
+            // Remember where this click happened
+            last_mouse_x = mouse_x;
+            last_mouse_y = mouse_y;
         } else {
-            // Clear selection if nothing was hit
-            clear_selection();
-            std::cout << "Selection cleared" << std::endl;
+            // This is a repeat click at the same location - cycle to next object
+            cycle_to_next_object();
         }
     }
 }

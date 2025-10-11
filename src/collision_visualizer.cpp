@@ -141,27 +141,25 @@ void CollisionVisualizer::renderCollisionGeometry(const glm::mat4& view, const g
         }
     }
     
-    // Render interactable element boxes (OBB type)
-    bboxShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red wireframe for OBBs
+    // Render interactable element boxes (AABB type)
+    bboxShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red wireframe for interactable AABBs
     
     for (const Shape& shape : interactable_element_boxes) {
-        if (shape.type == OBB) {
+        if (shape.type == AABB) {
             // Get the model matrix for this shape
             unsigned int modelIndex = get_model_index_by_id(shape.id);
             if (modelIndex >= modelMatrices.size()) continue;
             
             const glm::mat4& modelMatrix = modelMatrices[modelIndex];
             
-            // Create OBB transformation matrix
+            // Calculate size and center from AABB
+            glm::vec3 size = shape.aabb.max - shape.aabb.min;
+            glm::vec3 center = (shape.aabb.min + shape.aabb.max) * 0.5f;
+            
+            // Create transformation matrix
             glm::mat4 bboxTransform = modelMatrix;
-            bboxTransform = glm::translate(bboxTransform, shape.obb.center);
-            
-            // Apply OBB rotation
-            glm::mat4 rotationMatrix = glm::mat4_cast(shape.obb.rotation);
-            bboxTransform = bboxTransform * rotationMatrix;
-            
-            // Scale by half extents (since our cube goes from -0.5 to 0.5)
-            bboxTransform = glm::scale(bboxTransform, shape.obb.halfExtents * 2.0f);
+            bboxTransform = glm::translate(bboxTransform, center);
+            bboxTransform = glm::scale(bboxTransform, size);
             
             bboxShader->setMat4("model", bboxTransform);
             glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
