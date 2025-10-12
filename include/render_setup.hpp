@@ -79,6 +79,10 @@ void init_collision_visualizer();
 void cleanup_collision_visualizer();
 CollisionVisualizer& get_collision_visualizer();
 
+// Light management functions
+class LightManager;
+LightManager& get_light_manager();
+
 // Callback functions
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);

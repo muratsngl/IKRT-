@@ -6,6 +6,7 @@
 #include "ImGuiFileDialog.h"
 #include "ImGuizmo.h"
 #include "model_loader.hpp"
+#include "light_manager.hpp"
 
 // Forward declaration
 struct GLFWwindow;
@@ -34,5 +35,6 @@ ImGuiStyle create_gui_style();
 void RenderModelLoaderWidget();
 void RenderModeSwitcher();
 void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjection, glm::mat4& objectMatrix);
+void RenderLightManagerWidget();
 
 #endif

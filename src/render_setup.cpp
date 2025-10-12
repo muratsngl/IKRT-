@@ -6,6 +6,7 @@
 #include "include/Shader.h"
 #include "include/model_bones.h" 
 #include "include/application_logic.hpp"// Include the Model class definition
+#include "include/light_manager.hpp"
 
 #include "include/raycast.hpp"
 #include <glm/glm.hpp>
@@ -25,6 +26,9 @@ static Camera camera(glm::vec3(0.0f, 5.5f, 30.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
+
+// Light manager instance
+static LightManager lightManager;
 
 // Collision visualizer instance
 static CollisionVisualizer collisionVisualizer;
@@ -112,8 +116,19 @@ void load_shaders() {
     skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
     sceneElementShader = new Shader("assets/shaders/pbr.vs", "assets/shaders/pbr.fs");
     
-   
-
+    // Initialize light manager
+    lightManager.initialize();
+    lightManager.bindUBO(4); // Bind to binding point 4 as specified in shader
+    
+    // Set up a default directional light (sun)
+    DirectionalLight sun;
+    sun.direction = glm::normalize(glm::vec3(-0.2f, -1.0f, -0.3f));
+    sun.color = glm::vec3(1.0f, 0.95f, 0.8f);
+    sun.intensity = 0.5f; // Reduced from 2.0f to make point lights more visible
+    lightManager.setDirectionalLight(sun);
+    
+    // Update the UBO with default lighting
+    lightManager.updateUBO();
 }
 
 void init_buffers() {
@@ -300,35 +315,14 @@ void render_frame() {
         
         
         sceneElementShader->use();
-        
-
 
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
 
-        // Set up PBR lighting
-        // Define 5 point lights positioned around the scene
-        glm::vec3 lightPositions[5] = {
-            camera.Position,                     // Powerful camera light - follows camera position
-            glm::vec3( 10.0f,  10.0f, 10.0f),   // Top-right front  
-            glm::vec3(-10.0f, -10.0f, 10.0f),   // Bottom-left front
-            glm::vec3( 10.0f, -10.0f, 10.0f),   // Bottom-right front
-            glm::vec3(  0.0f,  50.0f,  0.0f)    // Positive Y direction light (overhead)
-        };
-        
-        glm::vec3 lightColors[5] = {
-            glm::vec3(1500.0f, 1500.0f, 1500.0f),  // Powerful camera light with huge intensity
-            glm::vec3(25.0f, 30.0f, 30.0f),        // Cool white light
-            glm::vec3(30.0f, 20.0f, 25.f),         // Slightly magenta light
-            glm::vec3(20.0f, 30.0f, 25.0f),        // Slightly green light
-            glm::vec3(200.0f, 200.0f, 180.0f)      // Bright overhead light with warm tone
-        };
-
-        // Set light uniforms
-        for (int i = 0; i < 5; ++i) {
-            sceneElementShader->setVec3("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
-            sceneElementShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
-        }
+        // Update and bind light data via UBO
+        // The light setup should be done elsewhere, but we'll ensure UBO is updated
+        lightManager.updateUBO();
+        lightManager.bindUBO(4);
 
         // Set camera position for view direction calculation (unified camera position)
         sceneElementShader->setVec3("camPos", camera.Position);
@@ -587,4 +581,8 @@ void cleanup_collision_visualizer() {
 
 CollisionVisualizer& get_collision_visualizer() {
     return collisionVisualizer;
+}
+
+LightManager& get_light_manager() {
+    return lightManager;
 }

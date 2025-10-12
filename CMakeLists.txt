@@ -64,6 +64,7 @@ set(SOURCES
     src/stb_image.cpp
     src/UI.cpp
     src/raycast.cpp
+    src/light_manager.cpp
 )
 
 # Include directories (Original Setup)
