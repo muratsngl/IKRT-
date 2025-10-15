@@ -8,7 +8,7 @@ constexpr int MAX_POINT_LIGHTS = 10;
 constexpr int MAX_SPOT_LIGHTS = 10;
 
 // UBO structure that matches the shader layout exactly
-// Must maintain std140 alignment rules
+//std140 alignment rules
 struct alignas(16) LightUBO {
     // Directional Light (32 bytes)
     glm::vec3 directionalLightDirection;    // offset 0

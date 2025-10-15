@@ -315,3 +315,30 @@ void update_transforms() {
 ApplicationState& get_application_state() {
     return app_state;
 }
+
+void reset_application_state() {
+    // Reset target positions to default values
+    app_state.targetPositionIndex = glm::vec3(-1.2f, 2.0f, 0.0f);
+    app_state.targetPositionMiddle = glm::vec3(-0.3f, -1.2f, 0.0f);
+    app_state.targetPositionRing = glm::vec3(1.6f, 2.0f, 0.0f);
+    app_state.targetPositionPinky = glm::vec3(0.5f, -1.2f, 0.0f);
+    app_state.targetPositionRoot = glm::vec3(0.0f, 0.0f, 0.0f);
+    
+    // Reset deltas to zero
+    app_state.deltaIndex = glm::vec3(0.0f);
+    app_state.deltaMiddle = glm::vec3(0.0f);
+    app_state.deltaRing = glm::vec3(0.0f);
+    app_state.deltaPinky = glm::vec3(0.0f);
+    app_state.deltaRoot = glm::vec3(0.0f);
+    
+    // Reset interaction states
+    for (int i = 0; i < 4; i++) {
+        app_state.isInteracting[i] = false;
+    }
+    
+    // Reset timing (keep current time to avoid jump)
+    app_state.deltaTime = 0.0f;
+    // Don't reset lastFrame to avoid timing issues
+    
+    std::cout << "Application state reset for new interactor model" << std::endl;
+}

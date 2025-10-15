@@ -1,6 +1,7 @@
 #include "include/model_loader.hpp"
 #include "include/model_bones.h"
 #include "include/render_setup.hpp"
+#include "include/application_logic.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -65,6 +66,8 @@ model_data.right_ring_indices = {18, 43, 44, 45, 57};
 // Path: hand.R -> ... -> hand.R.017 -> hand.R.020
 model_data.right_pinky_indices = {18, 46, 47, 48, 58};
 
+        // Reset application state for the new model to ensure clean initialization
+        reset_application_state();
 
     return true;
     } catch (const std::exception& e) {

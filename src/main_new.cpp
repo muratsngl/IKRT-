@@ -22,7 +22,7 @@ int main() {
     // Load shaders and initialize buffers
     load_shaders();
     init_buffers();
-    
+    //load_interactor_model("./assets/models/man_with_bones/quit.dae");
 
     // Initialize application state
     init_application_state();

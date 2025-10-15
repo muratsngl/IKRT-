@@ -40,4 +40,7 @@ void calculate_deltas();
 void rearrange_finger_positions_based_on_collision();
 ApplicationState& get_application_state();
 
+// Reset application state when loading new interactor model
+void reset_application_state();
+
 #endif
