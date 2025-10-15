@@ -113,7 +113,7 @@ bool init_rendering() {
 }
 
 void load_shaders() {
-    skeletonShader = new Shader("assets/shaders/skeletal.vs", "assets/shaders/skeletal.fs");
+    skeletonShader = new Shader("assets/shaders/skeletal_pbr.vs", "assets/shaders/skeletal_pbr.fs");
     sceneElementShader = new Shader("assets/shaders/pbr.vs", "assets/shaders/pbr.fs");
     
     // Initialize light manager
@@ -208,13 +208,54 @@ int get_selected_object_id() {
     return selected_model_id;
 }
 
+// Static matrices for target proxy manipulation
+static glm::mat4 targetProxyMatrix_Index = glm::mat4(1.0f);
+static glm::mat4 targetProxyMatrix_Middle = glm::mat4(1.0f);
+static glm::mat4 targetProxyMatrix_Ring = glm::mat4(1.0f);
+static glm::mat4 targetProxyMatrix_Pinky = glm::mat4(1.0f);
+
 glm::mat4& get_selected_object_matrix() {
+    // Check if selected object is a target proxy
+    if (selected_model_id >= TARGET_PROXY_INDEX && selected_model_id <= TARGET_PROXY_PINKY) {
+        // Get current target position and create matrix
+        ApplicationState& app_state = get_application_state();
+        glm::vec3* targetPos = nullptr;
+        glm::mat4* proxyMatrix = nullptr;
+        
+        switch(selected_model_id) {
+            case TARGET_PROXY_INDEX:
+                targetPos = &app_state.targetPositionIndex;
+                proxyMatrix = &targetProxyMatrix_Index;
+                break;
+            case TARGET_PROXY_MIDDLE:
+                targetPos = &app_state.targetPositionMiddle;
+                proxyMatrix = &targetProxyMatrix_Middle;
+                break;
+            case TARGET_PROXY_RING:
+                targetPos = &app_state.targetPositionRing;
+                proxyMatrix = &targetProxyMatrix_Ring;
+                break;
+            case TARGET_PROXY_PINKY:
+                targetPos = &app_state.targetPositionPinky;
+                proxyMatrix = &targetProxyMatrix_Pinky;
+                break;
+        }
+        
+        if (targetPos && proxyMatrix) {
+            // Update matrix with current position
+            *proxyMatrix = glm::translate(glm::mat4(1.0f), *targetPos);
+            return *proxyMatrix;
+        }
+    }
+    
+    // Regular model selection
     if (selected_model_id != -1) {
         unsigned int model_index = get_model_index_by_id(selected_model_id);
         if (model_index < modelMatrices.size()) {
             return modelMatrices[model_index];
         }
     }
+    
     // Return a static identity matrix as fallback (should not happen in normal usage)
     static glm::mat4 identity = glm::mat4(1.0f);
     return identity;
@@ -346,6 +387,9 @@ void render_frame() {
     
     // Render collision geometry if enabled
     collisionVisualizer.renderCollisionGeometry(view, projection);
+    
+    // Render target position proxies if enabled
+    collisionVisualizer.renderTargetProxies(view, projection);
     
     // Render all UI components
     render_ui();
@@ -501,6 +545,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             std::vector<Shape> allShapes;
             allShapes.insert(allShapes.end(), scene_element_boxes.begin(), scene_element_boxes.end());
             allShapes.insert(allShapes.end(), get_interactable_element_boxes().begin(), get_interactable_element_boxes().end());
+            
+            // Include target proxies if they're visible
+            if (CollisionVisualizer::showTargetProxies) {
+                std::vector<Shape>& target_proxies = get_target_proxy_boxes();
+                allShapes.insert(allShapes.end(), target_proxies.begin(), target_proxies.end());
+            }
             
             // Find all objects the ray hits and sort them by distance (nearest first)
             hit_objects_list = intersect_ray_all(ray, allShapes);

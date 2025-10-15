@@ -172,3 +172,53 @@ void CollisionVisualizer::renderCollisionGeometry(const glm::mat4& view, const g
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glLineWidth(1.0f);
 }
+
+bool CollisionVisualizer::showTargetProxies = false;
+
+void CollisionVisualizer::renderTargetProxies(const glm::mat4& view, const glm::mat4& projection) {
+    if (!isInitialized || !showTargetProxies) return;
+    
+    #include "application_logic.hpp"
+    
+    std::vector<Shape>& target_proxies = get_target_proxy_boxes();
+    
+    if (target_proxies.empty()) return;
+    
+    bboxShader->use();
+    bboxShader->setMat4("view", view);
+    bboxShader->setMat4("projection", projection);
+    
+    glBindVertexArray(VAO);
+    glLineWidth(3.0f);
+    
+    // Render target proxy boxes with distinct color (cyan/blue)
+    for (const Shape& shape : target_proxies) {
+        if (shape.type == AABB) {
+            // Use bright cyan color for target proxies
+            bboxShader->setVec3("boxColor", glm::vec3(0.0f, 1.0f, 1.0f));
+            
+            // Calculate size and center from AABB
+            glm::vec3 size = shape.aabb.max - shape.aabb.min;
+            glm::vec3 center = (shape.aabb.min + shape.aabb.max) * 0.5f;
+            
+            // Create transformation matrix (no model matrix needed, already in world space)
+            glm::mat4 bboxTransform = glm::mat4(1.0f);
+            bboxTransform = glm::translate(bboxTransform, center);
+            bboxTransform = glm::scale(bboxTransform, size);
+            
+            bboxShader->setMat4("model", bboxTransform);
+            glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+            
+            // Also render a small point at the center for clarity
+            glPointSize(10.0f);
+            glm::mat4 pointTransform = glm::translate(glm::mat4(1.0f), center);
+            bboxShader->setMat4("model", pointTransform);
+            bboxShader->setVec3("boxColor", glm::vec3(1.0f, 1.0f, 0.0f)); // Yellow point
+            glDrawArrays(GL_POINTS, 0, 1);
+        }
+    }
+    
+    glBindVertexArray(0);
+    glLineWidth(1.0f);
+    glPointSize(1.0f);
+}

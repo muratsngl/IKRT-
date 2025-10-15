@@ -1,6 +1,8 @@
 #include "include/UI.hpp"
 #include "include/render_setup.hpp"
 #include "include/collision_visualizer.hpp"
+#include "include/application_logic.hpp"
+#include "include/model_loader.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cmath>
@@ -188,6 +190,45 @@ void RenderModelLoaderWidget(bool* p_open) {
         ImGui::Text("Settings will go here...");
     }
 
+    if (ImGui::CollapsingHeader("Animation Controls")) {
+        ApplicationState& app_state = get_application_state();
+        
+        // Check if interactor model is loaded
+        if (is_interactor_model_available()) {
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Interactor Model Loaded");
+            
+            if (ImGui::Checkbox("Manual Control Mode", &app_state.manualControlMode)) {
+                if (app_state.manualControlMode) {
+                    std::cout << "Manual control mode enabled - shared memory disabled" << std::endl;
+                    CollisionVisualizer::showTargetProxies = true;
+                } else {
+                    std::cout << "Manual control mode disabled - shared memory enabled" << std::endl;
+                    CollisionVisualizer::showTargetProxies = false;
+                }
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("(?)");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Enable manual control of target positions\nwithout shared memory");
+            }
+            
+            if (ImGui::Checkbox("Show Target Proxies", &CollisionVisualizer::showTargetProxies)) {
+                if (CollisionVisualizer::showTargetProxies) {
+                    update_target_proxies();
+                }
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("(?)");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Visualize and interact with IK target positions");
+            }
+            
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.0f, 1.0f), "No Interactor Model");
+            ImGui::TextWrapped("Please load an interactor model to use animation controls.");
+        }
+    }
+
     if (ImGui::CollapsingHeader("Debug")) {
         static bool renderCollisionGeometry = false;
         if (ImGui::Checkbox("Render Collision Geometry", &renderCollisionGeometry)) {
@@ -256,7 +297,16 @@ void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjectio
         glm::vec4 perspective;
         glm::decompose(objectMatrix, scale, rotation, translation, skew, perspective);
 
-        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Object Transform");
+        // Check if we're manipulating a target proxy
+        int selected_id = get_selected_object_id();
+        if (selected_id >= TARGET_PROXY_INDEX && selected_id <= TARGET_PROXY_PINKY) {
+            // Update target position via delta system
+            update_target_from_gizmo(selected_id, translation);
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Target Proxy");
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Object Transform");
+        }
+        
         ImGui::Text("Translation: %.3f, %.3f, %.3f", translation.x, translation.y, translation.z);
         ImGui::Text("Rotation: %.3f, %.3f, %.3f, %.3f", rotation.w, rotation.x, rotation.y, rotation.z);
         ImGui::Text("Scale: %.3f, %.3f, %.3f", scale.x, scale.y, scale.z);

@@ -2,6 +2,7 @@
 #include "model_loader.hpp"
 #include "render_setup.hpp"
 #include "application_logic.hpp"
+#include "collision_visualizer.hpp"
 #include <iostream>
 
 int main() {
@@ -32,26 +33,41 @@ int main() {
     
     // Main loop
     while (!should_close_window()) {
-        // Check if shared memory is available, attempt to reinitialize if not
-        if (!is_shared_memory_available()) {
-            static bool retry_notified = false;
-            if (setup_shared_memory()) {
-                std::cout << "Shared memory successfully initialized! Hand tracking is now active." << std::endl;
-                retry_notified = false; // Reset notification flag
-            } else if (!retry_notified) {
-                std::cout << "Note: Shared memory still not available. Retrying each frame..." << std::endl;
-                retry_notified = true; // Only show this message once
-            }
-        }
+        // Get application state to check manual control mode
+        ApplicationState& app_state = get_application_state();
         
-        // Update shared memory data
-        update_shared_memory();
-        // Update application logic
-        update_finger_positions();
-        calculate_deltas();
+        // Only use shared memory if NOT in manual control mode
+        if (!app_state.manualControlMode) {
+            // Check if shared memory is available, attempt to reinitialize if not
+            if (!is_shared_memory_available()) {
+                static bool retry_notified = false;
+                if (setup_shared_memory()) {
+                    std::cout << "Shared memory successfully initialized! Hand tracking is now active." << std::endl;
+                    retry_notified = false; // Reset notification flag
+                } else if (!retry_notified) {
+                    std::cout << "Note: Shared memory still not available. Retrying each frame..." << std::endl;
+                    retry_notified = true; // Only show this message once
+                }
+            }
+            
+            // Update shared memory data
+            update_shared_memory();
+            // Update application logic
+            update_finger_positions();
+            calculate_deltas();
+        }
+        // In manual control mode, deltas are set via gizmo manipulation
+        // so we skip shared memory and finger position updates
+        
+        // Always apply FABRIK and update transforms
         apply_fabrik();
         update_transforms();
         rearrange_finger_positions_based_on_collision();
+        
+        // Update target proxies every frame to keep them in sync
+        if (CollisionVisualizer::showTargetProxies) {
+            update_target_proxies();
+        }
         
         
         // Render frame

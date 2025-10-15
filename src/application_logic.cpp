@@ -10,6 +10,7 @@
 
 
 static ApplicationState app_state;
+static std::vector<Shape> target_proxy_boxes;
 
 void init_application_state() {
     // Initialize target positions
@@ -18,6 +19,12 @@ void init_application_state() {
     app_state.targetPositionRing = glm::vec3(1.6f, 2.0f, 0.0f);
     app_state.targetPositionPinky = glm::vec3(0.5f, -1.2f, 0.0f);
     app_state.targetPositionRoot = glm::vec3(0.0f, 0.0f, 0.0f); // Added for root movement
+    
+    // Initialize previous positions for delta tracking
+    app_state.prevTargetPositionIndex = app_state.targetPositionIndex;
+    app_state.prevTargetPositionMiddle = app_state.targetPositionMiddle;
+    app_state.prevTargetPositionRing = app_state.targetPositionRing;
+    app_state.prevTargetPositionPinky = app_state.targetPositionPinky;
     
     // Initialize deltas
     app_state.deltaIndex = glm::vec3(0.0f);
@@ -29,8 +36,12 @@ void init_application_state() {
     // Initialize timing
     app_state.deltaTime = 0.0f;
     app_state.lastFrame = 0.0f;
-
-
+    
+    // Initialize manual control mode
+    app_state.manualControlMode = false;
+    
+    // Initialize target proxies
+    init_target_proxies();
 }
 
 void update_finger_positions() {
@@ -318,11 +329,11 @@ ApplicationState& get_application_state() {
 
 void reset_application_state() {
     // Reset target positions to default values
-    app_state.targetPositionIndex = glm::vec3(-1.2f, 2.0f, 0.0f);
-    app_state.targetPositionMiddle = glm::vec3(-0.3f, -1.2f, 0.0f);
-    app_state.targetPositionRing = glm::vec3(1.6f, 2.0f, 0.0f);
-    app_state.targetPositionPinky = glm::vec3(0.5f, -1.2f, 0.0f);
-    app_state.targetPositionRoot = glm::vec3(0.0f, 0.0f, 0.0f);
+    // app_state.targetPositionIndex = glm::vec3(-1.2f, 2.0f, 0.0f);
+    // app_state.targetPositionMiddle = glm::vec3(-0.3f, -1.2f, 0.0f);
+    // app_state.targetPositionRing = glm::vec3(1.6f, 2.0f, 0.0f);
+    // app_state.targetPositionPinky = glm::vec3(0.5f, -1.2f, 0.0f);
+    // app_state.targetPositionRoot = glm::vec3(0.0f, 0.0f, 0.0f);
     
     // Reset deltas to zero
     app_state.deltaIndex = glm::vec3(0.0f);
@@ -341,4 +352,113 @@ void reset_application_state() {
     // Don't reset lastFrame to avoid timing issues
     
     std::cout << "Application state reset for new interactor model" << std::endl;
+}
+
+// ============================================================================
+// Target Position Proxy System
+// ============================================================================
+
+void init_target_proxies() {
+    target_proxy_boxes.clear();
+    
+    // Create bounding boxes for each target position
+    // Box size for interaction
+    float boxSize = 0.15f;
+    
+    // Index finger target proxy
+    Shape indexBox;
+    indexBox.type = AABB;
+    indexBox.id = TARGET_PROXY_INDEX;
+    indexBox.aabb.min = app_state.targetPositionIndex - glm::vec3(boxSize);
+    indexBox.aabb.max = app_state.targetPositionIndex + glm::vec3(boxSize);
+    target_proxy_boxes.push_back(indexBox);
+    
+    // Middle finger target proxy
+    Shape middleBox;
+    middleBox.type = AABB;
+    middleBox.id = TARGET_PROXY_MIDDLE;
+    middleBox.aabb.min = app_state.targetPositionMiddle - glm::vec3(boxSize);
+    middleBox.aabb.max = app_state.targetPositionMiddle + glm::vec3(boxSize);
+    target_proxy_boxes.push_back(middleBox);
+    
+    // Ring finger target proxy
+    Shape ringBox;
+    ringBox.type = AABB;
+    ringBox.id = TARGET_PROXY_RING;
+    ringBox.aabb.min = app_state.targetPositionRing - glm::vec3(boxSize);
+    ringBox.aabb.max = app_state.targetPositionRing + glm::vec3(boxSize);
+    target_proxy_boxes.push_back(ringBox);
+    
+    // Pinky finger target proxy
+    Shape pinkyBox;
+    pinkyBox.type = AABB;
+    pinkyBox.id = TARGET_PROXY_PINKY;
+    pinkyBox.aabb.min = app_state.targetPositionPinky - glm::vec3(boxSize);
+    pinkyBox.aabb.max = app_state.targetPositionPinky + glm::vec3(boxSize);
+    target_proxy_boxes.push_back(pinkyBox);
+    
+    std::cout << "Target proxies initialized" << std::endl;
+}
+
+void update_target_proxies() {
+    // Update bounding box positions based on current target positions
+    float boxSize = 0.15f;
+    
+    if (target_proxy_boxes.size() >= 4) {
+        target_proxy_boxes[0].aabb.min = app_state.targetPositionIndex - glm::vec3(boxSize);
+        target_proxy_boxes[0].aabb.max = app_state.targetPositionIndex + glm::vec3(boxSize);
+        
+        target_proxy_boxes[1].aabb.min = app_state.targetPositionMiddle - glm::vec3(boxSize);
+        target_proxy_boxes[1].aabb.max = app_state.targetPositionMiddle + glm::vec3(boxSize);
+        
+        target_proxy_boxes[2].aabb.min = app_state.targetPositionRing - glm::vec3(boxSize);
+        target_proxy_boxes[2].aabb.max = app_state.targetPositionRing + glm::vec3(boxSize);
+        
+        target_proxy_boxes[3].aabb.min = app_state.targetPositionPinky - glm::vec3(boxSize);
+        target_proxy_boxes[3].aabb.max = app_state.targetPositionPinky + glm::vec3(boxSize);
+    }
+}
+
+std::vector<Shape>& get_target_proxy_boxes() {
+    return target_proxy_boxes;
+}
+
+void update_target_from_gizmo(int proxyID, const glm::vec3& newPosition) {
+    // Calculate delta and update the appropriate target position
+    // This maintains the existing framework where deltas drive the system
+    
+    glm::vec3 delta(0.0f);
+    
+    switch(proxyID) {
+        case TARGET_PROXY_INDEX:
+            delta = newPosition - app_state.prevTargetPositionIndex;
+            app_state.deltaIndex = delta;
+            app_state.targetPositionIndex = newPosition;
+            app_state.prevTargetPositionIndex = newPosition;
+            break;
+            
+        case TARGET_PROXY_MIDDLE:
+            delta = newPosition - app_state.prevTargetPositionMiddle;
+            app_state.deltaMiddle = delta;
+            app_state.targetPositionMiddle = newPosition;
+            app_state.prevTargetPositionMiddle = newPosition;
+            break;
+            
+        case TARGET_PROXY_RING:
+            delta = newPosition - app_state.prevTargetPositionRing;
+            app_state.deltaRing = delta;
+            app_state.targetPositionRing = newPosition;
+            app_state.prevTargetPositionRing = newPosition;
+            break;
+            
+        case TARGET_PROXY_PINKY:
+            delta = newPosition - app_state.prevTargetPositionPinky;
+            app_state.deltaPinky = delta;
+            app_state.targetPositionPinky = newPosition;
+            app_state.prevTargetPositionPinky = newPosition;
+            break;
+    }
+    
+    // Update the proxy bounding boxes
+    update_target_proxies();
 }
