@@ -391,7 +391,7 @@ __pycache__/
 .idea/
 
 # Asset cache (if not source)
-assets/models/*/*.dae
+assets/models/
 
 # Misc
 .DS_Store
@@ -399,3 +399,5 @@ Thumbs.db
 
 
 ./assets/*build/
+
+IKRT

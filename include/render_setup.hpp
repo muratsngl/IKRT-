@@ -12,8 +12,7 @@
 // Application mode enum
 enum MODE {
     EDIT_SCENE,
-    FREE_VIEW,
-    ANIMATE
+    FREE_VIEW
 };
 
 // Global application mode variable

@@ -144,7 +144,7 @@ void RenderMainMenuBar() {
         }
 
         // Mode Switcher integrated into the menu bar
-        const char* mode_names[] = {"Edit Scene", "Free View", "Animate"};
+        const char* mode_names[] = {"Edit Scene", "Free View"};
         static int current_mode_index = get_app_mode();
         float combo_width = 120.0f;
         ImGui::SameLine(ImGui::GetWindowWidth() - combo_width - 15);
@@ -152,7 +152,7 @@ void RenderMainMenuBar() {
         ImGui::Text("Mode:");
         ImGui::SameLine();
         ImGui::SetNextItemWidth(combo_width);
-        if (ImGui::Combo("##mode_combo", &current_mode_index, mode_names, 3)) {
+        if (ImGui::Combo("##mode_combo", &current_mode_index, mode_names, 2)) {
             set_app_mode((MODE)current_mode_index);
         }
 
@@ -201,6 +201,7 @@ void RenderModelLoaderWidget(bool* p_open) {
                 if (app_state.manualControlMode) {
                     std::cout << "Manual control mode enabled - shared memory disabled" << std::endl;
                     CollisionVisualizer::showTargetProxies = true;
+                    update_target_proxies();
                 } else {
                     std::cout << "Manual control mode disabled - shared memory enabled" << std::endl;
                     CollisionVisualizer::showTargetProxies = false;
@@ -209,18 +210,7 @@ void RenderModelLoaderWidget(bool* p_open) {
             ImGui::SameLine();
             ImGui::TextDisabled("(?)");
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Enable manual control of target positions\nwithout shared memory");
-            }
-            
-            if (ImGui::Checkbox("Show Target Proxies", &CollisionVisualizer::showTargetProxies)) {
-                if (CollisionVisualizer::showTargetProxies) {
-                    update_target_proxies();
-                }
-            }
-            ImGui::SameLine();
-            ImGui::TextDisabled("(?)");
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Visualize and interact with IK target positions");
+                ImGui::SetTooltip("Enable manual control of target positions\nShows target proxies and disables shared memory");
             }
             
         } else {

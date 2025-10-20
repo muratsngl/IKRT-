@@ -74,7 +74,7 @@ bool init_rendering() {
     render_context.screen_height = 720;
     render_context.window = glfwCreateWindow(render_context.screen_width, 
                                            render_context.screen_height, 
-                                           "Inverse Kinematics with Realtime Data", 
+                                           "I", 
                                            nullptr, nullptr);
     
     if (!render_context.window) {
@@ -133,6 +133,7 @@ void load_shaders() {
 
 void init_buffers() {
     GLbitfield flags = GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_WRITE_BIT;
+    
     
   
 
@@ -388,7 +389,7 @@ void render_frame() {
     // Render collision geometry if enabled
     collisionVisualizer.renderCollisionGeometry(view, projection);
     
-    // Render target position proxies if enabled
+    // Render target position proxies if enabled The problem here is the proxy rendering and the render collision geometry is coupled for the first click.
     collisionVisualizer.renderTargetProxies(view, projection);
     
     // Render all UI components
@@ -436,7 +437,7 @@ RenderContext& get_render_context() {
 
 // Mode utility functions
 const char* get_mode_name(MODE mode) {
-    const char* mode_names[] = {"Edit Scene", "Free View", "Animate"};
+    const char* mode_names[] = {"Edit Scene", "Free View"};
     return mode_names[mode];
 }
 
