@@ -2,8 +2,11 @@
 
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 norm;
-layout(location = 2) in ivec4 boneID;
-layout(location = 3) in vec4 boneWeights;
+layout(location = 2) in vec2 aTexCoords;
+layout(location = 3) in vec3 aTangent;
+layout(location = 4) in vec3 aBitangent;
+layout(location = 5) in ivec4 boneID;
+layout(location = 6) in vec4 boneWeights;
 
 
 uniform mat4 view;

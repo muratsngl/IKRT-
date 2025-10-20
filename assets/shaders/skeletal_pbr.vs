@@ -33,18 +33,19 @@ void main()
                          bone_matrices[boneID.z] * boneWeights.z + 
                          bone_matrices[boneID.w] * boneWeights.w;
     
-    // Transform position by bone transformation, then by model matrix
-    vec4 skinnedPos = boneTransform * vec4(aPos, 1.0);
-    vs_out.FragPos = vec3(model * skinnedPos);
+    // Transform position: model * bone * position (matching working shader order)
+    vec4 worldPos = model * boneTransform * vec4(aPos, 1.0);
+    vs_out.FragPos = vec3(worldPos);
     
     // Pass texture coordinates through
     vs_out.TexCoords = aTexCoords;
     
     // Transform normals, tangents, and bitangents for PBR
-    // Apply bone transformation to vertex attributes, then model transformation
-    vec3 skinnedNormal = mat3(boneTransform) * aNormal;
-    vec3 skinnedTangent = mat3(boneTransform) * aTangent;
-    vec3 skinnedBitangent = mat3(boneTransform) * aBitangent;
+    // First apply bone transformation, then model transformation (same order as position)
+    mat3 boneRotation = mat3(boneTransform);
+    vec3 skinnedNormal = boneRotation * aNormal;
+    vec3 skinnedTangent = boneRotation * aTangent;
+    vec3 skinnedBitangent = boneRotation * aBitangent;
     
     // Use normal matrix to correctly transform to world space
     mat3 normalMatrix = transpose(inverse(mat3(model)));
@@ -56,5 +57,5 @@ void main()
     vs_out.TBN = mat3(T, B, N);
     
     // Calculate final clip-space position
-    gl_Position = projection * view * vec4(vs_out.FragPos, 1.0);
+    gl_Position = projection * view * worldPos;
 }
