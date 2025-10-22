@@ -7,7 +7,8 @@ RENDERING
 DATA_ORGANIZATION:
     MODEL_REMOVAL: There is no such mechanism, having creative seizures while thinking of it. better keep it simple.
 SKINNING: 
-    1. The arms of the model has some faulty weights or there is an inconsistency that occurs around that area;
+    
+    2.VOLUME LOSS ON FOREARM(either skinning or vertex weights)
 
 MISC
     1. At some point the humanoid refused rendering. The problem was that I have changed the mesh code significantly without reflecting the changes in the shader
@@ -17,3 +18,4 @@ MISC
 
 SOLVED:
     For SceneElements bounding boxes are not consistent and extend themselves to infinity[UNINITIALIZED VARIABLE]
+    The arms of the model has some faulty weights or there is an inconsistency that occurs around that area[MATRIX OPERATION ORDER(STILL A MISTERY)]; 

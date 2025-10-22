@@ -5,6 +5,7 @@ in VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
     mat3 TBN;
+    vec4 FragPosLightSpace;
 } fs_in;
 
 // Material property textures
@@ -13,7 +14,7 @@ uniform sampler2D metallicMap;
 uniform sampler2D roughnessMap;
 uniform sampler2D normalMap;
 uniform sampler2D aoMap;
-
+uniform sampler2D shadowMap;
 // Light struct definitions
 struct PointLight {
     vec3 position;
@@ -50,6 +51,7 @@ layout(std140, binding = 4) uniform LightData {
 
 // Camera
 uniform vec3 camPos;
+
 
 const float PI = 3.14159265359;
 
@@ -100,6 +102,47 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+// ----------------------------------------------------------------------------
+// Shadow Calculation Function
+// ----------------------------------------------------------------------------
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
+{
+    // Perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    
+    // Transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    
+    // Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    
+    // Get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    
+    // Calculate bias based on surface angle
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    
+    // Check whether current frag pos is in shadow
+    // PCF (Percentage Closer Filtering) for soft shadows
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= 9.0;
+    
+    // Keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+        
+    return shadow;
 }
 
 // ----------------------------------------------------------------------------
@@ -157,7 +200,7 @@ vec3 calculatePointLight(int index, vec3 N, vec3 V, vec3 FragPos, vec3 albedo, f
 }
 
 // Calculate spot light contribution
-vec3 calculateSpotLight(int index, vec3 N, vec3 V, vec3 FragPos, vec3 albedo, float metallic, float roughness, vec3 F0)
+vec3 calculateSpotLight(int index, vec3 N, vec3 V, vec3 FragPos, vec3 albedo, float metallic, float roughness, vec3 F0, float shadow)
 {
     vec3 L = normalize(lights.spotLights[index].position - FragPos);
     vec3 H = normalize(V + L);
@@ -186,7 +229,9 @@ vec3 calculateSpotLight(int index, vec3 N, vec3 V, vec3 FragPos, vec3 albedo, fl
     kD *= 1.0 - metallic;
     
     float NdotL = max(dot(N, L), 0.0);
-    return (kD * albedo / PI + specular) * radiance * NdotL;
+    
+    // Apply shadow
+    return (1.0 - shadow) * (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
 // ----------------------------------------------------------------------------
@@ -218,6 +263,13 @@ void main()
     // --------------------------------------------------
     vec3 Lo = vec3(0.0); // Outgoing radiance
     
+    // Calculate shadow (only for first spotlight)
+    float shadow = 0.0;
+    if (lights.numSpotLights > 0) {
+        vec3 lightDir = normalize(lights.spotLights[0].position - fs_in.FragPos);
+        shadow = ShadowCalculation(fs_in.FragPosLightSpace, N, lightDir);
+    }
+    
     // Directional light
     Lo += calculateDirectionalLight(N, V, albedo, metallic, roughness, F0);
     
@@ -228,7 +280,7 @@ void main()
     
     // Spot lights  
     for(int i = 0; i < lights.numSpotLights && i < 10; ++i) {
-        Lo += calculateSpotLight(i, N, V, fs_in.FragPos, albedo, metallic, roughness, F0);
+        Lo += calculateSpotLight(i, N, V, fs_in.FragPos, albedo, metallic, roughness, F0, shadow);
     }
 
     // 3. Calculate ambient lighting

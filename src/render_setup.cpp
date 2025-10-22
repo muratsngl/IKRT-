@@ -17,6 +17,9 @@
 
 #include "include/UI.hpp"
 
+#define SHADOW_WIDTH 2048
+#define SHADOW_HEIGHT 2048
+
 // Global application mode variable definition
 MODE app_mode = EDIT_SCENE;  // Default to edit scene mode
 
@@ -26,6 +29,9 @@ static Camera camera(glm::vec3(0.0f, 5.5f, 30.0f));
 
 static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
+static Shader* shadowShader = nullptr;
+
+static Shader* debug_shader = nullptr;
 
 // Light manager instance
 static LightManager lightManager;
@@ -46,16 +52,48 @@ static bool firstMouse = true;
 
 // Add static variables to track the key state
 static bool spaceKeyPressed = false;
-
+static uint debug_rect_vao,debug_rect_vbo;
 // Gizmo state variables
 static int selected_model_id = -1;
-
+const float debug_rect[12]={
+        // Triangle 1
+        -1.0f, -1.0f, // Bottom-left
+         1.0f, -1.0f, // Bottom-right
+        -1.0f,  1.0f, // Top-left
+        // Triangle 2
+        -1.0f,  1.0f, // Top-left
+         1.0f, -1.0f, // Bottom-right
+         1.0f,  1.0f  // Top-right
+    };
 // Cycle selection state variables
 static std::vector<int> hit_objects_list;
 static int current_selection_index = 0;
 static double last_mouse_x = -1.0;
 static double last_mouse_y = -1.0;
 static const double CLICK_THRESHOLD = 25.0; // Pixels tolerance for "same location"
+
+void render_texture_debug_rect(GLuint debug_texture){
+    std::cout << "  Binding debug shader" << std::endl;
+    debug_shader->use();
+    debug_shader->setInt("debug_texture", 0);
+    
+    std::cout << "  Binding texture: " << debug_texture << std::endl;
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, debug_texture);
+    
+    std::cout << "  Drawing debug quad (VAO: " << debug_rect_vao << ")" << std::endl;
+    glBindVertexArray(debug_rect_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+    
+    // Check for OpenGL errors
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "  OpenGL error in debug render: " << err << std::endl;
+    } else {
+        std::cout << "  Debug quad rendered successfully" << std::endl;
+    }
+}
 
 bool init_rendering() {
     // Initialize GLFW
@@ -113,9 +151,18 @@ bool init_rendering() {
 }
 
 void load_shaders() {
+    std::cout << "Loading shaders..." << std::endl;
     skeletonShader = new Shader("assets/shaders/skeletal_pbr.vs", "assets/shaders/skeletal_pbr.fs");
-    sceneElementShader = new Shader("assets/shaders/pbr.vs", "assets/shaders/pbr.fs");
+    std::cout << "  skeletal_pbr shader loaded" << std::endl;
     
+    sceneElementShader = new Shader("assets/shaders/pbr.vs", "assets/shaders/pbr.fs");
+    std::cout << "  pbr shader loaded" << std::endl;
+    
+    shadowShader = new Shader("assets/shaders/shadow_shader.vs","assets/shaders/shadow_shader.fs");
+    std::cout << "  shadow shader loaded (ID: " << shadowShader->ID << ")" << std::endl;
+    
+    debug_shader = new Shader("assets/shaders/debug_shader.vs","assets/shaders/debug_shader.fs");
+    std::cout << "  debug shader loaded (ID: " << debug_shader->ID << ")" << std::endl;
     // Initialize light manager
     lightManager.initialize();
     lightManager.bindUBO(4); // Bind to binding point 4 as specified in shader
@@ -131,11 +178,45 @@ void load_shaders() {
     lightManager.updateUBO();
 }
 
+//Initialize depth textures for each spot(2DTEX) and point light(cubemap)
+void create_shadow_maps(){ 
+    glGenFramebuffers(1,&render_context.shadow_maps[0]); 
+    glGenTextures(1,&render_context.shadow_tex[0]);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_maps[0]);
+    
+
+    glBindTexture(GL_TEXTURE_2D,render_context.shadow_tex[0]);
+
+    glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT,SHADOW_WIDTH,SHADOW_HEIGHT,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+    
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,render_context.shadow_tex[0],0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);  
+    
+
+};
+
+
 void init_buffers() {
     GLbitfield flags = GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_WRITE_BIT;
     
-    
-  
+    //Shadow arrays
+    glGenVertexArrays(1,&debug_rect_vao);
+    glGenBuffers(1,&debug_rect_vbo);
+    glBindVertexArray(debug_rect_vao);
+    glBindBuffer(GL_ARRAY_BUFFER,debug_rect_vbo);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,2*sizeof(float),nullptr);
+    glBufferData(GL_ARRAY_BUFFER,12*sizeof(float),debug_rect,GL_STATIC_DRAW);
+
 
     glGenBuffers(1, &render_context.orcunUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
@@ -315,7 +396,7 @@ void render_frame() {
     //glEnable(GL_FRAMEBUFFER_SRGB); // Enable sRGB for correct color space
     
     // Set up matrices based on application mode using unified camera
-    glm::mat4 view, projection;
+    glm::mat4 view, projection,lightView,lightProjection;
     glm::mat4 model = glm::mat4(1.0f);
     
    // Both modes should use the same projection calculation
@@ -323,7 +404,7 @@ void render_frame() {
                             (float)render_context.screen_width / 
                             (float)render_context.screen_height, 
                             0.1f, 100.0f);
-    view = camera.GetViewMatrix();
+   view = camera.GetViewMatrix();
    
     
     // Update uniform buffer with bone transforms
@@ -353,6 +434,66 @@ void render_frame() {
         
     }
 
+
+    
+
+
+    if(lightManager.getActiveSpotLights()){
+        
+        
+        const SpotLight& sl = lightManager.getSpotLight(0);
+        
+        
+        //create light matrices
+        //here the up vector and the center vector are given in a non rigorous fashion will change in the actual system,
+        lightView = glm::lookAt(sl.position, sl.position + sl.direction, glm::vec3(0.0f, 0.99f, 0.1f));
+        lightProjection = glm::perspective(glm::radians(90.0f), 
+                            (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, 
+                            0.1f, 100.0f);
+        
+      
+        
+        //bind depth buffer
+        glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_maps[0]);
+        
+        // Check framebuffer status
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        
+        
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glClear(GL_DEPTH_BUFFER_BIT);
+       
+        
+        //bind shadow shader;
+        shadowShader->use();
+        //upload uniforms to the shader
+        shadowShader->setMat4("light_view", lightView);
+        shadowShader->setMat4("light_projection", lightProjection);
+        
+        
+         //draw scene
+        size_t scene_count = get_scene_element_model_count();
+      
+        for(size_t i = 0; i < scene_count; i++){
+            const SceneElementModel& model = get_scene_element_model(i);
+            model.Draw(*shadowShader);
+        }
+        
+        // Render interactable models (each model sets its own index)
+        size_t interactable_count = get_interactable_model_count();
+      
+        for(size_t i = 0; i < interactable_count; i++){
+            const InteractableModel& model = get_interactable_model(i);
+            model.Draw(*shadowShader);
+        }
+        
+        glBindFramebuffer(GL_FRAMEBUFFER,0);
+        glViewport(0, 0, render_context.screen_width, render_context.screen_height);
+        
+        
+       
+    }
+
     if(sceneElementShader){
         
         
@@ -360,7 +501,13 @@ void render_frame() {
 
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
-
+        sceneElementShader->setMat4("lightSpaceMatrix", lightProjection * lightView);
+        
+        // Bind shadow map texture
+        glActiveTexture(GL_TEXTURE15); // Use texture unit 15 for shadow map
+        glBindTexture(GL_TEXTURE_2D, render_context.shadow_maps[0]);
+        sceneElementShader->setInt("shadowMap", 15);
+        
         // Update and bind light data via UBO
         // The light setup should be done elsewhere, but we'll ensure UBO is updated
         lightManager.updateUBO();
@@ -368,7 +515,7 @@ void render_frame() {
 
         // Set camera position for view direction calculation (unified camera position)
         sceneElementShader->setVec3("camPos", camera.Position);
-
+        
         // Note: PBR material texture samplers are now handled dynamically in Mesh::Draw()
 
         // Render scene element models (each model sets its own index)
@@ -385,6 +532,13 @@ void render_frame() {
       
         
     }
+    // if(debug_shader){
+       
+    //    glDisable(GL_DEPTH_TEST);  // Disable depth test for 2D overlay
+    //    render_texture_debug_rect(render_context.shadow_tex[0]);
+    //    glEnable(GL_DEPTH_TEST);   // Re-enable depth test
+       
+    // }
     
     // Render collision geometry if enabled
     collisionVisualizer.renderCollisionGeometry(view, projection);

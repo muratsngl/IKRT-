@@ -9,11 +9,13 @@ out VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
     mat3 TBN;
+    vec4 FragPosLightSpace;
 } vs_out;
 
 uniform mat4 projection;
 uniform mat4 view;
 uniform uint modelIndex;
+uniform mat4 lightSpaceMatrix;  // Combined light projection * light view matrix
 
 // UBO for model matrices (buffer base 3, holds 50 mat4s)
 layout(std140, binding = 3) uniform ModelMatrices {
@@ -28,7 +30,10 @@ void main()
     // Calculate world position of the vertex
     vs_out.FragPos = vec3(model * vec4(aPos, 1.0));
     vs_out.TexCoords = aTexCoords;
-
+    
+    // Transform fragment position to light space for shadow mapping
+    vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    
     // To correctly transform normals, tangents, and bitangents to world space,
     // we use the normal matrix (the transpose of the inverse of the model matrix).
     // This prevents scaling issues from affecting the vectors' orientation.

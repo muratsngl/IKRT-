@@ -29,10 +29,9 @@ struct RenderContext {
     GLuint interactable_bone_UBO;
     GLuint scene_element_model_UBO;
     
-    // Various VAOs and VBOs for different objects
-    
-    
-    // Buffer handles for persistent mapping
+    //created array of 20 lights for 10 spot 10 pointlights
+    GLuint shadow_maps[20];
+    GLuint shadow_tex[20];
     
     
     // Buffer management
@@ -42,6 +41,7 @@ struct RenderContext {
 
 // Rendering functions
 bool init_rendering();
+void create_shadow_maps();
 void init_buffers();
 void load_shaders();
 void render_frame();

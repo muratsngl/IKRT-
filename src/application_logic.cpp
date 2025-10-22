@@ -292,7 +292,7 @@ void update_transforms() {
     update_bone_transforms(model_data.left_leg_indices);
     
     // Update center bone matrices (non-extremity bones affected by root translation)
-    update_center_bone_matrices();
+    //update_center_bone_matrices();
 
 
     if (!app_state.isInteracting[0]) {

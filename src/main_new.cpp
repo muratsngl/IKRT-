@@ -5,6 +5,7 @@
 #include "collision_visualizer.hpp"
 #include <iostream>
 
+
 int main() {
     // Initialize all systems
     if (!setup_shared_memory()) {
@@ -23,6 +24,7 @@ int main() {
     // Load shaders and initialize buffers
     load_shaders();
     init_buffers();
+    create_shadow_maps();
     //load_interactor_model("./assets/models/man_with_bones/quit.dae");
 
     // Initialize application state

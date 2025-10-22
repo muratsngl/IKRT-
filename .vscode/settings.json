@@ -81,7 +81,8 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "__nullptr": "cpp"
     },
     "github.copilot.chat.codeGeneration.useInstructionFiles": true
 }
