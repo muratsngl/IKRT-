@@ -4,6 +4,8 @@ RENDERING
         2. DATA IS NOT CENTRALIZED THERE ARE COPIES OF BBOXES FOR VISUALIZATION AND THE ACTUAL LOGIC
     PBR:
         2.The specular component of the radiance seems too flashy.
+    SHADOWS:
+        1.Cost exceeds available time.(70 render passes)
 DATA_ORGANIZATION:
     MODEL_REMOVAL: There is no such mechanism, having creative seizures while thinking of it. better keep it simple.
 SKINNING: 

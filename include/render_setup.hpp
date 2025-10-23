@@ -8,6 +8,11 @@
 
 // Constants
 #define MAX_INTERACTABLE_MODELS 10
+#define DIRECTIONAL_LIGHT_INDEX 0   // Directional light uses index 0
+#define SPOTLIGHT_START_INDEX 1      // Spotlights use indices 1-10
+#define POINTLIGHT_INDEX 11          // Point lights use indices 11-20
+#define SHADOW_WIDTH 4096
+#define SHADOW_HEIGHT 4096
 
 // Application mode enum
 enum MODE {
@@ -29,9 +34,14 @@ struct RenderContext {
     GLuint interactable_bone_UBO;
     GLuint scene_element_model_UBO;
     
-    //created array of 20 lights for 10 spot 10 pointlights
-    GLuint shadow_maps[20];
-    GLuint shadow_tex[20];
+    // Single framebuffer used for all shadow passes (texture swapping)
+    GLuint shadow_FBO;
+    
+    // Array of 21 shadow textures:
+    // Index 0: Directional light
+    // Indices 1-10: 10 Spotlights
+    // Indices 11-20: 10 Point lights
+    GLuint shadow_tex[21];
     
     
     // Buffer management

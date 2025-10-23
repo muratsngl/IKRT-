@@ -9,13 +9,17 @@ out VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
     mat3 TBN;
-    vec4 FragPosLightSpace;
+    vec4 FragPosDirectionalLightSpace;  // For directional light
+    vec4 FragPosLightSpace[10];  // Array for up to 10 spotlights
 } vs_out;
 
 uniform mat4 projection;
 uniform mat4 view;
 uniform uint modelIndex;
-uniform mat4 lightSpaceMatrix;  // Combined light projection * light view matrix
+uniform mat4 directionalLightSpaceMatrix;  // For directional light
+uniform mat4 lightSpaceMatrices[10];  // Array of light space matrices for 10 spotlights
+uniform int numActiveShadowCastingSpotLights;  // Number of spotlights that cast shadows
+uniform bool directionalLightCastsShadow;  // Whether directional light casts shadows
 
 // UBO for model matrices (buffer base 3, holds 50 mat4s)
 layout(std140, binding = 3) uniform ModelMatrices {
@@ -31,8 +35,15 @@ void main()
     vs_out.FragPos = vec3(model * vec4(aPos, 1.0));
     vs_out.TexCoords = aTexCoords;
     
-    // Transform fragment position to light space for shadow mapping
-    vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    // Transform fragment position to directional light space
+    if(directionalLightCastsShadow) {
+        vs_out.FragPosDirectionalLightSpace = directionalLightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    }
+    
+    // Transform fragment position to light space for all active spotlights
+    for(int i = 0; i < numActiveShadowCastingSpotLights && i < 10; i++) {
+        vs_out.FragPosLightSpace[i] = lightSpaceMatrices[i] * vec4(vs_out.FragPos, 1.0);
+    }
     
     // To correctly transform normals, tangents, and bitangents to world space,
     // we use the normal matrix (the transpose of the inverse of the model matrix).
