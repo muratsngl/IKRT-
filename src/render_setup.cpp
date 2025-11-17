@@ -375,6 +375,26 @@ unsigned int get_model_index_by_id(int model_id) {
     return 0;
 }
 
+// Function to get model matrix by ID
+glm::mat4 get_model_matrix_by_id(int model_id) {
+    unsigned int index = get_model_index_by_id(model_id);
+    if (index < modelMatrices.size()) {
+        return modelMatrices[index];
+    }
+    std::cerr << "Warning: Invalid model index " << index << " for model ID " << model_id << std::endl;
+    return glm::mat4(1.0f);
+}
+
+// Function to set model matrix by ID
+void set_model_matrix_by_id(int model_id, const glm::mat4& matrix) {
+    unsigned int index = get_model_index_by_id(model_id);
+    if (index < modelMatrices.size()) {
+        modelMatrices[index] = matrix;
+    } else {
+        std::cerr << "Warning: Invalid model index " << index << " for model ID " << model_id << std::endl;
+    }
+}
+
 // Function to upload model matrices to UBO (called every frame)
 void upload_model_matrices() {
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.scene_element_model_UBO);

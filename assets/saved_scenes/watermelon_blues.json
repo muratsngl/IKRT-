@@ -1,0 +1,112 @@
+{
+    "lighting": {
+        "directional": {
+            "active": true,
+            "color": [
+                1.0,
+                0.949999988079071,
+                0.800000011920929
+            ],
+            "direction": [
+                -0.18814417719841003,
+                -0.9407208561897278,
+                -0.28221628069877625
+            ],
+            "intensity": 0.5
+        },
+        "point_lights": [],
+        "spot_lights": [
+            {
+                "color": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "direction": [
+                    0.0,
+                    -1.0,
+                    0.0
+                ],
+                "inner_cone": 12.5,
+                "intensity": 25.0,
+                "outer_cone": 17.500003814697266,
+                "position": [
+                    0.0,
+                    5.0,
+                    0.0
+                ]
+            },
+            {
+                "color": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "direction": [
+                    0.0,
+                    -1.0,
+                    0.0
+                ],
+                "inner_cone": 12.5,
+                "intensity": 25.0,
+                "outer_cone": 17.500003814697266,
+                "position": [
+                    0.0,
+                    5.0,
+                    0.0
+                ]
+            }
+        ]
+    },
+    "models": {
+        "interactables": [],
+        "scene_elements": [
+            {
+                "file_path": "/home/firenzy/repo/IKRT-/assets/models/watermelon/scene.gltf",
+                "id": 0,
+                "transform": {
+                    "position": [
+                        0.27614128589630127,
+                        0.8284368515014648,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.8985280394554138,
+                        0.0,
+                        0.0,
+                        -0.4389161169528961
+                    ],
+                    "scale": [
+                        1.1904900074005127,
+                        1.0800000429153442,
+                        1.0800000429153442
+                    ]
+                }
+            },
+            {
+                "file_path": "/home/firenzy/repo/IKRT-/assets/models/watermelon/scene.gltf",
+                "id": 1,
+                "transform": {
+                    "position": [
+                        0.5522810816764832,
+                        -3.6588358879089355,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.8912919163703918,
+                        1.982007269418773e-08,
+                        -2.5410922349059124e-14,
+                        0.4534299969673157
+                    ],
+                    "scale": [
+                        1.392073631286621,
+                        2.654938220977783,
+                        1.0482134819030762
+                    ]
+                }
+            }
+        ]
+    },
+    "scene_name": "Untitled Scene",
+    "version": "1.0"
+}

@@ -64,6 +64,8 @@ unsigned int get_model_index();
 void register_model_id_to_index(int model_id, unsigned int model_index);
 void unregister_model_id_from_index(int model_id);
 unsigned int get_model_index_by_id(int model_id);
+glm::mat4 get_model_matrix_by_id(int model_id);
+void set_model_matrix_by_id(int model_id, const glm::mat4& matrix);
 void upload_model_matrices();
 const std::vector<glm::mat4>& get_model_matrices();
 

@@ -3,6 +3,7 @@
 #include "include/collision_visualizer.hpp"
 #include "include/application_logic.hpp"
 #include "include/model_loader.hpp"
+#include "include/scene_serializer.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cmath>
@@ -169,6 +170,40 @@ void RenderModelLoaderWidget(bool* p_open) {
         return;
     }
 
+    if (ImGui::CollapsingHeader("Scene Management", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Text("Scene Operations:");
+        ImGui::Separator();
+        
+        if (ImGui::Button("Save Scene", ImVec2(-1, 0))) {
+            ImGuiFileDialog::Instance()->OpenDialog("SaveSceneFileDlgKey", "Save Scene File", ".scene,.json");
+        }
+        
+        if (ImGui::Button("Load Scene", ImVec2(-1, 0))) {
+            ImGuiFileDialog::Instance()->OpenDialog("LoadSceneFileDlgKey", "Load Scene File", ".scene,.json");
+        }
+        
+        if (ImGui::Button("Clear Scene", ImVec2(-1, 0))) {
+            ImGui::OpenPopup("ClearSceneConfirm");
+        }
+        
+        // Confirmation popup for clear scene
+        if (ImGui::BeginPopupModal("ClearSceneConfirm", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Are you sure you want to clear the entire scene?");
+            ImGui::Text("This will remove all models and lights.");
+            ImGui::Separator();
+            
+            if (ImGui::Button("Yes, Clear Scene", ImVec2(120, 0))) {
+                SceneSerializer::clearScene();
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+    }
+    
     if (ImGui::CollapsingHeader("Model Loading", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Text("Load 3D Models:");
         ImGui::Separator();
@@ -262,6 +297,7 @@ void RenderModelLoaderWidget(bool* p_open) {
 
     ImGui::End();
 
+    // Model file dialog
     if (ImGuiFileDialog::Instance()->Display("ChooseModelFileDlgKey")) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string file_path = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -272,6 +308,36 @@ void RenderModelLoaderWidget(bool* p_open) {
                 case ModelType::None: break;
             }
             current_model_type_to_load = ModelType::None;
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    
+    // Save scene dialog
+    if (ImGuiFileDialog::Instance()->Display("SaveSceneFileDlgKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string file_path = ImGuiFileDialog::Instance()->GetFilePathName();
+            // Ensure it has .scene extension
+            if (file_path.find(".scene") == std::string::npos && file_path.find(".json") == std::string::npos) {
+                file_path += ".scene";
+            }
+            if (SceneSerializer::saveScene(file_path)) {
+                std::cout << "Scene saved successfully!" << std::endl;
+            } else {
+                std::cerr << "Failed to save scene!" << std::endl;
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    
+    // Load scene dialog
+    if (ImGuiFileDialog::Instance()->Display("LoadSceneFileDlgKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string file_path = ImGuiFileDialog::Instance()->GetFilePathName();
+            if (SceneSerializer::loadScene(file_path)) {
+                std::cout << "Scene loaded successfully!" << std::endl;
+            } else {
+                std::cerr << "Failed to load scene!" << std::endl;
+            }
         }
         ImGuiFileDialog::Instance()->Close();
     }

@@ -442,9 +442,10 @@ public:
     std::map<string, BoneInfo> local_bone_info_map;  // Local bone info for this model
     int id;
     unsigned int model_index;  // UBO model matrix index
+    std::string original_file_path;  // Store original file path for serialization
     
     // constructor, expects a filepath to a 3D model.
-    InteractableModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
+    InteractableModel(string const& path, bool gamma = false) : gammaCorrection(gamma), original_file_path(path)
     {
         InteractableModelCreator creator;
         id = get_next_unique_model_id();  // Use utility function for unique ID
@@ -979,9 +980,10 @@ public:
     std::vector<TextureInfo> textures_loaded;
     int id;
     unsigned int model_index;  // UBO model matrix index
+    std::string original_file_path;  // Store original file path for serialization
     
     // Constructor, expects a filepath to a 3D model.
-    SceneElementModel(std::string const& path, bool gamma = false) : gammaCorrection(gamma)
+    SceneElementModel(std::string const& path, bool gamma = false) : gammaCorrection(gamma), original_file_path(path)
     {
         SceneElementModelCreator creator;
         id = get_next_unique_model_id();  // Use utility function for unique ID

@@ -65,6 +65,7 @@ set(SOURCES
     src/UI.cpp
     src/raycast.cpp
     src/light_manager.cpp
+    src/scene_serializer.cpp
 )
 
 # Include directories (Original Setup)
@@ -75,6 +76,7 @@ include_directories(
     ${GLEW_INCLUDE_DIRS}
     vendor/assimp/include
     vendor/stb_image
+    vendor/nlohmann
 )
 
 # Create executable
