@@ -50,6 +50,8 @@ struct SceneElementModelData{
 bool load_scene_element_model(const char* path);
 bool load_interactor_model(const char* path);
 bool load_interactable_model(const char* path);
+bool remove_scene_element_model_by_id(int model_id);
+void cleanup_scene_element_gpu_resources(SceneElementModel& model);
 const InteractorModelData& get_interactor_model_data();
 InteractorModel* get_interactor_model(); // Get the actual model for drawing
 const SceneElementModel& get_scene_element_model(size_t index);

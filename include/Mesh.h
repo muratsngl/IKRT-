@@ -66,6 +66,13 @@ public:
         setupStaticMesh();
     }
 
+    // Cleanup GPU resources
+    void cleanup() {
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+    }
+    
     // UPDATED: Draw function now binds PBR textures to specific samplers
     void Draw(Shader& shader) const {
         // Bind appropriate textures for PBR

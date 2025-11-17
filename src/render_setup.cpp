@@ -43,6 +43,8 @@ static CollisionVisualizer collisionVisualizer;
 static std::vector<glm::mat4> modelMatrices(50, glm::mat4(1.0f));
 // Hashmap to map model IDs to their UBO matrix indices (CREATED FOR GIZMO FAST LOOKUP AND CHANGE OF MODEL MATRIX)
 static std::unordered_map<int, unsigned int> modelIdToIndexMap;
+// Free list of available UBO indices for reuse
+static std::vector<unsigned int> freeModelIndices;
 
 // Mouse and timing variables
 static float lastX = 1240.0f / 2.0f;
@@ -325,12 +327,41 @@ void init_buffers() {
 // Function to get unique model index for each model (called only once per model)
 unsigned int get_model_index() {
     static unsigned int modelIndexCounter = 0;
+    
+    // Reuse a freed index if available
+    if (!freeModelIndices.empty()) {
+        unsigned int index = freeModelIndices.back();
+        freeModelIndices.pop_back();
+        std::cout << "Reusing freed UBO slot: " << index << std::endl;
+        return index;
+    }
+    
+    // Otherwise allocate a new index
+    if (modelIndexCounter >= 50) {
+        std::cerr << "Error: Exceeded maximum number of models (50)!" << std::endl;
+        return 0;
+    }
+    
     return modelIndexCounter++;
 }
 
 // Function to register model ID to index mapping
 void register_model_id_to_index(int model_id, unsigned int model_index) {
     modelIdToIndexMap[model_id] = model_index;
+}
+
+// Function to unregister model ID from index mapping
+void unregister_model_id_from_index(int model_id) {
+    // Get the index before removing from map
+    auto it = modelIdToIndexMap.find(model_id);
+    if (it != modelIdToIndexMap.end()) {
+        unsigned int freed_index = it->second;
+        modelIdToIndexMap.erase(it);
+        
+        // Add the freed index to the free list for reuse
+        freeModelIndices.push_back(freed_index);
+        std::cout << "Freed UBO slot " << freed_index << " for reuse" << std::endl;
+    }
 }
 
 // Function to get model index by model ID

@@ -47,7 +47,7 @@ void init_application_state() {
 void update_finger_positions() {
     float currentFrame = static_cast<float>(glfwGetTime());
     app_state.deltaTime = currentFrame - app_state.lastFrame;
-    app_state.lastFrame = currentFrame;
+    app_state.lastFrame = currentFrame; 
 }
 
 void calculate_deltas() {
@@ -259,21 +259,21 @@ void rearrange_finger_positions_based_on_collision(){
     
     int selected_model_id;
     
-    if (choose_interaction(RIGHT_HAND, selected_model_id)) {
-        std::cout << "Right hand selected interactable model ID: " << selected_model_id << std::endl;
-    }
+    // if (choose_interaction(RIGHT_HAND, selected_model_id)) {
+    //     std::cout << "Right hand selected interactable model ID: " << selected_model_id << std::endl;
+    // }
     
-    if (choose_interaction(LEFT_HAND, selected_model_id)) {
-        std::cout << "Left hand selected interactable model ID: " << selected_model_id << std::endl;
-    }
+    // if (choose_interaction(LEFT_HAND, selected_model_id)) {
+    //     std::cout << "Left hand selected interactable model ID: " << selected_model_id << std::endl;
+    // }
     
-    if (choose_interaction(RIGHT_LEG, selected_model_id)) {
-        std::cout << "Right leg selected interactable model ID: " << selected_model_id << std::endl;
-    }
+    // if (choose_interaction(RIGHT_LEG, selected_model_id)) {
+    //     std::cout << "Right leg selected interactable model ID: " << selected_model_id << std::endl;
+    // }
     
-    if (choose_interaction(LEFT_LEG, selected_model_id)) {
-        std::cout << "Left leg selected interactable model ID: " << selected_model_id << std::endl;
-    }
+    // if (choose_interaction(LEFT_LEG, selected_model_id)) {
+    //     std::cout << "Left leg selected interactable model ID: " << selected_model_id << std::endl;
+    // }
 };
 
 

@@ -224,6 +224,40 @@ void RenderModelLoaderWidget(bool* p_open) {
         if (ImGui::Checkbox("Render Collision Geometry", &renderCollisionGeometry)) {
             CollisionVisualizer::isEnabled = renderCollisionGeometry;
         }
+        
+        ImGui::Separator();
+        
+        // Remove selected model button
+        int selected_id = get_selected_object_id();
+        if (selected_id != -1) {
+            ImGui::Text("Selected Model ID: %d", selected_id);
+            
+            // Determine if it's a target proxy (cannot be deleted)
+            if (selected_id >= TARGET_PROXY_INDEX && selected_id <= TARGET_PROXY_PINKY) {
+                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Target Proxy (Cannot Remove)");
+            } else {
+                if (ImGui::Button("Remove Selected Model", ImVec2(-1, 0))) {
+                    if (remove_scene_element_model_by_id(selected_id)) {
+                        ImGui::OpenPopup("RemoveSuccess");
+                    } else {
+                        ImGui::OpenPopup("RemoveFailed");
+                    }
+                }
+                
+                if (ImGui::BeginPopup("RemoveSuccess")) {
+                    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Model removed successfully!");
+                    ImGui::EndPopup();
+                }
+                
+                if (ImGui::BeginPopup("RemoveFailed")) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Failed to remove model.");
+                    ImGui::TextWrapped("Model may not exist or could be an interactable.");
+                    ImGui::EndPopup();
+                }
+            }
+        } else {
+            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "No model selected");
+        }
     }
 
     ImGui::End();

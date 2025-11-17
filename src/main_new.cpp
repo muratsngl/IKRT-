@@ -64,7 +64,8 @@ int main() {
         // Always apply FABRIK and update transforms
         apply_fabrik();
         update_transforms();
-        rearrange_finger_positions_based_on_collision();
+        
+        //rearrange_finger_positions_based_on_collision();
         
         // Update target proxies every frame to keep them in sync
         if (CollisionVisualizer::showTargetProxies) {

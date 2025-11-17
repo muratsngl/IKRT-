@@ -2,6 +2,7 @@ RENDERING
     COLLISION_DETECTION:
         1. Visualization code is not well written. lots of redundant operations.
         2. DATA IS NOT CENTRALIZED THERE ARE COPIES OF BBOXES FOR VISUALIZATION AND THE ACTUAL LOGIC
+        3. THE INTERACTOR MODEL STOPS INTERACTING THROUGH THE TARGET PROXIES WHEN THERE IS ATLEAST ONE click on the scene element bbox THE MODEL AND THE SCENE ELEMENT
     PBR:
         2.The specular component of the radiance seems too flashy.
     SHADOWS:

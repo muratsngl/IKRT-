@@ -11,8 +11,8 @@
 #define DIRECTIONAL_LIGHT_INDEX 0   // Directional light uses index 0
 #define SPOTLIGHT_START_INDEX 1      // Spotlights use indices 1-10
 #define POINTLIGHT_INDEX 11          // Point lights use indices 11-20
-#define SHADOW_WIDTH 4096
-#define SHADOW_HEIGHT 4096
+#define SHADOW_WIDTH 1024
+#define SHADOW_HEIGHT 1024
 
 // Application mode enum
 enum MODE {
@@ -62,6 +62,7 @@ RenderContext& get_render_context();
 // Model matrix management functions
 unsigned int get_model_index();
 void register_model_id_to_index(int model_id, unsigned int model_index);
+void unregister_model_id_from_index(int model_id);
 unsigned int get_model_index_by_id(int model_id);
 void upload_model_matrices();
 const std::vector<glm::mat4>& get_model_matrices();
