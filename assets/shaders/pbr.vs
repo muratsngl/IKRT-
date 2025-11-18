@@ -26,6 +26,8 @@ layout(std140, binding = 3) uniform ModelMatrices {
     mat4 models[50];
 };
 
+
+
 void main()
 {
     // Get the model matrix from the UBO using the index

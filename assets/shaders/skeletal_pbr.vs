@@ -13,12 +13,21 @@ out VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
     mat3 TBN;
+    vec4 FragPosDirectionalLightSpace;  // For directional light
+    vec4 FragPosLightSpace[10];  // Array for up to 10 spotlights
 } vs_out;
 
 // Standard transformation matrices
 uniform mat4 view;
 uniform mat4 projection;
+//redundant holding for backward compatibility
 uniform mat4 model;
+
+// Shadow mapping uniforms
+uniform mat4 directionalLightSpaceMatrix;  // For directional light
+uniform mat4 lightSpaceMatrices[10];  // Array of light space matrices for 10 spotlights
+uniform int numActiveShadowCastingSpotLights;  // Number of spotlights that cast shadows
+uniform bool directionalLightCastsShadow;  // Whether directional light casts shadows
 
 // Bone transformation matrices
 layout(std140, binding = 1) uniform bone_transforms {
@@ -39,6 +48,16 @@ void main()
     
     // Pass texture coordinates through
     vs_out.TexCoords = aTexCoords;
+    
+    // Transform fragment position to directional light space
+    if(directionalLightCastsShadow) {
+        vs_out.FragPosDirectionalLightSpace = directionalLightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    }
+    
+    // Transform fragment position to light space for all active spotlights
+    for(int i = 0; i < numActiveShadowCastingSpotLights && i < 10; i++) {
+        vs_out.FragPosLightSpace[i] = lightSpaceMatrices[i] * vec4(vs_out.FragPos, 1.0);
+    }
     
     // Transform normals, tangents, and bitangents for PBR
     // First apply bone transformation, then model transformation (same order as position)

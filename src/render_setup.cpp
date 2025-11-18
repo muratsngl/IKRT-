@@ -31,6 +31,8 @@ static Shader* skeletonShader = nullptr;
 static Shader* sceneElementShader = nullptr;
 static Shader* shadowShader = nullptr;
 static Shader* pointShadowShader = nullptr;
+static Shader* skeletalShadowShader = nullptr;
+static Shader* skeletalPointShadowShader = nullptr;
 static Shader* debug_shader = nullptr;
 
 // Light manager instance
@@ -207,6 +209,8 @@ void load_shaders() {
     sceneElementShader = new Shader("assets/shaders/pbr.vs", "assets/shaders/pbr.fs");
     shadowShader = new Shader("assets/shaders/shadow_shader.vs","assets/shaders/shadow_shader.fs");
     pointShadowShader = new Shader("assets/shaders/point_shadow.vs","assets/shaders/point_shadow.fs");
+    skeletalShadowShader = new Shader("assets/shaders/skeletal_shadow.vs","assets/shaders/skeletal_shadow.fs");
+    skeletalPointShadowShader = new Shader("assets/shaders/skeletal_point_shadow.vs","assets/shaders/skeletal_point_shadow.fs");
     debug_shader = new Shader("assets/shaders/debug_shader.vs","assets/shaders/debug_shader.fs");
     // Initialize light manager
     lightManager.initialize();
@@ -589,19 +593,6 @@ void render_frame() {
         }
     }
 
-    // Render the skeletal model
-    if (skeletonShader) {
-        skeletonShader->use();
-        skeletonShader->setMat4("model", model);
-        skeletonShader->setMat4("view", view);
-        skeletonShader->setMat4("projection", projection);
-        
-        if (is_interactor_model_available()) {
-            get_interactor_model()->Draw(*skeletonShader);
-        }
-        
-    }
-
     // ============================================================================
     // DIRECTIONAL LIGHT SHADOW PASS
     // ============================================================================
@@ -656,6 +647,17 @@ void render_frame() {
         for(size_t j = 0; j < interactable_count; j++) {
             const InteractableModel& model = get_interactable_model(j);
             model.Draw(*shadowShader);
+        }
+        
+        // Render skeletal model (interactor)
+        if(is_interactor_model_available() && skeletalShadowShader) {
+            skeletalShadowShader->use();
+            skeletalShadowShader->setMat4("light_view", lightView);
+            skeletalShadowShader->setMat4("light_projection", lightProjection);
+            InteractorModel* interactorModel = get_interactor_model();
+            if(interactorModel) {
+                interactorModel->Draw(*skeletalShadowShader);
+            }
         }
         
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -716,6 +718,17 @@ void render_frame() {
             model.Draw(*shadowShader);
         }
         
+        // Render skeletal model (interactor)
+        if(is_interactor_model_available() && skeletalShadowShader) {
+            skeletalShadowShader->use();
+            skeletalShadowShader->setMat4("light_view", lightView);
+            skeletalShadowShader->setMat4("light_projection", lightProjection);
+            InteractorModel* interactorModel = get_interactor_model();
+            if(interactorModel) {
+                interactorModel->Draw(*skeletalShadowShader);
+            }
+        }
+        
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, render_context.screen_width, render_context.screen_height);
     }
@@ -769,6 +782,18 @@ void render_frame() {
             for(size_t i = 0; i < get_interactable_model_count(); i++) {
                 const InteractableModel& model = get_interactable_model(i);
                 model.Draw(*pointShadowShader);
+            }
+            
+            // Render skeletal model (interactor)
+            if(is_interactor_model_available() && skeletalPointShadowShader) {
+                skeletalPointShadowShader->use();
+                skeletalPointShadowShader->setMat4("lightSpaceMatrix", shadowTransforms[face]);
+                skeletalPointShadowShader->setVec3("lightPos", pointLight.position);
+                skeletalPointShadowShader->setFloat("far_plane", far_plane);
+                InteractorModel* interactorModel = get_interactor_model();
+                if(interactorModel) {
+                    interactorModel->Draw(*skeletalPointShadowShader);
+                }
             }
         }
         
@@ -844,6 +869,58 @@ void render_frame() {
       
         
     }
+    
+    // Render the skeletal model with full lighting
+    if (skeletonShader && is_interactor_model_available()) {
+        skeletonShader->use();
+        skeletonShader->setMat4("model", model);
+        skeletonShader->setMat4("view", view);
+        skeletonShader->setMat4("projection", projection);
+        
+        // Upload directional light shadow settings
+        skeletonShader->setMat4("directionalLightSpaceMatrix", directionalLightSpaceMatrix);
+        skeletonShader->setBool("directionalLightCastsShadow", directionalLightCastsShadow);
+        
+        // Bind directional light shadow map (texture unit 19)
+        glActiveTexture(GL_TEXTURE19);
+        glBindTexture(GL_TEXTURE_2D, render_context.shadow_tex[DIRECTIONAL_LIGHT_INDEX]);
+        skeletonShader->setInt("directionalShadowMap", 19);
+        
+        // Upload light space matrices for all spotlights
+        for(int i = 0; i < numShadowCastingSpotLights; i++) {
+            std::string uniformName = "lightSpaceMatrices[" + std::to_string(i) + "]";
+            skeletonShader->setMat4(uniformName, spotLightSpaceMatrices[i]);
+        }
+        skeletonShader->setInt("numActiveShadowCastingSpotLights", numShadowCastingSpotLights);
+        skeletonShader->setInt("numActiveShadowCastingPointLights", numShadowCastingPointLights);
+        
+        // Bind all spotlight shadow maps (texture units 20-29)
+        for(int i = 0; i < 10; i++) {
+            glActiveTexture(GL_TEXTURE20 + i);
+            glBindTexture(GL_TEXTURE_2D, render_context.shadow_tex[SPOTLIGHT_START_INDEX + i]);
+            std::string uniformName = "shadowMaps[" + std::to_string(i) + "]";
+            skeletonShader->setInt(uniformName, 20 + i);
+        }
+        
+        // Bind all point light shadow cubemaps (texture units 30-39)
+        for(int i = 0; i < 10; i++) {
+            glActiveTexture(GL_TEXTURE30 + i);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, render_context.shadow_tex[POINTLIGHT_INDEX + i]);
+            std::string uniformName = "shadowCubemaps[" + std::to_string(i) + "]";
+            skeletonShader->setInt(uniformName, 30 + i);
+        }
+        
+        skeletonShader->setFloat("far_plane", 25.0f);
+        
+        // Update and bind light data via UBO (already updated, just bind)
+        lightManager.bindUBO(4);
+
+        // Set camera position for view direction calculation
+        skeletonShader->setVec3("camPos", camera.Position);
+        
+        get_interactor_model()->Draw(*skeletonShader);
+    }
+    
     // if(debug_shader){
        
     //    glDisable(GL_DEPTH_TEST);  // Disable depth test for 2D overlay
@@ -901,6 +978,8 @@ void cleanup_rendering() {
     delete sceneElementShader;
     delete shadowShader;
     delete pointShadowShader;
+    delete skeletalShadowShader;
+    delete skeletalPointShadowShader;
     delete debug_shader;
     
     // Clean up shadow system

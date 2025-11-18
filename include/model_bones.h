@@ -675,10 +675,32 @@ private:
         }
         
         ExtractBoneWeightForVertices(vertices, mesh, scene);
+        
+        // Load PBR material textures
+        vector<TextureInfo> textures;
+        if(mesh->mMaterialIndex >= 0) {
+            aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+            vector<TextureInfo> albedoMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_albedo");
+            textures.insert(textures.end(), albedoMaps.begin(), albedoMaps.end());
+
+            vector<TextureInfo> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
+            textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
+
+            vector<TextureInfo> roughnessMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
+            textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+
+            vector<TextureInfo> normalMaps = loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal");
+            textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+
+            vector<TextureInfo> aoMaps = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
+            textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
+        }
+
         // return a mesh object created from the extracted mesh data
         std::cout << m_BoneCounter;
         
-        return Mesh(vertices, indices);
+        return Mesh(vertices, indices, textures);
     }
 
 public:
