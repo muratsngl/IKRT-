@@ -57,6 +57,9 @@ void load_shaders();
 void render_frame();
 void cleanup_rendering();
 bool should_close_window();
+void confirm_quit();
+void cancel_quit();
+bool is_quit_confirmation_shown();
 RenderContext& get_render_context();
 
 // Model matrix management functions
@@ -101,5 +104,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void process_input(GLFWwindow* window);
+static void window_close_callback(GLFWwindow* window);
 
 #endif

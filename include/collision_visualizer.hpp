@@ -46,11 +46,17 @@ public:
     // Render target position proxies (points and boxes)
     void renderTargetProxies(const glm::mat4& view, const glm::mat4& projection);
     
+    // Render bone visualization (red boxes between bones)
+    void renderBoneVisualization(const glm::mat4& view, const glm::mat4& projection);
+    
     // Enable/disable collision visualization
     static bool isEnabled;
     
     // Enable/disable target proxy visualization
     static bool showTargetProxies;
+    
+    // Enable/disable bone visualization
+    static bool showBoneVisualization;
 };
 
 #endif

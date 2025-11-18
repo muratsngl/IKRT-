@@ -4,6 +4,8 @@
 #include "include/application_logic.hpp"
 #include "include/model_loader.hpp"
 #include "include/scene_serializer.hpp"
+#include "include/bone_hierarchy.hpp"
+#include "include/model_bones.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cmath>
@@ -16,6 +18,12 @@
 static bool show_operations_window = true;
 static bool show_light_manager_window = true;
 static bool show_gizmo_controls_window = true;
+static bool show_bone_inspector_window = false;
+
+// IK Chain builder state
+static IKChainManager chainManager;
+static IKChainDefinition currentChain;
+static bool buildingChain = false;
 
 
 // --- MODIFICATION: New Blender-style theme ---
@@ -105,6 +113,7 @@ void cleanup_ui() {
 void RenderModelLoaderWidget(bool* p_open);
 void RenderLightManagerWidget(bool* p_open);
 void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjection, glm::mat4& objectMatrix, bool* p_open);
+void RenderBoneInspectorWidget(bool* p_open);
 void RenderMainMenuBar();
 
 
@@ -114,6 +123,33 @@ void render_ui() {
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
 
+    // Quit confirmation popup
+    if (is_quit_confirmation_shown()) {
+        ImGui::OpenPopup("Quit Confirmation");
+    }
+    
+    // Center the popup
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    
+    if (ImGui::BeginPopupModal("Quit Confirmation", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Are you sure you want to quit?");
+        ImGui::Text("Any unsaved changes will be lost.");
+        ImGui::Separator();
+        
+        ImGui::Spacing();
+        if (ImGui::Button("Yes, Quit", ImVec2(120, 0))) {
+            confirm_quit();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            cancel_quit();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
     RenderMainMenuBar();
 
     if (show_operations_window) {
@@ -121,6 +157,9 @@ void render_ui() {
     }
     if (show_light_manager_window) {
         RenderLightManagerWidget(&show_light_manager_window);
+    }
+    if (show_bone_inspector_window) {
+        RenderBoneInspectorWidget(&show_bone_inspector_window);
     }
     
     if (show_gizmo_controls_window && get_selected_object_id() != -1) {
@@ -141,6 +180,7 @@ void RenderMainMenuBar() {
             ImGui::MenuItem("Operations Panel", NULL, &show_operations_window);
             ImGui::MenuItem("Light Manager", NULL, &show_light_manager_window);
             ImGui::MenuItem("Gizmo Controls", NULL, &show_gizmo_controls_window);
+            ImGui::MenuItem("Bone Inspector & IK Builder", NULL, &show_bone_inspector_window);
             ImGui::EndMenu();
         }
 
@@ -260,15 +300,26 @@ void RenderModelLoaderWidget(bool* p_open) {
             CollisionVisualizer::isEnabled = renderCollisionGeometry;
         }
         
+        static bool renderBoneVisualization = false;
+        if (ImGui::Checkbox("Render Bone Visualization", &renderBoneVisualization)) {
+            CollisionVisualizer::showBoneVisualization = renderBoneVisualization;
+        }
+        
         ImGui::Separator();
         
         // Remove selected model button
         int selected_id = get_selected_object_id();
         if (selected_id != -1) {
-            ImGui::Text("Selected Model ID: %d", selected_id);
+            ImGui::Text("Selected Object ID: %d", selected_id);
             
+            // Check if it's a bone
+            int bone_id = get_bone_id_from_shape_id(selected_id);
+            if (bone_id != -1) {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Selected: Bone #%d", bone_id);
+                ImGui::TextWrapped("Click on bones to build IK chains in the Bone Inspector.");
+            }
             // Determine if it's a target proxy (cannot be deleted)
-            if (selected_id >= TARGET_PROXY_INDEX && selected_id <= TARGET_PROXY_PINKY) {
+            else if (selected_id >= TARGET_PROXY_INDEX && selected_id <= TARGET_PROXY_PINKY) {
                 ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Target Proxy (Cannot Remove)");
             } else {
                 if (ImGui::Button("Remove Selected Model", ImVec2(-1, 0))) {
@@ -291,7 +342,7 @@ void RenderModelLoaderWidget(bool* p_open) {
                 }
             }
         } else {
-            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "No model selected");
+            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "No object selected");
         }
     }
 
@@ -586,4 +637,254 @@ void RenderLightManagerWidget(bool* p_open) {
     }
     
     ImGui::End();
+}
+
+// Helper function to render bone tree recursively
+static void RenderBoneNodeTree(BoneNode* node, IKChainDefinition& currentChain, bool buildingChain) {
+    if (!node) return;
+    
+    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
+    if (node->children.empty()) {
+        nodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+    }
+    
+    // Highlight if bone is in current chain
+    bool inChain = false;
+    int chainPosition = -1;
+    for (size_t i = 0; i < currentChain.boneIndices.size(); i++) {
+        if (currentChain.boneIndices[i] == node->boneId) {
+            inChain = true;
+            chainPosition = (int)i;
+            break;
+        }
+    }
+    
+    if (inChain) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 0.2f, 1.0f));
+    }
+    
+    // Show bone with ID and chain position if applicable
+    std::string label = node->name + " (ID: " + std::to_string(node->boneId) + ")";
+    if (inChain) {
+        label += " [Chain #" + std::to_string(chainPosition + 1) + "]";
+    }
+    
+    bool nodeOpen = ImGui::TreeNodeEx((void*)(intptr_t)node->boneId, nodeFlags, "%s", label.c_str());
+    
+    if (inChain) {
+        ImGui::PopStyleColor();
+    }
+    
+    // Tooltip showing full path on hover
+    if (ImGui::IsItemHovered()) {
+        ImGui::BeginTooltip();
+        ImGui::Text("Path: %s", node->getPath().c_str());
+        ImGui::Text("Depth: %d", node->getDepth());
+        ImGui::Text("Children: %d", (int)node->children.size());
+        ImGui::EndTooltip();
+    }
+    
+    // Context menu for bone
+    if (ImGui::BeginPopupContextItem()) {
+        ImGui::Text("Bone: %s", node->name.c_str());
+        ImGui::Separator();
+        
+        if (buildingChain) {
+            if (ImGui::MenuItem("Add to Chain")) {
+                currentChain.boneIndices.push_back(node->boneId);
+                currentChain.boneNames.push_back(node->name);
+                std::cout << "Added bone '" << node->name << "' (ID: " << node->boneId << ") to chain" << std::endl;
+            }
+            if (!currentChain.boneIndices.empty() && 
+                currentChain.boneIndices.back() == node->boneId) {
+                if (ImGui::MenuItem("Remove from Chain")) {
+                    currentChain.boneIndices.pop_back();
+                    currentChain.boneNames.pop_back();
+                }
+            }
+        }
+        
+        ImGui::EndPopup();
+    }
+    
+    // Render children
+    if (nodeOpen && !node->children.empty()) {
+        for (auto& child : node->children) {
+            RenderBoneNodeTree(child.get(), currentChain, buildingChain);
+        }
+        ImGui::TreePop();
+    }
+}
+
+void RenderBoneInspectorWidget(bool* p_open) {
+    ImGui::SetNextWindowPos(ImVec2(10, 440), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(450, 700), ImGuiCond_FirstUseEver);
+    
+    if (!ImGui::Begin("Bone Inspector & IK Chain Builder", p_open, ImGuiWindowFlags_None)) {
+        ImGui::End();
+        return;
+    }
+    
+    if (!is_interactor_model_available()) {
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "No Interactor Model Loaded");
+        ImGui::TextWrapped("Load an interactor model with bones to use this tool.");
+        ImGui::End();
+        return;
+    }
+    
+    InteractorModel* modelPtr = get_interactor_model();
+    if (!modelPtr) {
+        ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.0f, 1.0f), "Error accessing model");
+        ImGui::End();
+        return;
+    }
+    
+    BoneHierarchy* hierarchy = modelPtr->getBoneHierarchy();
+    
+    if (!hierarchy || !hierarchy->isValid()) {
+        ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.0f, 1.0f), "No Bone Hierarchy Available");
+        ImGui::TextWrapped("The loaded model doesn't have a valid bone structure.");
+        ImGui::End();
+        return;
+    }
+    
+    // Bone Inspector Section
+    if (ImGui::CollapsingHeader("Bone Hierarchy", ImGuiTreeNodeFlags_DefaultOpen)) {
+        std::vector<BoneNode*> allBones;
+        hierarchy->getAllBones(allBones);
+        ImGui::Text("Total Bones: %d", (int)allBones.size());
+        
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Right-click bones to add to chain");
+        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Tip: Resize window if hierarchy is cut off");
+        ImGui::Separator();
+        
+        // Calculate flexible height - take remaining window space minus chain builder section
+        float availableHeight = ImGui::GetContentRegionAvail().y;
+        float treeHeight = availableHeight * 0.5f; // Use 50% for tree, rest for chain builder
+        
+        if (ImGui::BeginChild("BoneTree", ImVec2(0, treeHeight), true, ImGuiWindowFlags_HorizontalScrollbar)) {
+            BoneNode* root = hierarchy->getRoot();
+            if (root) {
+                // Set all tree nodes to start open by default
+                ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 15.0f);
+                RenderBoneNodeTree(root, currentChain, buildingChain);
+                ImGui::PopStyleVar();
+            }
+        }
+        ImGui::EndChild();
+    }
+    
+    // IK Chain Builder Section
+    if (ImGui::CollapsingHeader("IK Chain Builder", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (!buildingChain) {
+            if (ImGui::Button("Start New Chain", ImVec2(-1, 0))) {
+                buildingChain = true;
+                currentChain = IKChainDefinition();
+                currentChain.name = "New Chain";
+                std::cout << "Started building new IK chain" << std::endl;
+            }
+        } else {
+            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Building Chain...");
+            
+            // Chain name input
+            char nameBuffer[128];
+            strncpy(nameBuffer, currentChain.name.c_str(), sizeof(nameBuffer));
+            if (ImGui::InputText("Chain Name", nameBuffer, sizeof(nameBuffer))) {
+                currentChain.name = nameBuffer;
+            }
+            
+            // Display current chain
+            ImGui::Text("Bones in chain: %d", (int)currentChain.boneIndices.size());
+            if (ImGui::BeginChild("CurrentChain", ImVec2(0, 100), true)) {
+                for (size_t i = 0; i < currentChain.boneIndices.size(); i++) {
+                    ImGui::Text("%d. %s (ID: %d)", 
+                               (int)i+1, 
+                               currentChain.boneNames[i].c_str(),
+                               currentChain.boneIndices[i]);
+                }
+            }
+            ImGui::EndChild();
+            
+            // Chain actions
+            if (ImGui::Button("Save Chain", ImVec2(-1, 0))) {
+                if (!currentChain.boneIndices.empty()) {
+                    chainManager.addChain(currentChain);
+                    std::cout << "Saved chain: " << currentChain.name << std::endl;
+                    buildingChain = false;
+                    currentChain = IKChainDefinition();
+                } else {
+                    std::cerr << "Cannot save empty chain!" << std::endl;
+                }
+            }
+            
+            if (ImGui::Button("Cancel", ImVec2(-1, 0))) {
+                buildingChain = false;
+                currentChain = IKChainDefinition();
+                std::cout << "Cancelled chain building" << std::endl;
+            }
+        }
+    }
+    
+    // Saved Chains Section
+    if (ImGui::CollapsingHeader("Saved IK Chains")) {
+        size_t chainCount = chainManager.getChainCount();
+        ImGui::Text("Saved Chains: %d", (int)chainCount);
+        
+        if (chainCount > 0) {
+            for (size_t i = 0; i < chainCount; i++) {
+                IKChainDefinition* chain = chainManager.getChain(i);
+                if (ImGui::TreeNode((void*)(intptr_t)i, "%s (%d bones)", 
+                                   chain->name.c_str(), 
+                                   (int)chain->boneIndices.size())) {
+                    for (size_t j = 0; j < chain->boneIndices.size(); j++) {
+                        ImGui::Text("  %d. %s (ID: %d)", 
+                                   (int)j+1,
+                                   chain->boneNames[j].c_str(),
+                                   chain->boneIndices[j]);
+                    }
+                    
+                    if (ImGui::Button("Delete Chain")) {
+                        chainManager.removeChain(i);
+                        ImGui::TreePop();
+                        break;
+                    }
+                    
+                    ImGui::TreePop();
+                }
+            }
+        }
+        
+        ImGui::Separator();
+        
+        if (ImGui::Button("Save Chains to File", ImVec2(-1, 0))) {
+            ImGuiFileDialog::Instance()->OpenDialog("SaveChainsFileDlgKey", "Save IK Chains", ".ikchains,.json");
+        }
+        
+        if (ImGui::Button("Load Chains from File", ImVec2(-1, 0))) {
+            ImGuiFileDialog::Instance()->OpenDialog("LoadChainsFileDlgKey", "Load IK Chains", ".ikchains,.json");
+        }
+    }
+    
+    ImGui::End();
+    
+    // File dialogs for chain save/load
+    if (ImGuiFileDialog::Instance()->Display("SaveChainsFileDlgKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            if (filepath.find(".ikchains") == std::string::npos && filepath.find(".json") == std::string::npos) {
+                filepath += ".ikchains";
+            }
+            chainManager.saveToFile(filepath);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    
+    if (ImGuiFileDialog::Instance()->Display("LoadChainsFileDlgKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            chainManager.loadFromFile(filepath);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
 }

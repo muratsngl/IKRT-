@@ -14,7 +14,8 @@
 
 #include "Mesh.h"
 
-// Forward declaration to avoid circular dependency
+// Forward declarations
+class BoneHierarchy;
 
 #include "Shader.h"
 #include "Texture.h"
@@ -719,13 +720,15 @@ public:
     vector<glm::vec3> bindPosePositions;
     vector<glm::mat4> bindPoseMatrices;
     std::vector<TextureInfo> textures_loaded; // Store loaded textures to prevent duplicates
+    
+    // Bone hierarchy for runtime inspection
+    class BoneHierarchy* boneHierarchy;
+    
     // constructor, expects a filepath to a 3D model.
-    InteractorModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
-    {
-        InteractorModelCreator creator;
-        creator.loadModel(path, meshes, m_BoneInfoMap, bindPosePositions, bindPoseMatrices, textures_loaded);
-        directory = creator.directory;
-    }
+    InteractorModel(string const& path, bool gamma = false);
+
+    // Destructor to clean up bone hierarchy
+    ~InteractorModel();
 
     // draws the model, and thus all its meshes
     void Draw(Shader& shader)
@@ -733,6 +736,10 @@ public:
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
+    
+    // Access bone hierarchy
+    BoneHierarchy* getBoneHierarchy() { return boneHierarchy; }
+    const BoneHierarchy* getBoneHierarchy() const { return boneHierarchy; }
 
 private:
     auto& GetBoneInfoMap() { return m_BoneInfoMap; }

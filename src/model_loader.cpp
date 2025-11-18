@@ -23,48 +23,6 @@ bool load_interactor_model(const char* path) {
         model_data.bind_pose_positions_original = model_data.bind_pose_positions;
         model_data.bind_pose_matrices = current_model->bindPoseMatrices;
         model_data.bind_pose_matrices_original = model_data.bind_pose_matrices;
-        
-        // Initialize bone indices
-        model_data.left_arm_indices = {6, 7, 17};
-        model_data.right_arm_indices = {9, 10, 18};
-        model_data.left_leg_indices = {11, 12, 13};
-        model_data.right_leg_indices = {14, 15, 16};
-        
-        // Center bones (non-extremity bones: hip, spine, chest, neck, head, clavicles)
-        model_data.center_bones = {0, 1, 2, 3, 4, 5, 8};
-
-        model_data.left_thumb_indices = {17, 19, 20, 21, 49};
-
-        // Path: hand.L -> ... -> hand.L.013 -> hand.L.016
-        model_data.left_index_indices = {17, 22, 23, 24, 50};
-
-        // Path: hand.L -> ... -> hand.L.014 -> hand.L.018
-        model_data.left_middle_indices = {17, 25, 26, 27, 51};
-
-        // Path: hand.L -> ... -> hand.L.015 -> hand.L.019
-        model_data.left_ring_indices = {17, 28, 29, 30, 52};
-
-        // Path: hand.L -> ... -> hand.L.017 -> hand.L.020
-        model_data.left_pinky_indices = {17, 31, 32, 33, 53};
-
-
-        // --- Bone Index Paths for the Right Hand (UPDATED with Leaf Bones) ---
-        // The hierarchy is traced from the root bone hand.R (index 18).
-
-        // Path: hand.R -> ... -> hand.R.011 -> hand.R.012
-        model_data.right_thumb_indices = {18, 34, 35, 36, 54};
-
-        // Path: hand.R -> ... -> hand.R.013 -> hand.R.016
-        model_data.right_index_indices = {18, 37, 38, 39, 55};
-
-        // Path: hand.R -> ... -> hand.R.014 -> hand.R.018
-        model_data.right_middle_indices = {18, 40, 41, 42, 56};
-
-        // Path: hand.R -> ... -> hand.R.015 -> hand.R.019
-        model_data.right_ring_indices = {18, 43, 44, 45, 57};
-
-        // Path: hand.R -> ... -> hand.R.017 -> hand.R.020
-        model_data.right_pinky_indices = {18, 46, 47, 48, 58};
 
         // Reset application state for the new model to ensure clean initialization
         reset_application_state();
@@ -119,6 +77,10 @@ bool load_interactable_model(const char* path) {
 }
 
 const InteractorModelData& get_interactor_model_data() {
+    return model_data;
+}
+
+InteractorModelData& get_interactor_model_data_mutable() {
     return model_data;
 }
 
@@ -201,19 +163,8 @@ void update_bone_transforms(const std::vector<unsigned short>& indices) {
 }
 
 void update_center_bone_matrices() {
-    // Update transforms for center bones based on their bind pose positions
-    for (unsigned short boneIndex : model_data.center_bones) {
-        glm::vec3 translateVector = (model_data.bind_pose_positions[boneIndex] - 
-                                   model_data.bind_pose_positions_original[boneIndex]);
-        
-        glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), 
-                                              -model_data.bind_pose_positions_original[boneIndex]);
-        
-        model_data.bind_pose_matrices[boneIndex] = 
-            glm::translate(glm::mat4(1.0f), translateVector) * 
-            glm::inverse(offsetMatrix) * 
-            offsetMatrix;
-    }
+    // TODO: Will be reimplemented using IK chains from IKChainManager
+    // Commented out center bone update code that used hardcoded indices
 }
 
 void sync_data_to_main(std::vector<glm::vec3>& main_positions, std::vector<glm::mat4>& main_matrices) {
@@ -311,7 +262,7 @@ void cleanup_scene_element_gpu_resources(SceneElementModel& model) {
     }
     
     // Delete textures
-    // Note: In a more advanced implementation, you would want reference counting
+    // Note: In a more advanced implementation, we want reference counting
     // for textures shared between models. For now, we delete them all.
     for (auto& texture : model.textures_loaded) {
         glDeleteTextures(1, &texture.id);

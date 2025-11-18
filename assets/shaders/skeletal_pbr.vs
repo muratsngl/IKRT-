@@ -22,7 +22,7 @@ uniform mat4 model;
 
 // Bone transformation matrices
 layout(std140, binding = 1) uniform bone_transforms {
-    mat4 bone_matrices[60];
+    mat4 bone_matrices[120];
 };
 
 void main()

@@ -19,26 +19,6 @@ struct InteractorModelData {
     std::vector<glm::vec3> bind_pose_positions_original;
     std::vector<glm::mat4> bind_pose_matrices;
     std::vector<glm::mat4> bind_pose_matrices_original;
-    
-    // Bone indices for different limbs
-    std::vector<unsigned short> left_arm_indices;
-    std::vector<unsigned short> right_arm_indices;
-    std::vector<unsigned short> left_leg_indices;
-    std::vector<unsigned short> right_leg_indices;
-    std::vector<unsigned short> left_thumb_indices;
-    std::vector<unsigned short> right_thumb_indices;
-    std::vector<unsigned short> left_index_indices;
-    std::vector<unsigned short> right_index_indices;
-    std::vector<unsigned short> left_middle_indices;
-    std::vector<unsigned short> right_middle_indices;
-    std::vector<unsigned short> left_ring_indices;
-    std::vector<unsigned short> right_ring_indices;
-    std::vector<unsigned short> left_pinky_indices;
-    std::vector<unsigned short> right_pinky_indices;
-    
-    // Center bones (non-extremity bones: torso, spine, neck, head)
-    std::vector<unsigned short> center_bones;
-
 };
 
 struct SceneElementModelData{
@@ -53,6 +33,7 @@ bool load_interactable_model(const char* path);
 bool remove_scene_element_model_by_id(int model_id);
 void cleanup_scene_element_gpu_resources(SceneElementModel& model);
 const InteractorModelData& get_interactor_model_data();
+InteractorModelData& get_interactor_model_data_mutable();
 InteractorModel* get_interactor_model(); // Get the actual model for drawing
 const SceneElementModel& get_scene_element_model(size_t index);
 const InteractableModel& get_interactable_model(size_t index);

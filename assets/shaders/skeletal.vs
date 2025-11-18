@@ -16,7 +16,7 @@ uniform mat4 model;
 
 
 layout(std140,binding = 1) uniform bone_transforms{
-mat4 bone_matrices[50];
+mat4 bone_matrices[120];
 };
 
 

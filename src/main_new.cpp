@@ -72,6 +72,11 @@ int main() {
             update_target_proxies();
         }
         
+        // Update bone boxes every frame for selection (independent of visualization)
+        if (is_interactor_model_available()) {
+            update_bone_boxes();
+        }
+        
         
         // Render frame
         render_frame();

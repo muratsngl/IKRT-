@@ -1,9 +1,12 @@
 #include "collision_visualizer.hpp"
 #include "model_bones.h"
+#include "bone_hierarchy.hpp"
+#include "model_loader.hpp"
 #include "render_setup.hpp"
 #include "application_logic.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <iostream>
 
 // Static member initialization
@@ -122,6 +125,9 @@ void CollisionVisualizer::renderCollisionGeometry(const glm::mat4& view, const g
     // Render scene element boxes (AABB type)
     for (const Shape& shape : scene_element_boxes) {
         if (shape.type == AABB) {
+            // Skip bone shapes (IDs >= 20000) - they're rendered separately
+            if (shape.id >= 20000) continue;
+            
             // Get the model matrix for this shape
             unsigned int modelIndex = get_model_index_by_id(shape.id);
             if (modelIndex >= modelMatrices.size()) continue;
@@ -147,6 +153,9 @@ void CollisionVisualizer::renderCollisionGeometry(const glm::mat4& view, const g
     
     for (const Shape& shape : interactable_element_boxes) {
         if (shape.type == AABB) {
+            // Skip bone shapes (IDs >= 20000) - they're rendered separately
+            if (shape.id >= 20000) continue;
+            
             // Get the model matrix for this shape
             unsigned int modelIndex = get_model_index_by_id(shape.id);
             if (modelIndex >= modelMatrices.size()) continue;
@@ -216,6 +225,152 @@ void CollisionVisualizer::renderTargetProxies(const glm::mat4& view, const glm::
         
         bboxShader->setMat4("model", bboxTransform);
         glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+    }
+    
+    glBindVertexArray(0);
+    glLineWidth(1.0f);
+}
+
+bool CollisionVisualizer::showBoneVisualization = false;
+
+void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const glm::mat4& projection) {
+    if (!showBoneVisualization || !isInitialized || !bboxShader) return;
+    
+    // Only render if interactor model is available
+    if (!is_interactor_model_available()) return;
+    
+    InteractorModel* model = get_interactor_model();
+    if (!model) return;
+    
+    const InteractorModelData& model_data = get_interactor_model_data();
+    
+    // Check if we have bone data
+    if (model_data.bind_pose_positions.empty() || model_data.bind_pose_matrices.empty()) return;
+    
+    bboxShader->use();
+    bboxShader->setMat4("view", view);
+    bboxShader->setMat4("projection", projection);
+    bboxShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for bones
+    
+    glBindVertexArray(VAO);
+    glLineWidth(2.5f);
+    
+    // Get bone hierarchy to determine parent-child relationships
+    BoneHierarchy* hierarchy = model->getBoneHierarchy();
+    if (!hierarchy || !hierarchy->isValid()) return;
+    
+    // Get all bones
+    std::vector<BoneNode*> allBones;
+    hierarchy->getAllBones(allBones);
+    
+    // Render a box between each bone and its parent
+    for (const BoneNode* bone : allBones) {
+        if (!bone->parent) continue; // Skip root bone (no parent)
+        
+        int childBoneId = bone->boneId;
+        int parentBoneId = bone->parent->boneId;
+        
+        // Check valid indices
+        if (childBoneId >= model_data.bind_pose_positions.size() || 
+            parentBoneId >= model_data.bind_pose_positions.size()) continue;
+        
+        // Get bone positions in world space
+        glm::vec3 childPos = model_data.bind_pose_matrices[childBoneId] * 
+                            glm::vec4(model_data.bind_pose_positions[childBoneId], 1.0f);
+        glm::vec3 parentPos = model_data.bind_pose_matrices[parentBoneId] * 
+                             glm::vec4(model_data.bind_pose_positions[parentBoneId], 1.0f);
+        
+        // Calculate center and direction
+        glm::vec3 center = (childPos + parentPos) * 0.5f;
+        glm::vec3 direction = childPos - parentPos;
+        float length = glm::length(direction);
+        
+        if (length < 0.001f) continue; // Skip if bones are too close
+        
+        direction = glm::normalize(direction);
+        
+        // Create rotation to align box with bone direction
+        glm::vec3 up = direction;
+        glm::vec3 forward = glm::vec3(0, 0, 1);
+        
+        if (fabs(glm::dot(up, forward)) > 0.99f) {
+            forward = glm::vec3(1, 0, 0);
+        }
+        
+        glm::vec3 right = glm::normalize(glm::cross(up, forward));
+        forward = glm::normalize(glm::cross(right, up));
+        
+        glm::mat3 rotMatrix(right, up, forward);
+        glm::quat rotation = glm::quat_cast(rotMatrix);
+        
+        // Create transformation matrix for the bone box
+        glm::mat4 boneTransform = glm::mat4(1.0f);
+        boneTransform = glm::translate(boneTransform, center);
+        boneTransform *= glm::mat4_cast(rotation);
+        
+        // Scale: thickness proportional to bone length (adaptive sizing)
+        float boneThickness = length * 0.15f; // Scale thickness with bone length
+        boneThickness = glm::clamp(boneThickness, 0.01f, 0.3f); // Clamp to reasonable range
+        boneTransform = glm::scale(boneTransform, glm::vec3(boneThickness, length, boneThickness));
+        
+        bboxShader->setMat4("model", boneTransform);
+        glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+    }
+    
+    // Render extended segments for leaf bones (so fingertips can be selected)
+    for (const BoneNode* bone : allBones) {
+        if (bone->children.empty() && bone->parent) {
+            int boneId = bone->boneId;
+            int parentBoneId = bone->parent->boneId;
+            
+            if (boneId >= model_data.bind_pose_positions.size() || 
+                parentBoneId >= model_data.bind_pose_positions.size()) continue;
+            
+            // Get bone positions in world space
+            glm::vec3 bonePos = model_data.bind_pose_matrices[boneId] * 
+                               glm::vec4(model_data.bind_pose_positions[boneId], 1.0f);
+            glm::vec3 parentPos = model_data.bind_pose_matrices[parentBoneId] * 
+                                 glm::vec4(model_data.bind_pose_positions[parentBoneId], 1.0f);
+            
+            // Calculate direction and create virtual tip
+            glm::vec3 direction = bonePos - parentPos;
+            float segmentLength = glm::length(direction);
+            
+            if (segmentLength < 0.001f) continue;
+            
+            direction = glm::normalize(direction);
+            float tipLength = segmentLength * 0.5f; // Extend 50% of parent-to-bone distance
+            glm::vec3 virtualTip = bonePos + direction * tipLength;
+            
+            // Create box from bone to virtual tip
+            glm::vec3 center = (bonePos + virtualTip) * 0.5f;
+            float length = tipLength;
+            
+            // Create rotation
+            glm::vec3 up = direction;
+            glm::vec3 forward = glm::vec3(0, 0, 1);
+            
+            if (fabs(glm::dot(up, forward)) > 0.99f) {
+                forward = glm::vec3(1, 0, 0);
+            }
+            
+            glm::vec3 right = glm::normalize(glm::cross(up, forward));
+            forward = glm::normalize(glm::cross(right, up));
+            
+            glm::mat3 rotMatrix(right, up, forward);
+            glm::quat rotation = glm::quat_cast(rotMatrix);
+            
+            glm::mat4 tipTransform = glm::mat4(1.0f);
+            tipTransform = glm::translate(tipTransform, center);
+            tipTransform *= glm::mat4_cast(rotation);
+            
+            float tipThickness = segmentLength * 0.15f;
+            tipThickness = glm::clamp(tipThickness, 0.05f, 0.3f);
+            tipTransform = glm::scale(tipTransform, glm::vec3(tipThickness, length, tipThickness));
+            
+            bboxShader->setMat4("model", tipTransform);
+            glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+        }
     }
     
     glBindVertexArray(0);

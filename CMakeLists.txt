@@ -66,6 +66,7 @@ set(SOURCES
     src/raycast.cpp
     src/light_manager.cpp
     src/scene_serializer.cpp
+    src/bone_hierarchy.cpp
 )
 
 # Include directories (Original Setup)

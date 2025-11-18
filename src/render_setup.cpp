@@ -53,6 +53,14 @@ static bool firstMouse = true;
 
 // Add static variables to track the key state
 static bool spaceKeyPressed = false;
+
+// Quit confirmation state
+static bool quitRequested = false;
+static bool showQuitConfirmation = false;
+
+// Window close callback (forward declaration)
+
+
 static uint debug_rect_vao,debug_rect_vbo;
 // Gizmo state variables
 static int selected_model_id = -1;
@@ -187,6 +195,9 @@ bool init_rendering() {
         return false;
     }
     
+    // Set window close callback for quit confirmation
+    glfwSetWindowCloseCallback(render_context.window, window_close_callback);
+    
     return true;
 }
 
@@ -298,7 +309,7 @@ void init_buffers() {
     glGenBuffers(1, &render_context.orcunUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, render_context.orcunUBO);
-    glBufferData(GL_UNIFORM_BUFFER, 4000, nullptr, GL_DYNAMIC_READ);
+    glBufferData(GL_UNIFORM_BUFFER, 7680, nullptr, GL_DYNAMIC_READ);  // 120 bone matrices * 64 bytes
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
     // Create interactable bone UBO
@@ -454,6 +465,21 @@ glm::mat4& get_selected_object_matrix() {
             *proxyMatrix = glm::translate(glm::mat4(1.0f), *targetPos);
             return *proxyMatrix;
         }
+    }
+    
+    // Check if this is a bone selection (ID >= 20000)
+    if (selected_model_id >= 20000) {
+        int bone_id = selected_model_id - 20000;
+        InteractorModelData& model_data = get_interactor_model_data_mutable();
+        
+        if (bone_id < model_data.bind_pose_matrices.size()) {
+            // Return direct reference to the bone matrix so gizmo can modify it
+            return model_data.bind_pose_matrices[bone_id];
+        }
+        
+        // Bone ID out of bounds, return identity
+        static glm::mat4 identity = glm::mat4(1.0f);
+        return identity;
     }
     
     // Regular model selection
@@ -816,6 +842,9 @@ void render_frame() {
     // Render target position proxies if enabled The problem here is the proxy rendering and the render collision geometry is coupled for the first click.
     collisionVisualizer.renderTargetProxies(view, projection);
     
+    // Render bone visualization if enabled
+    collisionVisualizer.renderBoneVisualization(view, projection);
+    
     // Render all UI components
     render_ui();
     
@@ -830,7 +859,19 @@ void render_frame() {
 }
 
 bool should_close_window() {
-    return glfwWindowShouldClose(render_context.window);
+    return quitRequested;
+}
+
+void confirm_quit() {
+    quitRequested = true;
+}
+
+void cancel_quit() {
+    showQuitConfirmation = false;
+}
+
+bool is_quit_confirmation_shown() {
+    return showQuitConfirmation;
 }
 
 void cleanup_rendering() {
@@ -982,6 +1023,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 allShapes.insert(allShapes.end(), target_proxies.begin(), target_proxies.end());
             }
             
+            // Include bone boxes for selection (always available when interactor model loaded)
+            if (is_interactor_model_available()) {
+                std::vector<Shape>& bone_boxes = get_bone_boxes();
+                allShapes.insert(allShapes.end(), bone_boxes.begin(), bone_boxes.end());
+            }
+            
             // Find all objects the ray hits and sort them by distance (nearest first)
             hit_objects_list = intersect_ray_all(ray, allShapes);
             
@@ -1007,9 +1054,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void process_input(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
+    // ESC key disabled - use window close button instead
+    
     const ApplicationState& app_state = get_application_state();
     
     // Only process camera movement if not in EDIT_SCENE mode
@@ -1053,6 +1099,14 @@ void process_input(GLFWwindow* window) {
             }
         }
     }
+}
+
+
+
+static void window_close_callback(GLFWwindow* window) {
+    // Don't close immediately, show confirmation dialog instead
+    glfwSetWindowShouldClose(window, GLFW_FALSE);
+    showQuitConfirmation = true;
 }
 
 // Collision visualization functions

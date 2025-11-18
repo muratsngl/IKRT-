@@ -8,7 +8,7 @@ RENDERING
     SHADOWS:
         1.Cost exceeds available time.(70 render passes)
 DATA_ORGANIZATION:
-    MODEL_REMOVAL: There is no such mechanism, having creative seizures while thinking of it. better keep it simple.
+    
 SKINNING: 
     
     2.VOLUME LOSS ON FOREARM(either skinning or vertex weights)
@@ -22,3 +22,4 @@ MISC
 SOLVED:
     For SceneElements bounding boxes are not consistent and extend themselves to infinity[UNINITIALIZED VARIABLE]
     The arms of the model has some faulty weights or there is an inconsistency that occurs around that area[MATRIX OPERATION ORDER(STILL A MISTERY)]; 
+    MODEL_REMOVAL: There is no such mechanism, having creative seizures while thinking of it. better keep it simple.

@@ -1,8 +1,10 @@
 #include "include/application_logic.hpp"
 #include "include/shared_memory.hpp"
 #include "include/model_loader.hpp"
+#include "include/model_bones.h"
 #include "include/FABRIK.h"
 #include "include/Interaction.hpp"
+#include "include/bone_hierarchy.hpp"
 #include "collision.hpp"
 #include <GLFW/glfw3.h>
 #include <cmath>
@@ -104,32 +106,17 @@ void calculate_deltas() {
 }
 
 void apply_fabrik() {
-    if (!is_interactor_model_available()) {
-        return; // Early return if model not available
-    }
+    // TODO: Apply FABRIK using IK chains from IKChainManager instead of hardcoded indices
+    // This function will be reimplemented to use dynamically created IK chains
     
-    const InteractorModelData& model_data = get_interactor_model_data();
-    
-    // Apply root offset to bone positions first, before FABRIK calculations
-    apply_root_offset_to_bones(app_state.deltaRoot);
-    
-    // Apply FABRIK to each limb
-    simple_fabrik_routine_indexed(const_cast<std::vector<glm::vec3>&>(model_data.bind_pose_positions),
-                                 app_state.targetPositionIndex, 
-                                 model_data.right_arm_indices);
-    
-    simple_fabrik_routine_indexed(const_cast<std::vector<glm::vec3>&>(model_data.bind_pose_positions),
-                                 app_state.targetPositionMiddle, 
-                                 model_data.right_leg_indices);
-    
-    simple_fabrik_routine_indexed(const_cast<std::vector<glm::vec3>&>(model_data.bind_pose_positions),
-                                 app_state.targetPositionRing, 
-                                 model_data.left_arm_indices);
-    
-    simple_fabrik_routine_indexed(const_cast<std::vector<glm::vec3>&>(model_data.bind_pose_positions),
-                                 app_state.targetPositionPinky, 
-                                 model_data.left_leg_indices);
-   
+    // if (!is_interactor_model_available()) {
+    //     return;
+    // }
+    // 
+    // const InteractorModelData& model_data = get_interactor_model_data();
+    // apply_root_offset_to_bones(app_state.deltaRoot);
+    // 
+    // // Will use IKChainManager to get chains and solve them
 }
 
 void rearrange_finger_positions_based_on_collision(){
@@ -219,43 +206,11 @@ void rearrange_finger_positions_based_on_collision(){
         return hasCollision;
     };
     
-   // Check collisions for all limbs with scene elements
-    checkSceneElementCollision(model_data.right_arm_indices, "Right Arm", 0.085f);
-    checkSceneElementCollision(model_data.left_arm_indices, "Left Arm", 0.085f);
-    checkSceneElementCollision(model_data.right_leg_indices, "Right Leg", 0.1f);
-    checkSceneElementCollision(model_data.left_leg_indices, "Left Leg", 0.1f);
-
-    // Check individual fingers with scene elements
-    checkSceneElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.015f);
-    checkSceneElementCollision(model_data.left_index_indices, "Left Index", 0.015f);
-    checkSceneElementCollision(model_data.left_middle_indices, "Left Middle", 0.02f);
-    checkSceneElementCollision(model_data.left_ring_indices, "Left Ring", 0.02f);
-    checkSceneElementCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f);
-
-    checkSceneElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.015f);
-    checkSceneElementCollision(model_data.right_index_indices, "Right Index", 0.015f);
-    checkSceneElementCollision(model_data.right_middle_indices, "Right Middle", 0.015f);
-    checkSceneElementCollision(model_data.right_ring_indices, "Right Ring", 0.015f);
-    checkSceneElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.015f);
+    // TODO: Collision detection will use IK chains from IKChainManager
+    // Commented out hardcoded collision checks
     
-    // Check collisions for all limbs with interactable elements
-    // checkInteractableElementCollision(model_data.right_arm_indices, "Right Arm", 0.085f, RIGHT_HAND);
-    // checkInteractableElementCollision(model_data.left_arm_indices, "Left Arm", 0.085f, LEFT_HAND);
-    // checkInteractableElementCollision(model_data.right_leg_indices, "Right Leg", 0.1f, RIGHT_LEG);
-    // checkInteractableElementCollision(model_data.left_leg_indices, "Left Leg", 0.1f, LEFT_LEG);
-
-    // Check individual fingers with interactable elements
-    checkInteractableElementCollision(model_data.left_thumb_indices, "Left Thumb", 0.015f, LEFT_HAND);
-    checkInteractableElementCollision(model_data.left_index_indices, "Left Index", 0.015f, LEFT_HAND);
-    checkInteractableElementCollision(model_data.left_middle_indices, "Left Middle", 0.02f, LEFT_HAND);
-    checkInteractableElementCollision(model_data.left_ring_indices, "Left Ring", 0.02f, LEFT_HAND);
-    checkInteractableElementCollision(model_data.left_pinky_indices, "Left Pinky", 0.02f, LEFT_HAND);
-
-    checkInteractableElementCollision(model_data.right_thumb_indices, "Right Thumb", 0.015f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_index_indices, "Right Index", 0.015f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_middle_indices, "Right Middle", 0.015f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_ring_indices, "Right Ring", 0.015f, RIGHT_HAND);
-    checkInteractableElementCollision(model_data.right_pinky_indices, "Right Pinky", 0.015f, RIGHT_HAND);
+    // checkSceneElementCollision(chain_indices, "Chain Name", halfExtent);
+    // checkInteractableElementCollision(chain_indices, "Chain Name", halfExtent, effector);
     
     int selected_model_id;
     
@@ -283,44 +238,12 @@ void update_transforms() {
         return; // Early return if model not available
     }
     
-    const InteractorModelData& model_data = get_interactor_model_data();
+    // TODO: Transform updates will use IK chains from IKChainManager
+    // Commented out hardcoded transform updates
     
-    // Update bone transforms for each limb
-    update_bone_transforms(model_data.right_arm_indices);
-    update_bone_transforms(model_data.left_arm_indices);
-    update_bone_transforms(model_data.right_leg_indices);
-    update_bone_transforms(model_data.left_leg_indices);
-    
-    // Update center bone matrices (non-extremity bones affected by root translation)
-    //update_center_bone_matrices();
-
-
-    if (!app_state.isInteracting[0]) {
-        end_effector_align(model_data.right_thumb_indices);
-    
-    
-        end_effector_align(model_data.right_index_indices);
-    
- 
-        end_effector_align(model_data.right_middle_indices);
-
-        end_effector_align(model_data.right_ring_indices);
- 
-        end_effector_align(model_data.right_pinky_indices);
-    
-    }
-    // 9-13: left fingers (thumb, index, middle, ring, pinky)
-    if(!app_state.isInteracting[1]){
-        end_effector_align(model_data.left_thumb_indices);
-    
-        end_effector_align(model_data.left_index_indices);
-    
-        end_effector_align(model_data.left_middle_indices);
-        end_effector_align(model_data.left_ring_indices);
-    
-    
-        end_effector_align(model_data.left_pinky_indices);
-    }
+    // const InteractorModelData& model_data = get_interactor_model_data();
+    // update_bone_transforms(chain_indices);
+    // end_effector_align(chain_indices);
 }
 
 ApplicationState& get_application_state() {
@@ -461,4 +384,114 @@ void update_target_from_gizmo(int proxyID, const glm::vec3& newPosition) {
     
     // Update the proxy bounding boxes
     update_target_proxies();
+}
+
+// ============================================================================
+// Bone Box Management for Raycast Selection
+// ============================================================================
+
+static std::vector<Shape> bone_boxes;
+
+void update_bone_boxes() {
+    bone_boxes.clear();
+    
+    if (!is_interactor_model_available()) return;
+    
+    InteractorModel* model = get_interactor_model();
+    if (!model) return;
+    
+    const InteractorModelData& model_data = get_interactor_model_data();
+    
+    if (model_data.bind_pose_positions.empty() || model_data.bind_pose_matrices.empty()) return;
+    
+    BoneHierarchy* hierarchy = model->getBoneHierarchy();
+    if (!hierarchy || !hierarchy->isValid()) return;
+    
+    std::vector<BoneNode*> allBones;
+    hierarchy->getAllBones(allBones);
+    
+    // Create AABB for each bone segment (in local space, like scene elements)
+    for (const BoneNode* bone : allBones) {
+        if (!bone->parent) continue; // Skip root
+        
+        int childBoneId = bone->boneId;
+        int parentBoneId = bone->parent->boneId;
+        
+        if (childBoneId >= model_data.bind_pose_positions.size() || 
+            parentBoneId >= model_data.bind_pose_positions.size()) continue;
+        
+        // Get bone positions in LOCAL space (bind pose positions)
+        glm::vec3 childPos = model_data.bind_pose_positions[childBoneId];
+        glm::vec3 parentPos = model_data.bind_pose_positions[parentBoneId];
+        
+        // Calculate bone length for adaptive sizing
+        float boneLength = glm::length(childPos - parentPos);
+        float boneThickness = boneLength * 0.15f; // Scale thickness with bone length
+        boneThickness = glm::clamp(boneThickness, 0.01f, 0.3f); // Clamp to reasonable range
+        
+        // Create AABB that encompasses both bone endpoints with some thickness
+        glm::vec3 minBounds = glm::min(childPos, parentPos) - glm::vec3(boneThickness);
+        glm::vec3 maxBounds = glm::max(childPos, parentPos) + glm::vec3(boneThickness);
+        
+        // Create AABB shape (in local space)
+        Shape boneShape;
+        boneShape.type = AABB;
+        boneShape.id = BONE_ID_START + childBoneId; // Use child bone ID for identification
+        boneShape.aabb.min = minBounds;
+        boneShape.aabb.max = maxBounds;
+        
+        bone_boxes.push_back(boneShape);
+    }
+    
+    // Add extended segments for leaf bones (fingertips, etc.)
+    for (const BoneNode* bone : allBones) {
+        if (bone->children.empty() && bone->parent) {
+            int boneId = bone->boneId;
+            int parentBoneId = bone->parent->boneId;
+            
+            if (boneId >= model_data.bind_pose_positions.size() || 
+                parentBoneId >= model_data.bind_pose_positions.size()) continue;
+            
+            // Get bone positions in LOCAL space
+            glm::vec3 bonePos = model_data.bind_pose_positions[boneId];
+            glm::vec3 parentPos = model_data.bind_pose_positions[parentBoneId];
+            
+            // Calculate direction and create virtual tip
+            glm::vec3 direction = bonePos - parentPos;
+            float segmentLength = glm::length(direction);
+            
+            if (segmentLength < 0.001f) continue;
+            
+            direction = glm::normalize(direction);
+            float tipLength = segmentLength * 0.5f; // Extend 50% of parent-to-bone distance
+            glm::vec3 virtualTip = bonePos + direction * tipLength;
+            
+            // Calculate adaptive thickness
+            float tipThickness = segmentLength * 0.15f;
+            tipThickness = glm::clamp(tipThickness, 0.05f, 0.3f);
+            
+            // Create AABB from bone to virtual tip
+            glm::vec3 minBounds = glm::min(bonePos, virtualTip) - glm::vec3(tipThickness);
+            glm::vec3 maxBounds = glm::max(bonePos, virtualTip) + glm::vec3(tipThickness);
+            
+            Shape tipShape;
+            tipShape.type = AABB;
+            tipShape.id = BONE_ID_START + parentBoneId; // Use parent bone ID so manipulation affects the right joint
+            tipShape.aabb.min = minBounds;
+            tipShape.aabb.max = maxBounds;
+            
+            bone_boxes.push_back(tipShape);
+        }
+    }
+}
+
+std::vector<Shape>& get_bone_boxes() {
+    return bone_boxes;
+}
+
+int get_bone_id_from_shape_id(int shape_id) {
+    if (shape_id >= BONE_ID_START) {
+        return shape_id - BONE_ID_START;
+    }
+    return -1;
 }

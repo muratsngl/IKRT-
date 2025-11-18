@@ -1,5 +1,6 @@
 #include "include/raycast.hpp"
 #include "include/render_setup.hpp"
+#include "include/model_loader.hpp"
 #include <glm/gtc/matrix_inverse.hpp>
 #include <algorithm>
 #include <limits>
@@ -96,18 +97,34 @@ int intersect_ray(const Ray& ray, const std::vector<Shape>& shapes) {
             continue;
         }
         
-        // For regular models, transform ray to local space using model matrix
-        // Get the model matrix for this shape using the existing ID-to-index mapping
-        unsigned int model_index = get_model_index_by_id(shape.id);
-        
-        // Make sure the model index is valid
-        if (model_index >= model_matrices.size()) {
-            std::cerr << "Warning: Model index " << model_index << " out of bounds for model ID " << shape.id << std::endl;
-            continue;
+        // Special handling for bone shapes (IDs >= 20000)
+        glm::mat4 model_matrix;
+        if (shape.id >= 20000) {
+            // This is a bone - use bone matrix from interactor model
+            int bone_id = shape.id - 20000;
+            const InteractorModelData& model_data = get_interactor_model_data();
+            
+            if (bone_id >= model_data.bind_pose_matrices.size()) {
+                std::cerr << "Warning: Bone ID " << bone_id << " out of bounds" << std::endl;
+                continue;
+            }
+            
+            model_matrix = model_data.bind_pose_matrices[bone_id];
+        } else {
+            // For regular models, transform ray to local space using model matrix
+            // Get the model matrix for this shape using the existing ID-to-index mapping
+            unsigned int model_index = get_model_index_by_id(shape.id);
+            
+            // Make sure the model index is valid
+            if (model_index >= model_matrices.size()) {
+                std::cerr << "Warning: Model index " << model_index << " out of bounds for model ID " << shape.id << std::endl;
+                continue;
+            }
+            
+            model_matrix = model_matrices[model_index];
         }
         
         // Get the model matrix and calculate its inverse
-        const glm::mat4& model_matrix = model_matrices[model_index];
         glm::mat4 inverse_model_matrix = glm::inverse(model_matrix);
         
         // Transform ray to local space
@@ -163,18 +180,34 @@ std::vector<int> intersect_ray_all(const Ray& ray, const std::vector<Shape>& sha
             continue;
         }
         
-        // For regular models, transform ray to local space using model matrix
-        // Get the model matrix for this shape using the existing ID-to-index mapping
-        unsigned int model_index = get_model_index_by_id(shape.id);
-        
-        // Make sure the model index is valid
-        if (model_index >= model_matrices.size()) {
-            std::cerr << "Warning: Model index " << model_index << " out of bounds for model ID " << shape.id << std::endl;
-            continue;
+        // Special handling for bone shapes (IDs >= 20000)
+        glm::mat4 model_matrix;
+        if (shape.id >= 20000) {
+            // This is a bone - use bone matrix from interactor model
+            int bone_id = shape.id - 20000;
+            const InteractorModelData& model_data = get_interactor_model_data();
+            
+            if (bone_id >= model_data.bind_pose_matrices.size()) {
+                std::cerr << "Warning: Bone ID " << bone_id << " out of bounds" << std::endl;
+                continue;
+            }
+            
+            model_matrix = model_data.bind_pose_matrices[bone_id];
+        } else {
+            // For regular models, transform ray to local space using model matrix
+            // Get the model matrix for this shape using the existing ID-to-index mapping
+            unsigned int model_index = get_model_index_by_id(shape.id);
+            
+            // Make sure the model index is valid
+            if (model_index >= model_matrices.size()) {
+                std::cerr << "Warning: Model index " << model_index << " out of bounds for model ID " << shape.id << std::endl;
+                continue;
+            }
+            
+            model_matrix = model_matrices[model_index];
         }
         
         // Get the model matrix and calculate its inverse
-        const glm::mat4& model_matrix = model_matrices[model_index];
         glm::mat4 inverse_model_matrix = glm::inverse(model_matrix);
         
         // Transform ray to local space
