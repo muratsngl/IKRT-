@@ -1,5 +1,6 @@
 #include "include/model_loader.hpp"
 #include "include/model_bones.h"
+#include "include/bone_hierarchy.hpp"
 #include "include/render_setup.hpp"
 #include "include/application_logic.hpp"
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,6 +24,33 @@ bool load_interactor_model(const char* path) {
         model_data.bind_pose_positions_original = model_data.bind_pose_positions;
         model_data.bind_pose_matrices = current_model->bindPoseMatrices;
         model_data.bind_pose_matrices_original = model_data.bind_pose_matrices;
+
+        // Initialize local transforms from world matrices
+        model_data.local_bone_transforms.resize(model_data.bind_pose_matrices.size());
+        BoneHierarchy* hierarchy = current_model->getBoneHierarchy();
+        
+        if (hierarchy && hierarchy->isValid()) {
+            std::vector<BoneNode*> allBones;
+            hierarchy->getAllBones(allBones);
+            
+            for (const BoneNode* bone : allBones) {
+                int boneId = bone->boneId;
+                if (boneId >= model_data.bind_pose_matrices.size()) continue;
+                
+                // Compute local transform: local = inverse(parent_world) * world
+                if (bone->parent && bone->parent->boneId < model_data.bind_pose_matrices.size()) {
+                    glm::mat4 parentWorld = model_data.bind_pose_matrices[bone->parent->boneId];
+                    glm::mat4 world = model_data.bind_pose_matrices[boneId];
+                    model_data.local_bone_transforms[boneId] = glm::inverse(parentWorld) * world;
+                } else {
+                    // Root bone - local transform is same as world
+                    model_data.local_bone_transforms[boneId] = model_data.bind_pose_matrices[boneId];
+                }
+            }
+        }
+        
+        // Set default mode to FK
+        model_data.manipulation_mode = MODE_FORWARD_KINEMATICS;
 
         // Reset application state for the new model to ensure clean initialization
         reset_application_state();

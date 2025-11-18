@@ -13,12 +13,20 @@ class InteractorModel;
 class SceneElementModel;
 class InteractableModel;
 
+// Bone manipulation mode
+enum BoneManipulationMode {
+    MODE_FORWARD_KINEMATICS,  // Children inherit parent transforms
+    MODE_INVERSE_KINEMATICS   // Independent bone matrices for IK solving
+};
+
 // Model data structure
 struct InteractorModelData {
     std::vector<glm::vec3> bind_pose_positions;
     std::vector<glm::vec3> bind_pose_positions_original;
-    std::vector<glm::mat4> bind_pose_matrices;
+    std::vector<glm::mat4> bind_pose_matrices;          // Final world-space matrices
     std::vector<glm::mat4> bind_pose_matrices_original;
+    std::vector<glm::mat4> local_bone_transforms;       // Local transforms relative to parent
+    BoneManipulationMode manipulation_mode = MODE_FORWARD_KINEMATICS;
 };
 
 struct SceneElementModelData{

@@ -274,8 +274,15 @@ void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const g
         if (childBoneId >= model_data.bind_pose_positions.size() || 
             parentBoneId >= model_data.bind_pose_positions.size()) continue;
         
+        // Determine which matrix to use for the child bone
+        // If this is a leaf bone (no children), use parent's matrix for transformation
+        int childMatrixId = childBoneId;
+        if (bone->children.empty()) {
+            childMatrixId = parentBoneId; // Use parent's matrix for leaf bones
+        }
+        
         // Get bone positions in world space
-        glm::vec3 childPos = model_data.bind_pose_matrices[childBoneId] * 
+        glm::vec3 childPos = model_data.bind_pose_matrices[childMatrixId] * 
                             glm::vec4(model_data.bind_pose_positions[childBoneId], 1.0f);
         glm::vec3 parentPos = model_data.bind_pose_matrices[parentBoneId] * 
                              glm::vec4(model_data.bind_pose_positions[parentBoneId], 1.0f);
@@ -315,62 +322,6 @@ void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const g
         
         bboxShader->setMat4("model", boneTransform);
         glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
-    }
-    
-    // Render extended segments for leaf bones (so fingertips can be selected)
-    for (const BoneNode* bone : allBones) {
-        if (bone->children.empty() && bone->parent) {
-            int boneId = bone->boneId;
-            int parentBoneId = bone->parent->boneId;
-            
-            if (boneId >= model_data.bind_pose_positions.size() || 
-                parentBoneId >= model_data.bind_pose_positions.size()) continue;
-            
-            // Get bone positions in world space
-            glm::vec3 bonePos = model_data.bind_pose_matrices[boneId] * 
-                               glm::vec4(model_data.bind_pose_positions[boneId], 1.0f);
-            glm::vec3 parentPos = model_data.bind_pose_matrices[parentBoneId] * 
-                                 glm::vec4(model_data.bind_pose_positions[parentBoneId], 1.0f);
-            
-            // Calculate direction and create virtual tip
-            glm::vec3 direction = bonePos - parentPos;
-            float segmentLength = glm::length(direction);
-            
-            if (segmentLength < 0.001f) continue;
-            
-            direction = glm::normalize(direction);
-            float tipLength = segmentLength * 0.5f; // Extend 50% of parent-to-bone distance
-            glm::vec3 virtualTip = bonePos + direction * tipLength;
-            
-            // Create box from bone to virtual tip
-            glm::vec3 center = (bonePos + virtualTip) * 0.5f;
-            float length = tipLength;
-            
-            // Create rotation
-            glm::vec3 up = direction;
-            glm::vec3 forward = glm::vec3(0, 0, 1);
-            
-            if (fabs(glm::dot(up, forward)) > 0.99f) {
-                forward = glm::vec3(1, 0, 0);
-            }
-            
-            glm::vec3 right = glm::normalize(glm::cross(up, forward));
-            forward = glm::normalize(glm::cross(right, up));
-            
-            glm::mat3 rotMatrix(right, up, forward);
-            glm::quat rotation = glm::quat_cast(rotMatrix);
-            
-            glm::mat4 tipTransform = glm::mat4(1.0f);
-            tipTransform = glm::translate(tipTransform, center);
-            tipTransform *= glm::mat4_cast(rotation);
-            
-            float tipThickness = segmentLength * 0.15f;
-            tipThickness = glm::clamp(tipThickness, 0.05f, 0.3f);
-            tipTransform = glm::scale(tipTransform, glm::vec3(tipThickness, length, tipThickness));
-            
-            bboxShader->setMat4("model", tipTransform);
-            glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
-        }
     }
     
     glBindVertexArray(0);

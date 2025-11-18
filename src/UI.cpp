@@ -444,6 +444,11 @@ void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjectio
             // Update target position via delta system
             update_target_from_gizmo(selected_id, translation);
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Target Proxy");
+        } else if (selected_id >= 20000) {
+            // Bone manipulation - propagate to children in FK mode
+            int bone_id = selected_id - 20000;
+            recompute_bone_hierarchy_from(bone_id);
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Bone Transform (FK)");
         } else {
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Object Transform");
         }

@@ -5,6 +5,7 @@
 #include "include/Camera.h"
 #include "include/Shader.h"
 #include "include/model_bones.h" 
+#include "include/bone_hierarchy.hpp"
 #include "include/application_logic.hpp"// Include the Model class definition
 #include "include/light_manager.hpp"
 
@@ -471,8 +472,23 @@ glm::mat4& get_selected_object_matrix() {
     if (selected_model_id >= 20000) {
         int bone_id = selected_model_id - 20000;
         InteractorModelData& model_data = get_interactor_model_data_mutable();
+        InteractorModel* model = get_interactor_model();
         
-        if (bone_id < model_data.bind_pose_matrices.size()) {
+        if (bone_id < model_data.bind_pose_matrices.size() && model) {
+            // Check if this bone has no children (leaf bone)
+            BoneHierarchy* hierarchy = model->getBoneHierarchy();
+            if (hierarchy && hierarchy->isValid()) {
+                BoneNode* bone = hierarchy->findBoneById(bone_id);
+                
+                // If bone has no children and has a parent, manipulate the parent instead
+                if (bone && bone->children.empty() && bone->parent) {
+                    int parent_bone_id = bone->parent->boneId;
+                    if (parent_bone_id < model_data.bind_pose_matrices.size()) {
+                        return model_data.bind_pose_matrices[parent_bone_id];
+                    }
+                }
+            }
+            
             // Return direct reference to the bone matrix so gizmo can modify it
             return model_data.bind_pose_matrices[bone_id];
         }

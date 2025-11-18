@@ -436,52 +436,11 @@ void update_bone_boxes() {
         // Create AABB shape (in local space)
         Shape boneShape;
         boneShape.type = AABB;
-        boneShape.id = BONE_ID_START + childBoneId; // Use child bone ID for identification
+        boneShape.id = BONE_ID_START + parentBoneId; // Use parent bone ID so manipulating the segment affects the parent joint
         boneShape.aabb.min = minBounds;
         boneShape.aabb.max = maxBounds;
         
         bone_boxes.push_back(boneShape);
-    }
-    
-    // Add extended segments for leaf bones (fingertips, etc.)
-    for (const BoneNode* bone : allBones) {
-        if (bone->children.empty() && bone->parent) {
-            int boneId = bone->boneId;
-            int parentBoneId = bone->parent->boneId;
-            
-            if (boneId >= model_data.bind_pose_positions.size() || 
-                parentBoneId >= model_data.bind_pose_positions.size()) continue;
-            
-            // Get bone positions in LOCAL space
-            glm::vec3 bonePos = model_data.bind_pose_positions[boneId];
-            glm::vec3 parentPos = model_data.bind_pose_positions[parentBoneId];
-            
-            // Calculate direction and create virtual tip
-            glm::vec3 direction = bonePos - parentPos;
-            float segmentLength = glm::length(direction);
-            
-            if (segmentLength < 0.001f) continue;
-            
-            direction = glm::normalize(direction);
-            float tipLength = segmentLength * 0.5f; // Extend 50% of parent-to-bone distance
-            glm::vec3 virtualTip = bonePos + direction * tipLength;
-            
-            // Calculate adaptive thickness
-            float tipThickness = segmentLength * 0.15f;
-            tipThickness = glm::clamp(tipThickness, 0.05f, 0.3f);
-            
-            // Create AABB from bone to virtual tip
-            glm::vec3 minBounds = glm::min(bonePos, virtualTip) - glm::vec3(tipThickness);
-            glm::vec3 maxBounds = glm::max(bonePos, virtualTip) + glm::vec3(tipThickness);
-            
-            Shape tipShape;
-            tipShape.type = AABB;
-            tipShape.id = BONE_ID_START + parentBoneId; // Use parent bone ID so manipulation affects the right joint
-            tipShape.aabb.min = minBounds;
-            tipShape.aabb.max = maxBounds;
-            
-            bone_boxes.push_back(tipShape);
-        }
     }
 }
 
@@ -494,4 +453,55 @@ int get_bone_id_from_shape_id(int shape_id) {
         return shape_id - BONE_ID_START;
     }
     return -1;
+}
+
+// Recompute bone hierarchy in FK mode starting from a bone
+void recompute_bone_hierarchy_from(int bone_id) {
+    if (!is_interactor_model_available()) return;
+    
+    InteractorModel* model = get_interactor_model();
+    if (!model) return;
+    
+    InteractorModelData& model_data = get_interactor_model_data_mutable();
+    
+    // Only recompute in FK mode
+    if (model_data.manipulation_mode != MODE_FORWARD_KINEMATICS) return;
+    
+    BoneHierarchy* hierarchy = model->getBoneHierarchy();
+    if (!hierarchy || !hierarchy->isValid()) return;
+    if (bone_id >= model_data.bind_pose_matrices.size()) return;
+    
+    BoneNode* bone = hierarchy->findBoneById(bone_id);
+    if (!bone) return;
+    
+    // Update this bone's local transform based on its new world matrix
+    if (bone->parent && bone->parent->boneId < model_data.bind_pose_matrices.size()) {
+        glm::mat4 parentWorld = model_data.bind_pose_matrices[bone->parent->boneId];
+        glm::mat4 world = model_data.bind_pose_matrices[bone_id];
+        model_data.local_bone_transforms[bone_id] = glm::inverse(parentWorld) * world;
+    } else {
+        // Root bone
+        model_data.local_bone_transforms[bone_id] = model_data.bind_pose_matrices[bone_id];
+    }
+    
+    // Recursively update all children's world transforms
+    std::function<void(BoneNode*)> updateChildren = [&](BoneNode* node) {
+        glm::mat4 parentWorld = model_data.bind_pose_matrices[node->boneId];
+        
+        for (const auto& childPtr : node->children) {
+            BoneNode* child = childPtr.get();
+            int childId = child->boneId;
+            
+            if (childId >= model_data.bind_pose_matrices.size()) continue;
+            
+            // Recompute child world transform: world = parent_world * local
+            model_data.bind_pose_matrices[childId] = parentWorld * model_data.local_bone_transforms[childId];
+            
+            // Recursively update this child's children
+            updateChildren(child);
+        }
+    };
+    
+    // Start recursive update from this bone
+    updateChildren(bone);
 }
