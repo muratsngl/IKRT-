@@ -4,6 +4,7 @@
 #include "model_loader.hpp"
 #include "render_setup.hpp"
 #include "application_logic.hpp"
+#include "include/UI.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -250,7 +251,6 @@ void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const g
     bboxShader->use();
     bboxShader->setMat4("view", view);
     bboxShader->setMat4("projection", projection);
-    bboxShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for bones
     
     glBindVertexArray(VAO);
     glLineWidth(2.5f);
@@ -273,6 +273,15 @@ void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const g
         // Check valid indices
         if (childBoneId >= model_data.bind_pose_positions.size() || 
             parentBoneId >= model_data.bind_pose_positions.size()) continue;
+
+        // Determine color based on selection state
+        glm::vec3 boneColor = glm::vec3(1.0f, 0.0f, 0.0f); // Default Red
+        
+        if (is_building_chain() && is_bone_in_current_chain(childBoneId)) {
+            boneColor = glm::vec3(0.3f, 0.7f, 0.0f); // Orange for selected bones in chain
+        }
+        
+        bboxShader->setVec3("color", boneColor);
         
         // Determine which matrix to use for the child bone
         // If this is a leaf bone (no children), use parent's matrix for transformation
@@ -317,7 +326,7 @@ void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const g
         
         // Scale: thickness proportional to bone length (adaptive sizing)
         float boneThickness = length * 0.15f; // Scale thickness with bone length
-        boneThickness = glm::clamp(boneThickness, 0.01f, 0.3f); // Clamp to reasonable range
+        boneThickness = glm::clamp(boneThickness, 0.01f, 0.6f); // Clamp to reasonable range
         boneTransform = glm::scale(boneTransform, glm::vec3(boneThickness, length, boneThickness));
         
         bboxShader->setMat4("model", boneTransform);

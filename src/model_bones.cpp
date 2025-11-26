@@ -18,9 +18,9 @@ std::map<string, BoneInfo> global_bone_info_map;
 int global_bone_counter = 0;
 
 // InteractorModel constructor implementation
-InteractorModel::InteractorModel(string const& path, bool gamma) : gammaCorrection(gamma), boneHierarchy(nullptr) {
+InteractorModel::InteractorModel(string const& path, bool gamma) : gammaCorrection(gamma), boneHierarchy(nullptr), original_file_path(path) {
     InteractorModelCreator creator;
-    creator.loadModel(path, meshes, m_BoneInfoMap, bindPosePositions, bindPoseMatrices, textures_loaded);
+    creator.loadModel(path, meshes, m_BoneInfoMap, bindPosePositions, bindPoseMatrices, offset_matrices, textures_loaded);
     directory = creator.directory;
     
     // Build bone hierarchy from the loaded model

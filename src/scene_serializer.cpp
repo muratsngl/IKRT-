@@ -100,6 +100,34 @@ namespace SceneSerializer {
                 
                 scene["models"]["interactables"].push_back(model_data);
             }
+
+            // Serialize interactor model (skeletal)
+            if (is_interactor_model_available()) {
+                InteractorModel* interactor = get_interactor_model();
+                json interactor_data;
+                interactor_data["file_path"] = interactor->original_file_path;
+                
+                // Save bone matrices
+                const InteractorModelData& data = get_interactor_model_data();
+                interactor_data["bone_matrices"] = json::array();
+                
+                for (const auto& matrix : data.bind_pose_matrices) {
+                    json matrix_json = json::array();
+                    const float* pSource = (const float*)glm::value_ptr(matrix);
+                    for (int i = 0; i < 16; ++i) {
+                        matrix_json.push_back(pSource[i]);
+                    }
+                    interactor_data["bone_matrices"].push_back(matrix_json);
+                }
+                
+                // Also save bone positions if needed (optional but good for completeness)
+                interactor_data["bone_positions"] = json::array();
+                for (const auto& pos : data.bind_pose_positions) {
+                    interactor_data["bone_positions"].push_back({pos.x, pos.y, pos.z});
+                }
+
+                scene["models"]["interactor"] = interactor_data;
+            }
             
             // Serialize lighting
             LightManager& lightManager = get_light_manager();
@@ -238,6 +266,51 @@ namespace SceneSerializer {
                     } else {
                         std::cerr << "Failed to load interactable: " << file_path << std::endl;
                     }
+                }
+            }
+
+            // Load interactor model (skeletal)
+            if (scene.contains("models") && scene["models"].contains("interactor")) {
+                auto& interactor_data = scene["models"]["interactor"];
+                std::string file_path = interactor_data["file_path"];
+                
+                if (load_interactor_model(file_path.c_str())) {
+                    std::cout << "Loaded interactor model: " << file_path << std::endl;
+                    
+                    InteractorModelData& data = get_interactor_model_data_mutable();
+                    
+                    // Restore bone matrices
+                    if (interactor_data.contains("bone_matrices")) {
+                        auto& matrices_json = interactor_data["bone_matrices"];
+                        if (matrices_json.size() == data.bind_pose_matrices.size()) {
+                            for (size_t i = 0; i < matrices_json.size(); ++i) {
+                                auto& mat_arr = matrices_json[i];
+                                float mat_values[16];
+                                for (int j = 0; j < 16; ++j) {
+                                    mat_values[j] = mat_arr[j];
+                                }
+                                data.bind_pose_matrices[i] = glm::make_mat4(mat_values);
+                            }
+                            std::cout << "Restored " << matrices_json.size() << " bone matrices." << std::endl;
+                        } else {
+                            std::cerr << "Warning: Saved bone matrices count (" << matrices_json.size() 
+                                      << ") does not match loaded model bone count (" << data.bind_pose_matrices.size() << ")" << std::endl;
+                        }
+                    }
+                    
+                    // Restore bone positions
+                    if (interactor_data.contains("bone_positions")) {
+                        auto& positions_json = interactor_data["bone_positions"];
+                        if (positions_json.size() == data.bind_pose_positions.size()) {
+                            for (size_t i = 0; i < positions_json.size(); ++i) {
+                                auto& pos_arr = positions_json[i];
+                                data.bind_pose_positions[i] = glm::vec3(pos_arr[0], pos_arr[1], pos_arr[2]);
+                            }
+                            std::cout << "Restored " << positions_json.size() << " bone positions." << std::endl;
+                        }
+                    }
+                } else {
+                    std::cerr << "Failed to load interactor model: " << file_path << std::endl;
                 }
             }
             

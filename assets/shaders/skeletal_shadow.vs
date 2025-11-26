@@ -25,6 +25,6 @@ void main(){
                          bone_matrices[boneID.w] * boneWeights.w;
     
     // Transform position: model * bone * position (matching skeletal PBR shader order)
-    vec4 worldPos = model * boneTransform * vec4(aPos, 1.0);
+    vec4 worldPos = boneTransform * vec4(aPos, 1.0);
     gl_Position = light_projection * light_view * worldPos;
 }

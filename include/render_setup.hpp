@@ -106,4 +106,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void process_input(GLFWwindow* window);
 static void window_close_callback(GLFWwindow* window);
 
+// Wireframe mode functions
+void set_wireframe_mode(bool enabled);
+bool is_wireframe_mode_enabled();
+
 #endif

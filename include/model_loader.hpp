@@ -25,7 +25,8 @@ struct InteractorModelData {
     std::vector<glm::vec3> bind_pose_positions_original;
     std::vector<glm::mat4> bind_pose_matrices;          // Final world-space matrices
     std::vector<glm::mat4> bind_pose_matrices_original;
-    std::vector<glm::mat4> local_bone_transforms;       // Local transforms relative to parent
+    std::vector<glm::mat4> offset_matrices;       //offset matrices for origin based transformations in FK workflow removed the fuckface local transform logic
+    std::vector<glm::mat4> imm_transformation_matrices;    //these hold t_current before offsetting
     BoneManipulationMode manipulation_mode = MODE_FORWARD_KINEMATICS;
 };
 

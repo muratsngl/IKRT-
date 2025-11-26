@@ -37,4 +37,10 @@ void RenderModeSwitcher();
 void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjection, glm::mat4& objectMatrix);
 void RenderLightManagerWidget();
 
+// --- IK Chain Building State Access ---
+bool is_building_chain();
+bool is_bone_in_current_chain(int bone_id);
+void add_bone_to_current_chain(int bone_id);
+void remove_last_bone_from_current_chain();
+
 #endif

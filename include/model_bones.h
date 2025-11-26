@@ -507,6 +507,7 @@ private:
     std::map<string, BoneInfo> m_BoneInfoMap;
     vector<glm::vec3> bindPosePositions;
     vector<glm::mat4> bindPoseMatrices;
+    vector<glm::mat4> offset_matrices;
     std::vector<TextureInfo> textures_loaded;
 
     auto& GetBoneInfoMap() { return m_BoneInfoMap; }
@@ -550,7 +551,7 @@ private:
                 glm::mat4 currentTransform = glm::inverse(newBoneInfo.offset);
                 bindPoseMatrices.push_back(glm::mat4(1.0f));
                 bindPosePositions.push_back(currentTransform*glm::vec4(0.f,0.f,0.f,1.0f));
-                
+                offset_matrices.push_back(newBoneInfo.offset);
                 m_BoneInfoMap[boneName] = newBoneInfo;
                 boneID = m_BoneCounter;
                 m_BoneCounter++;
@@ -706,7 +707,7 @@ private:
 public:
     string directory;
 
-    void loadModel(string const& path, vector<Mesh>& meshes, std::map<string, BoneInfo>& boneInfoMap, vector<glm::vec3>& bindPosePos, vector<glm::mat4>& bindPoseMat, std::vector<TextureInfo>& texLoaded)
+    void loadModel(string const& path, vector<Mesh>& meshes, std::map<string, BoneInfo>& boneInfoMap, vector<glm::vec3>& bindPosePos, vector<glm::mat4>& bindPoseMat, vector<glm::mat4>& offsetMat, std::vector<TextureInfo>& texLoaded)
     {
         // read file via ASSIMP
         Assimp::Importer importer;
@@ -727,6 +728,7 @@ public:
         boneInfoMap = m_BoneInfoMap;
         bindPosePos = bindPosePositions;
         bindPoseMat = bindPoseMatrices;
+        offsetMat = offset_matrices;
         texLoaded = textures_loaded;
     }
 };
@@ -741,7 +743,9 @@ public:
     std::map<string, BoneInfo> m_BoneInfoMap;
     vector<glm::vec3> bindPosePositions;
     vector<glm::mat4> bindPoseMatrices;
+    vector<glm::mat4> offset_matrices;
     std::vector<TextureInfo> textures_loaded; // Store loaded textures to prevent duplicates
+    std::string original_file_path; // Store original file path for serialization
     
     // Bone hierarchy for runtime inspection
     class BoneHierarchy* boneHierarchy;

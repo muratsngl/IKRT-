@@ -56,6 +56,7 @@ static bool firstMouse = true;
 
 // Add static variables to track the key state
 static bool spaceKeyPressed = false;
+static bool deleteKeyPressed = false;
 
 // Quit confirmation state
 static bool quitRequested = false;
@@ -133,6 +134,17 @@ static int current_selection_index = 0;
 static double last_mouse_x = -1.0;
 static double last_mouse_y = -1.0;
 static const double CLICK_THRESHOLD = 25.0; // Pixels tolerance for "same location"
+
+// Wireframe mode state
+static bool wireframe_mode = false;
+
+void set_wireframe_mode(bool enabled) {
+    wireframe_mode = enabled;
+}
+
+bool is_wireframe_mode_enabled() {
+    return wireframe_mode;
+}
 
 void render_texture_debug_rect(GLuint debug_texture){
     debug_shader->use();
@@ -423,7 +435,7 @@ const std::vector<glm::mat4>& get_model_matrices() {
     return modelMatrices;
 }
 
-// Gizmo management functions
+// TODO:: EITHER GET RID OF THIS CODE OR MOVE TO ANOTHER UNDERSTANDABLE FILE 0 DEBUGGABILITY
 void set_selected_object(int model_id) {
     selected_model_id = model_id;
 }
@@ -483,18 +495,11 @@ glm::mat4& get_selected_object_matrix() {
             BoneHierarchy* hierarchy = model->getBoneHierarchy();
             if (hierarchy && hierarchy->isValid()) {
                 BoneNode* bone = hierarchy->findBoneById(bone_id);
-                
-                // If bone has no children and has a parent, manipulate the parent instead
-                if (bone && bone->children.empty() && bone->parent) {
-                    int parent_bone_id = bone->parent->boneId;
-                    if (parent_bone_id < model_data.bind_pose_matrices.size()) {
-                        return model_data.bind_pose_matrices[parent_bone_id];
-                    }
-                }
             }
             
             // Return direct reference to the bone matrix so gizmo can modify it
-            return model_data.bind_pose_matrices[bone_id];
+            model_data.imm_transformation_matrices[bone_id] = glm::mat4(1.0f);
+            return model_data.imm_transformation_matrices[bone_id];
         }
         
         // Bone ID out of bounds, return identity
@@ -654,6 +659,7 @@ void render_frame() {
             skeletalShadowShader->use();
             skeletalShadowShader->setMat4("light_view", lightView);
             skeletalShadowShader->setMat4("light_projection", lightProjection);
+            skeletalShadowShader->setMat4("model", model);
             InteractorModel* interactorModel = get_interactor_model();
             if(interactorModel) {
                 interactorModel->Draw(*skeletalShadowShader);
@@ -723,6 +729,7 @@ void render_frame() {
             skeletalShadowShader->use();
             skeletalShadowShader->setMat4("light_view", lightView);
             skeletalShadowShader->setMat4("light_projection", lightProjection);
+            skeletalShadowShader->setMat4("model", model);
             InteractorModel* interactorModel = get_interactor_model();
             if(interactorModel) {
                 interactorModel->Draw(*skeletalShadowShader);
@@ -790,6 +797,7 @@ void render_frame() {
                 skeletalPointShadowShader->setMat4("lightSpaceMatrix", shadowTransforms[face]);
                 skeletalPointShadowShader->setVec3("lightPos", pointLight.position);
                 skeletalPointShadowShader->setFloat("far_plane", far_plane);
+                skeletalPointShadowShader->setMat4("model", model);
                 InteractorModel* interactorModel = get_interactor_model();
                 if(interactorModel) {
                     interactorModel->Draw(*skeletalPointShadowShader);
@@ -804,6 +812,14 @@ void render_frame() {
     if(sceneElementShader){
         
         sceneElementShader->use();
+
+        // Set polygon mode based on wireframe setting
+        // Shadows must be rendered solid, but main scene can be wireframe
+        if (wireframe_mode) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
 
         sceneElementShader->setMat4("view", view);
         sceneElementShader->setMat4("projection", projection);
@@ -920,6 +936,9 @@ void render_frame() {
         
         get_interactor_model()->Draw(*skeletonShader);
     }
+    
+    // Reset polygon mode to FILL for UI and debug rendering
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
     // if(debug_shader){
        
@@ -1102,7 +1121,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                                         (float)render_context.screen_height, 
                                         0.1f, 100.0f);
             
-            // Generate ray from mouse position
+            //TODO:: MOVE THIS CODE PART THAT HANDLES MOUSE CLICK RAY GENERATION IN ANOTHER FILE OR FUNCTION 
+                                        // Generate ray from mouse position
             Ray ray = generate_ray(static_cast<float>(mouse_x), static_cast<float>(mouse_y), 
                                   view, projection, camera.Position,
                                   render_context.screen_width, render_context.screen_height);
@@ -1133,6 +1153,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 selected_model_id = hit_objects_list[current_selection_index];
                 std::cout << "Selected object ID: " << selected_model_id 
                           << " (1 of " << hit_objects_list.size() << " objects at this location)" << std::endl;
+                
+                // If building IK chain and selected object is a bone, add it to the chain
+                if (is_building_chain() && selected_model_id >= 20000) {
+                    int bone_id = selected_model_id - 20000;
+                    add_bone_to_current_chain(bone_id);
+                }
             } else {
                 // Clicked on empty space
                 std::cout << "Selection cleared - clicked on empty space" << std::endl;
@@ -1144,6 +1170,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         } else {
             // This is a repeat click at the same location - cycle to next object
             cycle_to_next_object();
+            
+            // If building IK chain and cycled object is a bone, add it to the chain
+            if (is_building_chain() && selected_model_id >= 20000) {
+                int bone_id = selected_model_id - 20000;
+                add_bone_to_current_chain(bone_id);
+            }
         }
     }
 }
@@ -1193,6 +1225,16 @@ void process_input(GLFWwindow* window) {
                 reset_notification = false;
             }
         }
+    }
+    
+    // Handle Delete key for removing last bone from the IK chain
+    if (glfwGetKey(window, GLFW_KEY_DELETE) == GLFW_PRESS) {
+        if (!deleteKeyPressed && is_building_chain()) {
+            remove_last_bone_from_current_chain();
+            deleteKeyPressed = true;
+        }
+    } else {
+        deleteKeyPressed = false;
     }
 }
 

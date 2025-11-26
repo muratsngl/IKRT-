@@ -173,6 +173,60 @@ void render_ui() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+// --- IK Chain Building State Access Implementation ---
+bool is_building_chain() {
+    return buildingChain;
+}
+
+bool is_bone_in_current_chain(int bone_id) {
+    if (!buildingChain) return false;
+    
+    for (int id : currentChain.boneIndices) {
+        if (id == bone_id) return true;
+    }
+    return false;
+}
+
+void add_bone_to_current_chain(int bone_id) {
+    if (!buildingChain) return;
+    
+    // Check if bone is already in chain to avoid duplicates
+    for (int id : currentChain.boneIndices) {
+        if (id == bone_id) return;
+    }
+    
+    // Get bone name
+    std::string boneName = "Unknown";
+    if (is_interactor_model_available()) {
+        InteractorModel* model = get_interactor_model();
+        if (model) {
+            BoneHierarchy* hierarchy = model->getBoneHierarchy();
+            if (hierarchy) {
+                BoneNode* node = hierarchy->findBoneById(bone_id);
+                if (node) {
+                    boneName = node->name;
+                }
+            }
+        }
+    }
+    
+    currentChain.boneIndices.push_back(bone_id);
+    currentChain.boneNames.push_back(boneName);
+    std::cout << "Added bone '" << boneName << "' (ID: " << bone_id << ") to chain via selection" << std::endl;
+}
+
+void remove_last_bone_from_current_chain() {
+    if (!buildingChain || currentChain.boneIndices.empty()) return;
+    
+    int removedId = currentChain.boneIndices.back();
+    std::string removedName = currentChain.boneNames.back();
+    
+    currentChain.boneIndices.pop_back();
+    currentChain.boneNames.pop_back();
+    
+    std::cout << "Removed bone '" << removedName << "' (ID: " << removedId << ") from chain" << std::endl;
+}
+
 // --- MODIFICATION: "File" menu has been removed ---
 void RenderMainMenuBar() {
     if (ImGui::BeginMainMenuBar()) {
@@ -303,6 +357,11 @@ void RenderModelLoaderWidget(bool* p_open) {
         static bool renderBoneVisualization = false;
         if (ImGui::Checkbox("Render Bone Visualization", &renderBoneVisualization)) {
             CollisionVisualizer::showBoneVisualization = renderBoneVisualization;
+        }
+        
+        static bool wireframeMode = false;
+        if (ImGui::Checkbox("Wireframe Mode", &wireframeMode)) {
+            set_wireframe_mode(wireframeMode);
         }
         
         ImGui::Separator();
