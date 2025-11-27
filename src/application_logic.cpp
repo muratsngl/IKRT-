@@ -478,14 +478,15 @@ void recompute_bone_hierarchy_from(int bone_id) {
     //CAUTION CURRENTLY NOT APPLYING THE BINDPOSE POSITION LOGIC IT WILL BE NEEEDED WHEN IKRT MODE ENABLED
     // Update this bone's local transform based on its new world matrix
     //this works dont change xD
+    glm::mat4 parent = model_data.bind_pose_matrices[bone->parent->boneId];
     model_data.tot_transformation_matrices[bone_id]=model_data.tot_transformation_matrices[bone_id]*model_data.imm_transformation_matrices[bone_id];
-    model_data.bind_pose_matrices[bone_id] = glm::inverse(model_data.offset_matrices[bone_id])* model_data.tot_transformation_matrices[bone_id]*model_data.offset_matrices[bone_id];
+    model_data.bind_pose_matrices[bone_id] = parent * glm::inverse(model_data.offset_matrices[bone_id])* model_data.tot_transformation_matrices[bone_id]*model_data.offset_matrices[bone_id];
     glm::mat4 transform = model_data.bind_pose_matrices[bone_id]; 
     
     // offset should always map the vertex to its local coordinate system hence the modification
     
     // Recursively update all children's world transforms
-    std::function<void(BoneNode*,const glm::mat4&)> updateChildren = [&](BoneNode* node,const glm::mat4& transform) {
+    std::function<void(BoneNode*)> updateChildren = [&](BoneNode* node) {
         
         
         for (const auto& childPtr : node->children) {
@@ -495,12 +496,12 @@ void recompute_bone_hierarchy_from(int bone_id) {
         if (childId >= model_data.bind_pose_matrices.size()) continue;
             
             // Recursively update this child's children
-            model_data.bind_pose_matrices[childId] = glm::inverse(model_data.offset_matrices[childId])* model_data.tot_transformation_matrices[childId]*model_data.offset_matrices[childId]*transform;
-            updateChildren(child,transform);
+            model_data.bind_pose_matrices[childId] = model_data.bind_pose_matrices[node->boneId]*glm::inverse(model_data.offset_matrices[childId])* model_data.tot_transformation_matrices[childId]*model_data.offset_matrices[childId];
+            updateChildren(child);
             
         }
     };
     // Start recursive update from this bone
-    updateChildren(bone,transform);
+    updateChildren(bone);
     
 }
