@@ -54,6 +54,7 @@ void update_bone_transforms(const std::vector<unsigned short>& indices);
 void update_center_bone_matrices();
 void end_effector_align(std::vector<unsigned short> indices);
 void apply_root_offset_to_bones(const glm::vec3& rootOffset);
+void reset_interactor_pose();
 void sync_data_to_main(std::vector<glm::vec3>& main_positions, std::vector<glm::mat4>& main_matrices);
 
 // Helper functions for interactable models

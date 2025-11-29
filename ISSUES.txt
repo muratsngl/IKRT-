@@ -8,6 +8,8 @@ RENDERING
     SHADOWS:
         1.Cost exceeds available time.(70 render passes)
 DATA_ORGANIZATION:
+        1. Base model-instance seperation
+        
     
 SKINNING: 
     

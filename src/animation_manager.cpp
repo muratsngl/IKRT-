@@ -4,7 +4,34 @@
 #include "include/application_logic.hpp"
 #include "include/bone_hierarchy.hpp"
 #include "include/model_bones.h"
+#include "include/misc_math.hpp"
+#include "json.hpp"
 #include <iostream>
+#include <fstream>
+#include <glm/gtc/type_ptr.hpp>
+
+using json = nlohmann::json;
+
+// Helper functions for serialization
+static json serializeMat4(const glm::mat4& m) {
+    std::vector<float> data;
+    const float* p = glm::value_ptr(m);
+    for (int i = 0; i < 16; ++i) data.push_back(p[i]);
+    return data;
+}
+
+static glm::mat4 deserializeMat4(const json& j) {
+    std::vector<float> data = j.get<std::vector<float>>();
+    return glm::make_mat4(data.data());
+}
+
+static json serializeVec3(const glm::vec3& v) {
+    return {v.x, v.y, v.z};
+}
+
+static glm::vec3 deserializeVec3(const json& j) {
+    return glm::vec3(j[0], j[1], j[2]);
+}
 
 AnimationManager& get_animation_manager() {
     return AnimationManager::getInstance();
@@ -33,47 +60,109 @@ void AnimationManager::applyFrame(int frame) {
     for (auto& seq : sequences) {
         if (!seq.enabled) continue;
 
-        // Simple step interpolation (hold previous value)
-        // In a real system, we would interpolate between prev and next keyframes
-        const Keyframe* kf = seq.getPrevKeyframe(frame);
+        const Keyframe* prevKf = seq.getPrevKeyframe(frame);
+        const Keyframe* nextKf = seq.getNextKeyframe(frame);
         
-        if (kf) {
-            // Apply bone transforms
-            if (seq.modelID >= 0) { // Assuming positive IDs are models
-                // Check if it's the interactor model (special handling)
-                if (is_interactor_model_available() && get_interactor_model()) {
-                    // TODO: We need a way to map seq.modelID to the actual interactor pointer if we have multiple
-                    // For now, assume seq.modelID corresponds to the loaded interactor
+        // If no keyframes at all
+        if (!prevKf && !nextKf) continue;
+        
+        // If only one keyframe or we are at the boundaries
+        if (!prevKf) prevKf = nextKf; // Before first keyframe
+        if (!nextKf) nextKf = prevKf; // After last keyframe
+        
+        // Calculate interpolation factor
+        float alpha = 0.0f;
+        if (prevKf != nextKf) {
+            float duration = (float)(nextKf->frameIndex - prevKf->frameIndex);
+            if (duration > 0.0001f) {
+                alpha = (float)(frame - prevKf->frameIndex) / duration;
+            }
+        }
+        
+        // Apply bone transforms
+        if (seq.modelID >= 0) { // Assuming positive IDs are models
+            // Check if it's the interactor model (special handling)
+            if (is_interactor_model_available() && get_interactor_model()) {
+                InteractorModelData& data = get_interactor_model_data_mutable();
+                
+                // We need to iterate over all bones that are present in EITHER keyframe
+                // For bones present in both, interpolate
+                // For bones present in only one, hold value (step)
+                
+                // Collect all unique bone IDs from both keyframes
+                std::vector<int> boneIDs;
+                for (const auto& pair : prevKf->boneTransforms) boneIDs.push_back(pair.first);
+                for (const auto& pair : nextKf->boneTransforms) boneIDs.push_back(pair.first);
+                
+                // Sort and remove duplicates
+                std::sort(boneIDs.begin(), boneIDs.end());
+                boneIDs.erase(std::unique(boneIDs.begin(), boneIDs.end()), boneIDs.end());
+                
+                for (int boneID : boneIDs) {
+                    if (boneID >= data.tot_transformation_matrices.size()) continue;
                     
-                    InteractorModelData& data = get_interactor_model_data_mutable();
+                    bool inPrev = prevKf->boneTransforms.count(boneID);
+                    bool inNext = nextKf->boneTransforms.count(boneID);
                     
-                    for (const auto& pair : kf->boneTransforms) {
-                        int boneID = pair.first;
-                        const glm::mat4& transform = pair.second;
-                        
-                        if (boneID < data.tot_transformation_matrices.size()) {
-                            data.tot_transformation_matrices[boneID] = transform;
-                        }
+                    glm::mat4 finalTransform;
+                    
+                    if (inPrev && inNext) {
+                        // Interpolate
+                        finalTransform = interpolate_transform(
+                            prevKf->boneTransforms.at(boneID),
+                            nextKf->boneTransforms.at(boneID),
+                            alpha
+                        );
+                    } else if (inPrev) {
+                        // Hold previous
+                        finalTransform = prevKf->boneTransforms.at(boneID);
+                    } else {
+                        // Use next (shouldn't happen with getPrevKeyframe logic unless we are before first kf)
+                        finalTransform = nextKf->boneTransforms.at(boneID);
                     }
                     
-                    // Trigger hierarchy update if needed (FK)
-                    // This is expensive to do for every bone, ideally we do it once per frame per model
-                    recompute_bone_hierarchy_from(0); // Recompute from root
+                    data.tot_transformation_matrices[boneID] = finalTransform;
                 }
+                
+                // Trigger hierarchy update if needed (FK)
+                recompute_bone_hierarchy_from(0); // Recompute from root
+            }
+        }
+        
+        // Apply target proxy positions (IK targets)
+        ApplicationState& app_state = get_application_state();
+        
+        // Collect all unique proxy IDs
+        std::vector<int> proxyIDs;
+        for (const auto& pair : prevKf->targetPositions) proxyIDs.push_back(pair.first);
+        for (const auto& pair : nextKf->targetPositions) proxyIDs.push_back(pair.first);
+        
+        std::sort(proxyIDs.begin(), proxyIDs.end());
+        proxyIDs.erase(std::unique(proxyIDs.begin(), proxyIDs.end()), proxyIDs.end());
+        
+        for (int proxyID : proxyIDs) {
+            bool inPrev = prevKf->targetPositions.count(proxyID);
+            bool inNext = nextKf->targetPositions.count(proxyID);
+            
+            glm::vec3 finalPos;
+            
+            if (inPrev && inNext) {
+                finalPos = interpolate_position(
+                    prevKf->targetPositions.at(proxyID),
+                    nextKf->targetPositions.at(proxyID),
+                    alpha
+                );
+            } else if (inPrev) {
+                finalPos = prevKf->targetPositions.at(proxyID);
+            } else {
+                finalPos = nextKf->targetPositions.at(proxyID);
             }
             
-            // Apply target proxy positions (IK targets)
-            ApplicationState& app_state = get_application_state();
-            for (const auto& pair : kf->targetPositions) {
-                int proxyID = pair.first;
-                glm::vec3 pos = pair.second;
-                
-                switch(proxyID) {
-                    case TARGET_PROXY_INDEX: app_state.targetPositionIndex = pos; break;
-                    case TARGET_PROXY_MIDDLE: app_state.targetPositionMiddle = pos; break;
-                    case TARGET_PROXY_RING: app_state.targetPositionRing = pos; break;
-                    case TARGET_PROXY_PINKY: app_state.targetPositionPinky = pos; break;
-                }
+            switch(proxyID) {
+                case TARGET_PROXY_INDEX: app_state.targetPositionIndex = finalPos; break;
+                case TARGET_PROXY_MIDDLE: app_state.targetPositionMiddle = finalPos; break;
+                case TARGET_PROXY_RING: app_state.targetPositionRing = finalPos; break;
+                case TARGET_PROXY_PINKY: app_state.targetPositionPinky = finalPos; break;
             }
         }
     }
@@ -120,4 +209,102 @@ void AnimationManager::recordKeyframe(int modelID) {
 
     seq->addKeyframe(newKf);
     std::cout << "Recorded keyframe at frame " << currentFrame << " for model " << modelID << std::endl;
+}
+
+bool AnimationManager::saveToFile(const std::string& filepath) {
+    try {
+        json j;
+        j["version"] = "1.0";
+        j["sequences"] = json::array();
+
+        for (const auto& seq : sequences) {
+            json seqJson;
+            seqJson["name"] = seq.name;
+            seqJson["modelID"] = seq.modelID;
+            seqJson["enabled"] = seq.enabled;
+            seqJson["keyframes"] = json::array();
+
+            for (const auto& kf : seq.keyframes) {
+                json kfJson;
+                kfJson["frame"] = kf.frameIndex;
+                
+                kfJson["bones"] = json::object();
+                for (const auto& pair : kf.boneTransforms) {
+                    kfJson["bones"][std::to_string(pair.first)] = serializeMat4(pair.second);
+                }
+
+                kfJson["targets"] = json::object();
+                for (const auto& pair : kf.targetPositions) {
+                    kfJson["targets"][std::to_string(pair.first)] = serializeVec3(pair.second);
+                }
+
+                seqJson["keyframes"].push_back(kfJson);
+            }
+            j["sequences"].push_back(seqJson);
+        }
+
+        std::ofstream file(filepath);
+        if (!file.is_open()) {
+            std::cerr << "Failed to open file for writing: " << filepath << std::endl;
+            return false;
+        }
+        file << j.dump(4);
+        file.close();
+        std::cout << "Animation data saved to: " << filepath << std::endl;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error saving animation data: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool AnimationManager::loadFromFile(const std::string& filepath) {
+    try {
+        std::ifstream file(filepath);
+        if (!file.is_open()) {
+            std::cerr << "Failed to open file for reading: " << filepath << std::endl;
+            return false;
+        }
+
+        json j;
+        file >> j;
+        file.close();
+
+        sequences.clear();
+
+        if (j.contains("sequences")) {
+            for (const auto& seqJson : j["sequences"]) {
+                Sequence seq(seqJson["name"], seqJson["modelID"]);
+                seq.enabled = seqJson.value("enabled", true);
+
+                if (seqJson.contains("keyframes")) {
+                    for (const auto& kfJson : seqJson["keyframes"]) {
+                        Keyframe kf(kfJson["frame"]);
+
+                        if (kfJson.contains("bones")) {
+                            for (auto& el : kfJson["bones"].items()) {
+                                int boneID = std::stoi(el.key());
+                                kf.boneTransforms[boneID] = deserializeMat4(el.value());
+                            }
+                        }
+
+                        if (kfJson.contains("targets")) {
+                            for (auto& el : kfJson["targets"].items()) {
+                                int targetID = std::stoi(el.key());
+                                kf.targetPositions[targetID] = deserializeVec3(el.value());
+                            }
+                        }
+                        seq.addKeyframe(kf);
+                    }
+                }
+                sequences.push_back(seq);
+            }
+        }
+
+        std::cout << "Animation data loaded from: " << filepath << std::endl;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading animation data: " << e.what() << std::endl;
+        return false;
+    }
 }

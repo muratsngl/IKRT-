@@ -979,6 +979,65 @@ void RenderSequencerWindow(bool* p_open) {
 
     AnimationManager& animMgr = get_animation_manager();
 
+    // Sequence Management
+    ImGui::Text("Sequences:");
+    ImGui::SameLine();
+    
+    // Combo box for selecting active sequence
+    std::string currentSeqName = "None";
+    Sequence* activeSeq = animMgr.getActiveSequence();
+    if (activeSeq) {
+        currentSeqName = activeSeq->name;
+    }
+    
+    ImGui::SetNextItemWidth(200);
+    if (ImGui::BeginCombo("##SequenceCombo", currentSeqName.c_str())) {
+        for (int i = 0; i < animMgr.sequences.size(); i++) {
+            bool isSelected = (animMgr.activeSequenceIndex == i);
+            if (ImGui::Selectable(animMgr.sequences[i].name.c_str(), isSelected)) {
+                animMgr.activeSequenceIndex = i;
+                // When switching sequences, if the new sequence has no keyframes at current frame,
+                // we might want to reset or apply the frame.
+                // If we just applyFrame, and it's empty, nothing happens (pose stays).
+                // So let's reset first, then applyFrame will overwrite if there is data.
+                reset_interactor_pose();
+                animMgr.applyFrame(animMgr.currentFrame);
+            }
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+    
+    ImGui::SameLine();
+    if (ImGui::Button("New Sequence")) {
+        // Create a new sequence for the default model (0)
+        animMgr.createNewSequence(0, "New Sequence " + std::to_string(animMgr.sequences.size() + 1));
+        // Refresh pointer as vector might have reallocated
+        activeSeq = animMgr.getActiveSequence();
+        
+        // Reset pose to bind pose for the new sequence
+        reset_interactor_pose();
+    }
+    
+    if (activeSeq) {
+        ImGui::SameLine();
+        ImGui::Text("Name:");
+        ImGui::SameLine();
+        char nameBuf[128];
+        strncpy(nameBuf, activeSeq->name.c_str(), sizeof(nameBuf));
+        ImGui::SetNextItemWidth(200);
+        if (ImGui::InputText("##SeqName", nameBuf, sizeof(nameBuf))) {
+            activeSeq->name = nameBuf;
+        }
+        
+        ImGui::SameLine();
+        ImGui::Checkbox("Enabled", &activeSeq->enabled);
+    }
+    
+    ImGui::Separator();
+
     // Transport Controls
     if (ImGui::Button(animMgr.isPlaying ? "Pause" : "Play")) {
         animMgr.isPlaying = !animMgr.isPlaying;
@@ -992,6 +1051,13 @@ void RenderSequencerWindow(bool* p_open) {
     ImGui::SameLine();
     
     // Allow manual frame control
+    // Calculate available width to fit subsequent buttons
+    float right_side_width = 450.0f; // Approximate width of buttons on the right
+    float available_width = ImGui::GetContentRegionAvail().x;
+    float slider_width = available_width - right_side_width;
+    if (slider_width < 100.0f) slider_width = 100.0f;
+    
+    ImGui::SetNextItemWidth(slider_width);
     if (ImGui::DragInt("Frame", &animMgr.currentFrame, 0.2f, animMgr.frameMin, animMgr.frameMax)) {
         animMgr.applyFrame(animMgr.currentFrame);
     }
@@ -1017,6 +1083,15 @@ void RenderSequencerWindow(bool* p_open) {
         }
     }
 
+    ImGui::SameLine();
+    if (ImGui::Button("Save Animation")) {
+        ImGuiFileDialog::Instance()->OpenDialog("SaveAnimFileDlgKey", "Save Animation", ".anim_meta_json");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load Animation")) {
+        ImGuiFileDialog::Instance()->OpenDialog("LoadAnimFileDlgKey", "Load Animation", ".anim_meta_json");
+    }
+
     ImGui::Separator();
 
     // Sequencer
@@ -1035,4 +1110,24 @@ void RenderSequencerWindow(bool* p_open) {
     }
 
     ImGui::End();
+
+    // Animation file dialogs
+    if (ImGuiFileDialog::Instance()->Display("SaveAnimFileDlgKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            if (filepath.find(".anim_meta_json") == std::string::npos) {
+                filepath += ".anim_meta_json";
+            }
+            animMgr.saveToFile(filepath);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    if (ImGuiFileDialog::Instance()->Display("LoadAnimFileDlgKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            animMgr.loadFromFile(filepath);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
 }

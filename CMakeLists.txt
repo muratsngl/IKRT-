@@ -69,6 +69,7 @@ set(SOURCES
     src/scene_serializer.cpp
     src/bone_hierarchy.cpp
     src/animation_manager.cpp
+    src/misc_math.cpp
 )
 
 # Include directories (Original Setup)

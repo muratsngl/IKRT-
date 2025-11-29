@@ -203,6 +203,26 @@ void apply_root_offset_to_bones(const glm::vec3& rootOffset) {
     }
 }
 
+void reset_interactor_pose() {
+    if (!current_model) return;
+    
+    // Reset local transforms to identity
+    std::fill(model_data.tot_transformation_matrices.begin(), 
+              model_data.tot_transformation_matrices.end(), 
+              glm::mat4(1.0f));
+              
+    // Clear dirty flags
+    model_data.dirty_bone_indices.clear();
+    
+    // Recompute hierarchy from root to reset world matrices
+    recompute_bone_hierarchy_from(0);
+    
+    // Reset IK targets if needed
+    ApplicationState& app_state = get_application_state();
+    // We might want to reset targets to some default or keep them?
+    // For now, let's just reset the bone transforms as requested.
+}
+
 // Scene element model removal using swap-and-pop method
 bool remove_scene_element_model_by_id(int model_id) {
     // Step 1: Find the model in the array by ID
