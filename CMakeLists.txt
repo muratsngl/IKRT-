@@ -32,6 +32,7 @@ add_library(imgui STATIC
     ${IMGUI_DIR}/imgui_impl_opengl3.cpp
     ${IMGUI_DIR}/ImGuiFileDialog.cpp
     ${IMGUI_DIR}/ImGuizmo.cpp
+    ${IMGUI_DIR}/ImSequencer.cpp
 )
 
 # 3. Provide include directories for ImGui
@@ -67,6 +68,7 @@ set(SOURCES
     src/light_manager.cpp
     src/scene_serializer.cpp
     src/bone_hierarchy.cpp
+    src/animation_manager.cpp
 )
 
 # Include directories (Original Setup)

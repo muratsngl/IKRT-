@@ -474,12 +474,28 @@ void recompute_bone_hierarchy_from(int bone_id) {
     BoneNode* bone = hierarchy->findBoneById(bone_id);
     if (!bone) return;
     
+    // Add to dirty list
+    bool alreadyDirty = false;
+    for (int dirtyId : model_data.dirty_bone_indices) {
+        if (dirtyId == bone_id) {
+            alreadyDirty = true;
+            break;
+        }
+    }
+    if (!alreadyDirty) {
+        model_data.dirty_bone_indices.push_back(bone_id);
+    }
+
     //TODO another issue is that we should use the gizmo update only once for every click on the gizmo not a constant delta
     //CAUTION CURRENTLY NOT APPLYING THE BINDPOSE POSITION LOGIC IT WILL BE NEEEDED WHEN IKRT MODE ENABLED
     // Update this bone's local transform based on its new world matrix
     //this works dont change xD
-    glm::mat4 parent = model_data.bind_pose_matrices[bone->parent->boneId];
-    model_data.tot_transformation_matrices[bone_id]=model_data.tot_transformation_matrices[bone_id]*model_data.imm_transformation_matrices[bone_id];
+    glm::mat4 parent = glm::mat4(1.0f);
+    if (bone->parent) {
+        parent = model_data.bind_pose_matrices[bone->parent->boneId];
+    }
+    
+    // model_data.tot_transformation_matrices[bone_id] is now the source of truth
     model_data.bind_pose_matrices[bone_id] = parent * glm::inverse(model_data.offset_matrices[bone_id])* model_data.tot_transformation_matrices[bone_id]*model_data.offset_matrices[bone_id];
     glm::mat4 transform = model_data.bind_pose_matrices[bone_id]; 
     

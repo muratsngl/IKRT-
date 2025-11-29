@@ -13,17 +13,23 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include "include/ui_sequencer.hpp"
 
 // UI state variables
 static bool show_operations_window = true;
 static bool show_light_manager_window = true;
 static bool show_gizmo_controls_window = true;
 static bool show_bone_inspector_window = false;
+static bool show_sequencer_window = true;
 
 // IK Chain builder state
 static IKChainManager chainManager;
 static IKChainDefinition currentChain;
 static bool buildingChain = false;
+
+// Sequencer instance
+static IKRTSequencer sequencer;
+
 
 
 // --- MODIFICATION: New Blender-style theme ---
@@ -115,6 +121,7 @@ void RenderLightManagerWidget(bool* p_open);
 void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjection, glm::mat4& objectMatrix, bool* p_open);
 void RenderBoneInspectorWidget(bool* p_open);
 void RenderMainMenuBar();
+void RenderSequencerWindow(bool* p_open);
 
 
 void render_ui() {
@@ -160,6 +167,11 @@ void render_ui() {
     }
     if (show_bone_inspector_window) {
         RenderBoneInspectorWidget(&show_bone_inspector_window);
+    }
+    
+    // Only show sequencer in Animation mode
+    if (show_sequencer_window && get_app_mode() == ANIMATION) {
+        RenderSequencerWindow(&show_sequencer_window);
     }
     
     if (show_gizmo_controls_window && get_selected_object_id() != -1) {
@@ -235,11 +247,14 @@ void RenderMainMenuBar() {
             ImGui::MenuItem("Light Manager", NULL, &show_light_manager_window);
             ImGui::MenuItem("Gizmo Controls", NULL, &show_gizmo_controls_window);
             ImGui::MenuItem("Bone Inspector & IK Builder", NULL, &show_bone_inspector_window);
+            if (get_app_mode() == ANIMATION) {
+                ImGui::MenuItem("Timeline", NULL, &show_sequencer_window);
+            }
             ImGui::EndMenu();
         }
 
         // Mode Switcher integrated into the menu bar
-        const char* mode_names[] = {"Edit Scene", "Free View"};
+        const char* mode_names[] = {"Edit Scene", "Free View", "Animation"};
         static int current_mode_index = get_app_mode();
         float combo_width = 120.0f;
         ImGui::SameLine(ImGui::GetWindowWidth() - combo_width - 15);
@@ -247,7 +262,7 @@ void RenderMainMenuBar() {
         ImGui::Text("Mode:");
         ImGui::SameLine();
         ImGui::SetNextItemWidth(combo_width);
-        if (ImGui::Combo("##mode_combo", &current_mode_index, mode_names, 2)) {
+        if (ImGui::Combo("##mode_combo", &current_mode_index, mode_names, 3)) {
             set_app_mode((MODE)current_mode_index);
         }
 
@@ -951,4 +966,73 @@ void RenderBoneInspectorWidget(bool* p_open) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+}
+
+void RenderSequencerWindow(bool* p_open) {
+    ImGui::SetNextWindowPos(ImVec2(10, 720 - 250), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(1220, 240), ImGuiCond_FirstUseEver);
+    
+    if (!ImGui::Begin("Timeline", p_open)) {
+        ImGui::End();
+        return;
+    }
+
+    AnimationManager& animMgr = get_animation_manager();
+
+    // Transport Controls
+    if (ImGui::Button(animMgr.isPlaying ? "Pause" : "Play")) {
+        animMgr.isPlaying = !animMgr.isPlaying;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop")) {
+        animMgr.isPlaying = false;
+        animMgr.currentFrame = animMgr.frameMin;
+        animMgr.applyFrame(animMgr.currentFrame);
+    }
+    ImGui::SameLine();
+    
+    // Allow manual frame control
+    if (ImGui::DragInt("Frame", &animMgr.currentFrame, 0.2f, animMgr.frameMin, animMgr.frameMax)) {
+        animMgr.applyFrame(animMgr.currentFrame);
+    }
+    ImGui::SameLine();
+    
+    // Record Button
+    static bool autoKey = false;
+    ImGui::Checkbox("Auto Key", &autoKey);
+    ImGui::SameLine();
+    if (ImGui::Button("Key Selected")) {
+        // Record keyframe for selected model
+        // For now, we assume model ID 0 is the main character/interactor
+        // Ideally we get the ID from selection
+        int selectedID = get_selected_object_id();
+        if (selectedID != -1) {
+             // If a bone is selected (ID >= 20000), we still want to key the model it belongs to (ID 0 usually)
+             // Or we key the specific bone. Our system keys the model.
+             // Let's assume ID 0 for now as the main interactor
+             animMgr.recordKeyframe(0); 
+        } else {
+             // Fallback to keying the main interactor if nothing selected
+             animMgr.recordKeyframe(0);
+        }
+    }
+
+    ImGui::Separator();
+
+    // Sequencer
+    int currentFrame = animMgr.currentFrame;
+    static int selectedEntry = -1;
+    static int firstFrame = 0;
+    static bool expanded = true;
+    
+    ImSequencer::Sequencer(&sequencer, &currentFrame, &expanded, &selectedEntry, &firstFrame, 
+        ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_CHANGE_FRAME);
+        
+    // Update current frame if changed by sequencer
+    if (currentFrame != animMgr.currentFrame) {
+        animMgr.currentFrame = currentFrame;
+        animMgr.applyFrame(currentFrame);
+    }
+
+    ImGui::End();
 }

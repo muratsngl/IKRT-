@@ -8,6 +8,7 @@
 #include "include/bone_hierarchy.hpp"
 #include "include/application_logic.hpp"// Include the Model class definition
 #include "include/light_manager.hpp"
+#include "include/animation_manager.hpp"
 
 #include "include/raycast.hpp"
 #include <glm/glm.hpp>
@@ -498,8 +499,7 @@ glm::mat4& get_selected_object_matrix() {
             }
             
             // Return direct reference to the bone matrix so gizmo can modify it
-            model_data.imm_transformation_matrices[bone_id] = glm::mat4(1.0f);
-            return model_data.imm_transformation_matrices[bone_id];
+            return model_data.tot_transformation_matrices[bone_id];
         }
         
         // Bone ID out of bounds, return identity
@@ -960,6 +960,13 @@ void render_frame() {
     // Render all UI components
     render_ui();
     
+    // Update animation manager
+    if (get_app_mode() == ANIMATION) {
+        // Use a fixed delta time or calculate it
+        // For now, use 1/60
+        get_animation_manager().update(1.0f/60.0f);
+    }
+    
     // Process input and swap buffers
     process_input(render_context.window);
     glfwSwapBuffers(render_context.window);
@@ -1021,7 +1028,7 @@ RenderContext& get_render_context() {
 
 // Mode utility functions
 const char* get_mode_name(MODE mode) {
-    const char* mode_names[] = {"Edit Scene", "Free View"};
+    const char* mode_names[] = {"Edit Scene", "Free View", "Animation"};
     return mode_names[mode];
 }
 
@@ -1099,7 +1106,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         return; // Let ImGuizmo handle the input
     }
     
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && app_mode == EDIT_SCENE) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && (app_mode == EDIT_SCENE || app_mode == ANIMATION)) {
         // Get current mouse position
         double mouse_x, mouse_y;
         glfwGetCursorPos(window, &mouse_x, &mouse_y);

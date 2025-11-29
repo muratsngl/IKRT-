@@ -25,7 +25,6 @@ bool load_interactor_model(const char* path) {
         model_data.bind_pose_matrices = current_model->bindPoseMatrices;
         model_data.bind_pose_matrices_original = model_data.bind_pose_matrices;
         model_data.offset_matrices = current_model->offset_matrices;
-        model_data.imm_transformation_matrices.resize(model_data.bind_pose_matrices.size());
         model_data.tot_transformation_matrices.resize(model_data.bind_pose_matrices.size(),glm::mat4(1.0f));
         // Initialize local transforms from world matrices
         
