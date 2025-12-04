@@ -328,6 +328,36 @@ void RenderModelLoaderWidget(bool* p_open) {
             current_model_type_to_load = ModelType::Interactable;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseModelFileDlgKey", "Choose a Model File", ".obj,.gltf,.glb,.dae,.fbx");
         }
+        
+        ImGui::Separator();
+        ImGui::Text("Active Interactor:");
+        
+        size_t count = get_interactor_model_count_total();
+        int activeIndex = get_active_interactor_index();
+        
+        if (count == 0) {
+            ImGui::TextDisabled("No interactors loaded");
+        } else {
+            std::string comboLabel = "Interactor " + std::to_string(activeIndex);
+            if (ImGui::BeginCombo("##ActiveInteractor", comboLabel.c_str())) {
+                for (size_t i = 0; i < count; i++) {
+                    bool isSelected = (activeIndex == i);
+                    std::string label = "Interactor " + std::to_string(i);
+                    if (ImGui::Selectable(label.c_str(), isSelected)) {
+                        set_active_interactor(i);
+                    }
+                    if (isSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            
+            ImGui::Spacing();
+            if (ImGui::Button("Remove Active Interactor", ImVec2(-1, 0))) {
+                remove_interactor_model_by_index(activeIndex);
+            }
+        }
     }
 
     if (ImGui::CollapsingHeader("Settings")) {
@@ -1012,8 +1042,9 @@ void RenderSequencerWindow(bool* p_open) {
     
     ImGui::SameLine();
     if (ImGui::Button("New Sequence")) {
-        // Create a new sequence for the default model (0)
-        animMgr.createNewSequence(0, "New Sequence " + std::to_string(animMgr.sequences.size() + 1));
+        // Create a new sequence for the active model
+        int activeIdx = get_active_interactor_index();
+        animMgr.createNewSequence(activeIdx, "New Sequence " + std::to_string(animMgr.sequences.size() + 1));
         // Refresh pointer as vector might have reallocated
         activeSeq = animMgr.getActiveSequence();
         
@@ -1072,14 +1103,16 @@ void RenderSequencerWindow(bool* p_open) {
         // For now, we assume model ID 0 is the main character/interactor
         // Ideally we get the ID from selection
         int selectedID = get_selected_object_id();
+        int activeIdx = get_active_interactor_index();
+        
         if (selectedID != -1) {
              // If a bone is selected (ID >= 20000), we still want to key the model it belongs to (ID 0 usually)
              // Or we key the specific bone. Our system keys the model.
              // Let's assume ID 0 for now as the main interactor
-             animMgr.recordKeyframe(0); 
+             animMgr.recordKeyframe(activeIdx); 
         } else {
              // Fallback to keying the main interactor if nothing selected
-             animMgr.recordKeyframe(0);
+             animMgr.recordKeyframe(activeIdx);
         }
     }
 

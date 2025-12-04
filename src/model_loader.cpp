@@ -8,8 +8,10 @@
 #include <glm/gtx/quaternion.hpp>
 #include <iostream>
 
-static InteractorModelData model_data;
-static InteractorModel* current_model = nullptr;
+static std::vector<InteractorModelData> interactors_data;
+static std::vector<InteractorModel*> interactors;
+static int active_interactor_index = -1;
+
 static std::vector<SceneElementModel> scene_element_model_arr;
 static std::vector<InteractableModel> interactable_model_arr;
 static uint SceneElementModelCount = 0;
@@ -17,19 +19,25 @@ static uint InteractableModelCount = 0;
 
 bool load_interactor_model(const char* path) {
     try {
-        current_model = new InteractorModel(path);
+        InteractorModel* new_model = new InteractorModel(path);
+        interactors.push_back(new_model);
         
+        InteractorModelData new_data;
         // Copy data from the model
-        model_data.bind_pose_positions = current_model->bindPosePositions;
-        model_data.bind_pose_positions_original = model_data.bind_pose_positions;
-        model_data.bind_pose_matrices = current_model->bindPoseMatrices;
-        model_data.bind_pose_matrices_original = model_data.bind_pose_matrices;
-        model_data.offset_matrices = current_model->offset_matrices;
-        model_data.tot_transformation_matrices.resize(model_data.bind_pose_matrices.size(),glm::mat4(1.0f));
-        // Initialize local transforms from world matrices
+        new_data.bind_pose_positions = new_model->bindPosePositions;
+        new_data.bind_pose_positions_original = new_data.bind_pose_positions;
+        new_data.bind_pose_matrices = new_model->bindPoseMatrices;
+        new_data.bind_pose_matrices_original = new_data.bind_pose_matrices;
+        new_data.offset_matrices = new_model->offset_matrices;
+        new_data.tot_transformation_matrices.resize(new_data.bind_pose_matrices.size(), glm::mat4(1.0f));
         
         // Set default mode to FK
-        model_data.manipulation_mode = MODE_FORWARD_KINEMATICS;
+        new_data.manipulation_mode = MODE_FORWARD_KINEMATICS;
+        
+        interactors_data.push_back(new_data);
+        
+        // Set as active
+        active_interactor_index = interactors.size() - 1;
 
         // Reset application state for the new model to ensure clean initialization
         reset_application_state();
@@ -39,6 +47,37 @@ bool load_interactor_model(const char* path) {
         std::cerr << "Failed to load model: " << e.what() << std::endl;
         return false;
     }
+}
+
+bool remove_interactor_model_by_index(int index) {
+    if (index < 0 || index >= interactors.size()) {
+        return false;
+    }
+
+    // Delete the model (this will trigger destructor and cleanup GPU resources)
+    delete interactors[index];
+
+    // Remove from vectors
+    interactors.erase(interactors.begin() + index);
+    interactors_data.erase(interactors_data.begin() + index);
+
+    // Update active index
+    if (interactors.empty()) {
+        active_interactor_index = -1;
+        reset_application_state();
+    } else {
+        if (active_interactor_index == index) {
+            // If we removed the active one, select the previous one or the first one
+            active_interactor_index = (index > 0) ? index - 1 : 0;
+            reset_application_state();
+        } else if (active_interactor_index > index) {
+            // If we removed one before the active one, decrement index
+            active_interactor_index--;
+        }
+        // If we removed one after the active one, active index stays same
+    }
+    
+    return true;
 }
 
 
@@ -84,19 +123,61 @@ bool load_interactable_model(const char* path) {
 }
 
 const InteractorModelData& get_interactor_model_data() {
-    return model_data;
+    if (active_interactor_index >= 0 && active_interactor_index < interactors_data.size()) {
+        return interactors_data[active_interactor_index];
+    }
+    static InteractorModelData empty;
+    return empty;
 }
 
 InteractorModelData& get_interactor_model_data_mutable() {
-    return model_data;
+    if (active_interactor_index >= 0 && active_interactor_index < interactors_data.size()) {
+        return interactors_data[active_interactor_index];
+    }
+    static InteractorModelData empty;
+    return empty;
 }
 
 InteractorModel* get_interactor_model() {
-    return current_model;
+    if (active_interactor_index >= 0 && active_interactor_index < interactors.size()) {
+        return interactors[active_interactor_index];
+    }
+    return nullptr;
 }
 
 bool is_interactor_model_available() {
-    return current_model != nullptr;
+    return !interactors.empty() && active_interactor_index >= 0;
+}
+
+// Multiple Interactor Support
+size_t get_interactor_model_count_total() {
+    return interactors.size();
+}
+
+InteractorModel* get_interactor_model_by_index(int index) {
+    if (index >= 0 && index < interactors.size()) {
+        return interactors[index];
+    }
+    return nullptr;
+}
+
+InteractorModelData& get_interactor_model_data_by_index(int index) {
+    if (index >= 0 && index < interactors_data.size()) {
+        return interactors_data[index];
+    }
+    static InteractorModelData empty;
+    return empty;
+}
+
+int get_active_interactor_index() {
+    return active_interactor_index;
+}
+
+void set_active_interactor(int index) {
+    if (index >= 0 && index < interactors.size()) {
+        active_interactor_index = index;
+        // Reset application state or update UI context if needed
+    }
 }
 
 const SceneElementModel&get_scene_element_model(size_t index) {
@@ -120,14 +201,17 @@ std::vector<Shape>& get_interactable_element_boxes() {
 }
 
 void update_bone_transforms(const std::vector<unsigned short>& indices) {
+    if (active_interactor_index < 0) return;
+    InteractorModelData& data = interactors_data[active_interactor_index];
+
     for (unsigned short i = 0; i < indices.size() - 1; i++) {
-        glm::vec3 translateVector = (model_data.bind_pose_positions[indices[i]] - 
-                                   model_data.bind_pose_positions_original[indices[i]]);
+        glm::vec3 translateVector = (data.bind_pose_positions[indices[i]] - 
+                                   data.bind_pose_positions_original[indices[i]]);
         
-        glm::vec3 original_dir = model_data.bind_pose_positions_original[indices[i + 1]] - 
-                                model_data.bind_pose_positions_original[indices[i]];
-        glm::vec3 current_dir = model_data.bind_pose_positions[indices[i + 1]] - 
-                               model_data.bind_pose_positions[indices[i]];
+        glm::vec3 original_dir = data.bind_pose_positions_original[indices[i + 1]] - 
+                                data.bind_pose_positions_original[indices[i]];
+        glm::vec3 current_dir = data.bind_pose_positions[indices[i + 1]] - 
+                               data.bind_pose_positions[indices[i]];
         
         glm::vec3 rotationOrientationVector = glm::normalize(glm::cross(original_dir, current_dir));
         float rotationCos = glm::dot(glm::normalize(current_dir), glm::normalize(original_dir));
@@ -145,9 +229,9 @@ void update_bone_transforms(const std::vector<unsigned short>& indices) {
         
         glm::quat rotationQuat = glm::angleAxis(rotationAngle, rotationOrientationVector);
         glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), 
-                                              -model_data.bind_pose_positions_original[indices[i]]);
+                                              -data.bind_pose_positions_original[indices[i]]);
         
-        model_data.bind_pose_matrices[indices[i]] = 
+        data.bind_pose_matrices[indices[i]] = 
             glm::translate(glm::mat4(1.0f), translateVector) * 
             glm::inverse(offsetMatrix) * 
             glm::mat4_cast(rotationQuat) * 
@@ -155,12 +239,12 @@ void update_bone_transforms(const std::vector<unsigned short>& indices) {
         
         // Handle the last bone in the chain
         if (i == indices.size() - 2) {
-            translateVector = (model_data.bind_pose_positions[indices[i + 1]] - 
-                             model_data.bind_pose_positions_original[indices[i + 1]]);
+            translateVector = (data.bind_pose_positions[indices[i + 1]] - 
+                             data.bind_pose_positions_original[indices[i + 1]]);
             offsetMatrix = glm::translate(glm::mat4(1.0f), 
-                                        -model_data.bind_pose_positions_original[indices[i + 1]]);
+                                        -data.bind_pose_positions_original[indices[i + 1]]);
             
-            model_data.bind_pose_matrices[indices[i + 1]] = 
+            data.bind_pose_matrices[indices[i + 1]] = 
                 glm::translate(glm::mat4(1.0f), translateVector) * 
                 glm::inverse(offsetMatrix) * 
                 glm::mat4_cast(rotationQuat) * 
@@ -175,44 +259,52 @@ void update_center_bone_matrices() {
 }
 
 void sync_data_to_main(std::vector<glm::vec3>& main_positions, std::vector<glm::mat4>& main_matrices) {
-    main_positions = model_data.bind_pose_positions;
-    main_matrices = model_data.bind_pose_matrices;
+    if (active_interactor_index < 0) return;
+    InteractorModelData& data = interactors_data[active_interactor_index];
+    main_positions = data.bind_pose_positions;
+    main_matrices = data.bind_pose_matrices;
 }
 
 void sync_data_from_main(const std::vector<glm::vec3>& main_positions, const std::vector<glm::mat4>& main_matrices) {
-    model_data.bind_pose_positions = main_positions;
-    model_data.bind_pose_matrices = main_matrices;
+    if (active_interactor_index < 0) return;
+    InteractorModelData& data = interactors_data[active_interactor_index];
+    data.bind_pose_positions = main_positions;
+    data.bind_pose_matrices = main_matrices;
 }
 
 void end_effector_align(std::vector<unsigned short> indices) {
-    if (indices.empty()) return;
+    if (indices.empty() || active_interactor_index < 0) return;
+    InteractorModelData& data = interactors_data[active_interactor_index];
     
     // Get the transformation matrix of the first index
-    glm::mat4 firstTransform = model_data.bind_pose_matrices[indices[0]];
+    glm::mat4 firstTransform = data.bind_pose_matrices[indices[0]];
     
     // Assign this transformation matrix to all other indices
     for (size_t i = 1; i < indices.size(); i++) {
-        model_data.bind_pose_matrices[indices[i]] = firstTransform;
+        data.bind_pose_matrices[indices[i]] = firstTransform;
     }
 }
 
 void apply_root_offset_to_bones(const glm::vec3& rootOffset) {
+    if (active_interactor_index < 0) return;
+    InteractorModelData& data = interactors_data[active_interactor_index];
     // Apply root offset to all bone positions
-    for (size_t i = 0; i < model_data.bind_pose_positions.size(); i++) {
-        model_data.bind_pose_positions[i] += rootOffset;
+    for (size_t i = 0; i < data.bind_pose_positions.size(); i++) {
+        data.bind_pose_positions[i] += rootOffset;
     }
 }
 
 void reset_interactor_pose() {
-    if (!current_model) return;
+    if (active_interactor_index < 0) return;
+    InteractorModelData& data = interactors_data[active_interactor_index];
     
     // Reset local transforms to identity
-    std::fill(model_data.tot_transformation_matrices.begin(), 
-              model_data.tot_transformation_matrices.end(), 
+    std::fill(data.tot_transformation_matrices.begin(), 
+              data.tot_transformation_matrices.end(), 
               glm::mat4(1.0f));
               
     // Clear dirty flags
-    model_data.dirty_bone_indices.clear();
+    data.dirty_bone_indices.clear();
     
     // Recompute hierarchy from root to reset world matrices
     recompute_bone_hierarchy_from(0);

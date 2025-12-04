@@ -456,13 +456,25 @@ int get_bone_id_from_shape_id(int shape_id) {
 }
 
 // Recompute bone hierarchy in FK mode starting from a bone
-void recompute_bone_hierarchy_from(int bone_id) {
-    if (!is_interactor_model_available()) return;
+void recompute_bone_hierarchy_from(int bone_id, int model_index) {
+    InteractorModel* model = nullptr;
+    InteractorModelData* model_data_ptr = nullptr;
     
-    InteractorModel* model = get_interactor_model();
-    if (!model) return;
+    if (model_index >= 0) {
+        model = get_interactor_model_by_index(model_index);
+        if (model) {
+            model_data_ptr = &get_interactor_model_data_by_index(model_index);
+        }
+    } else {
+        if (is_interactor_model_available()) {
+            model = get_interactor_model();
+            model_data_ptr = &get_interactor_model_data_mutable();
+        }
+    }
     
-    InteractorModelData& model_data = get_interactor_model_data_mutable();
+    if (!model || !model_data_ptr) return;
+    
+    InteractorModelData& model_data = *model_data_ptr;
     
     // Only recompute in FK mode
     if (model_data.manipulation_mode != MODE_FORWARD_KINEMATICS) return;

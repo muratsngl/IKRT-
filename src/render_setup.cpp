@@ -58,6 +58,11 @@ static bool firstMouse = true;
 // Add static variables to track the key state
 static bool spaceKeyPressed = false;
 static bool deleteKeyPressed = false;
+static bool fKeyPressed = false;
+
+// Fullscreen state
+static bool isFullscreen = false;
+static int windowedXPos, windowedYPos, windowedWidth, windowedHeight;
 
 // Quit confirmation state
 static bool quitRequested = false;
@@ -170,6 +175,7 @@ bool init_rendering() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4); 
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     // Create window
     render_context.screen_width = 1240;
@@ -562,6 +568,22 @@ void get_current_camera_matrices(glm::mat4& view, glm::mat4& projection) {
     
 }
 
+void update_bone_ubo(int interactor_index) {
+    const InteractorModelData& model_data = get_interactor_model_data_by_index(interactor_index);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
+    
+    // Upload all matrices at once instead of one by one
+    if (!model_data.bind_pose_matrices.empty()) {
+        size_t dataSize = model_data.bind_pose_matrices.size() * sizeof(glm::mat4);
+        // Clamp to buffer size (120 matrices * 64 bytes = 7680)
+        if (dataSize > 7680) dataSize = 7680;
+        
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, dataSize, model_data.bind_pose_matrices.data());
+    }
+    
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 void render_frame() {
     // Upload model matrices to UBO every frame
     upload_model_matrices();
@@ -582,21 +604,7 @@ void render_frame() {
                             (float)render_context.screen_height, 
                             0.1f, 100.0f);
    view = camera.GetViewMatrix();
-   
-    
-    // Update uniform buffer with bone transforms
-    //Room for optimization this could be done in a single memory access;
-    if (is_interactor_model_available()) {
-        const InteractorModelData& model_data = get_interactor_model_data();
-        glBindBuffer(GL_UNIFORM_BUFFER, render_context.orcunUBO);
-        for (short i = 0; i < model_data.bind_pose_matrices.size(); i++) {
-            if (i < model_data.bind_pose_matrices.size()) {
-                glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), 
-                              sizeof(glm::mat4), 
-                              glm::value_ptr(model_data.bind_pose_matrices[i]));
-            }
-        }
-    }
+
 
     // ============================================================================
     // DIRECTIONAL LIGHT SHADOW PASS
@@ -660,9 +668,14 @@ void render_frame() {
             skeletalShadowShader->setMat4("light_view", lightView);
             skeletalShadowShader->setMat4("light_projection", lightProjection);
             skeletalShadowShader->setMat4("model", model);
-            InteractorModel* interactorModel = get_interactor_model();
-            if(interactorModel) {
-                interactorModel->Draw(*skeletalShadowShader);
+            
+            size_t interactor_count = get_interactor_model_count_total();
+            for(size_t k = 0; k < interactor_count; k++) {
+                InteractorModel* interactorModel = get_interactor_model_by_index(k);
+                if(interactorModel) {
+                    update_bone_ubo(k);
+                    interactorModel->Draw(*skeletalShadowShader);
+                }
             }
         }
         
@@ -730,9 +743,14 @@ void render_frame() {
             skeletalShadowShader->setMat4("light_view", lightView);
             skeletalShadowShader->setMat4("light_projection", lightProjection);
             skeletalShadowShader->setMat4("model", model);
-            InteractorModel* interactorModel = get_interactor_model();
-            if(interactorModel) {
-                interactorModel->Draw(*skeletalShadowShader);
+            
+            size_t interactor_count = get_interactor_model_count_total();
+            for(size_t k = 0; k < interactor_count; k++) {
+                InteractorModel* interactorModel = get_interactor_model_by_index(k);
+                if(interactorModel) {
+                    update_bone_ubo(k);
+                    interactorModel->Draw(*skeletalShadowShader);
+                }
             }
         }
         
@@ -798,9 +816,14 @@ void render_frame() {
                 skeletalPointShadowShader->setVec3("lightPos", pointLight.position);
                 skeletalPointShadowShader->setFloat("far_plane", far_plane);
                 skeletalPointShadowShader->setMat4("model", model);
-                InteractorModel* interactorModel = get_interactor_model();
-                if(interactorModel) {
-                    interactorModel->Draw(*skeletalPointShadowShader);
+                
+                size_t interactor_count = get_interactor_model_count_total();
+                for(size_t k = 0; k < interactor_count; k++) {
+                    InteractorModel* interactorModel = get_interactor_model_by_index(k);
+                    if(interactorModel) {
+                        update_bone_ubo(k);
+                        interactorModel->Draw(*skeletalPointShadowShader);
+                    }
                 }
             }
         }
@@ -934,7 +957,14 @@ void render_frame() {
         // Set camera position for view direction calculation
         skeletonShader->setVec3("camPos", camera.Position);
         
-        get_interactor_model()->Draw(*skeletonShader);
+        size_t interactor_count = get_interactor_model_count_total();
+        for(size_t k = 0; k < interactor_count; k++) {
+            InteractorModel* interactorModel = get_interactor_model_by_index(k);
+            if(interactorModel) {
+                update_bone_ubo(k);
+                interactorModel->Draw(*skeletonShader);
+            }
+        }
     }
     
     // Reset polygon mode to FILL for UI and debug rendering
@@ -1043,6 +1073,8 @@ void set_app_mode(MODE mode) {
 // Callback implementations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+    render_context.screen_width = width;
+    render_context.screen_height = height;
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
@@ -1242,6 +1274,32 @@ void process_input(GLFWwindow* window) {
         }
     } else {
         deleteKeyPressed = false;
+    }
+
+    // Handle F key for fullscreen toggle
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+        if (!fKeyPressed) {
+            fKeyPressed = true;
+            isFullscreen = !isFullscreen;
+            
+            if (isFullscreen) {
+                // Store windowed state
+                glfwGetWindowPos(window, &windowedXPos, &windowedYPos);
+                glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+                
+                // Get primary monitor
+                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+                
+                // Switch to fullscreen
+                glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            } else {
+                // Switch back to windowed
+                glfwSetWindowMonitor(window, nullptr, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
+            }
+        }
+    } else {
+        fKeyPressed = false;
     }
 }
 

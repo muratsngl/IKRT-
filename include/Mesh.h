@@ -181,6 +181,13 @@ public:
         setupMesh();
     }
 
+    // Cleanup GPU resources
+    void cleanup() {
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+    }
+
     // render the mesh
     void Draw(Shader& shader) const
     {

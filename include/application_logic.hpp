@@ -77,6 +77,6 @@ std::vector<Shape>& get_bone_boxes();
 int get_bone_id_from_shape_id(int shape_id);
 
 // Bone hierarchy management
-void recompute_bone_hierarchy_from(int bone_id);
+void recompute_bone_hierarchy_from(int bone_id, int model_index = -1);
 
 #endif

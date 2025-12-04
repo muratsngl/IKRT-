@@ -44,6 +44,13 @@ InteractorModel::InteractorModel(string const& path, bool gamma) : gammaCorrecti
 
 // InteractorModel destructor implementation
 InteractorModel::~InteractorModel() {
+    for (auto& mesh : meshes) {
+        mesh.cleanup();
+    }
+    // Cleanup textures
+    for (auto& texture : textures_loaded) {
+        glDeleteTextures(1, &texture.id);
+    }
     if (boneHierarchy) {
         delete boneHierarchy;
         boneHierarchy = nullptr;

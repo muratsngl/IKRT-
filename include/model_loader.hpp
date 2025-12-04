@@ -41,10 +41,21 @@ bool load_scene_element_model(const char* path);
 bool load_interactor_model(const char* path);
 bool load_interactable_model(const char* path);
 bool remove_scene_element_model_by_id(int model_id);
+bool remove_interactor_model_by_index(int index);
 void cleanup_scene_element_gpu_resources(SceneElementModel& model);
+
+// Active Interactor Accessors (Backward Compatibility)
 const InteractorModelData& get_interactor_model_data();
 InteractorModelData& get_interactor_model_data_mutable();
-InteractorModel* get_interactor_model(); // Get the actual model for drawing
+InteractorModel* get_interactor_model(); // Get the active model
+
+// Multiple Interactor Support
+size_t get_interactor_model_count_total();
+InteractorModel* get_interactor_model_by_index(int index);
+InteractorModelData& get_interactor_model_data_by_index(int index);
+int get_active_interactor_index();
+void set_active_interactor(int index);
+
 const SceneElementModel& get_scene_element_model(size_t index);
 const InteractableModel& get_interactable_model(size_t index);
 size_t get_scene_element_model_count();

@@ -21,7 +21,9 @@ public:
 
     // Container for all sequences
     std::vector<Sequence> sequences;
+    std::vector<SceneElementSequence> sceneElementSequences;
     int activeSequenceIndex = -1;
+    int activeSceneElementSequenceIndex = -1;
 
     // Management
     void addSequence(const Sequence& seq) {
@@ -31,14 +33,33 @@ public:
         }
     }
 
+    void addSceneElementSequence(const SceneElementSequence& seq) {
+        sceneElementSequences.push_back(seq);
+        if (activeSceneElementSequenceIndex == -1) {
+            activeSceneElementSequenceIndex = 0;
+        }
+    }
+
     void createNewSequence(int modelID, const std::string& name) {
         sequences.emplace_back(name, modelID);
         activeSequenceIndex = sequences.size() - 1;
     }
 
+    void createNewSceneElementSequence(int modelID, const std::string& name) {
+        sceneElementSequences.emplace_back(name, modelID);
+        activeSceneElementSequenceIndex = sceneElementSequences.size() - 1;
+    }
+
     Sequence* getActiveSequence() {
         if (activeSequenceIndex >= 0 && activeSequenceIndex < sequences.size()) {
             return &sequences[activeSequenceIndex];
+        }
+        return nullptr;
+    }
+
+    SceneElementSequence* getActiveSceneElementSequence() {
+        if (activeSceneElementSequenceIndex >= 0 && activeSceneElementSequenceIndex < sceneElementSequences.size()) {
+            return &sceneElementSequences[activeSceneElementSequenceIndex];
         }
         return nullptr;
     }
@@ -57,6 +78,21 @@ public:
         }
         return nullptr;
     }
+
+    SceneElementSequence* getSceneElementSequenceForModel(int modelID) {
+        // Prefer active sequence if it matches the model
+        if (activeSceneElementSequenceIndex >= 0 && activeSceneElementSequenceIndex < sceneElementSequences.size()) {
+            if (sceneElementSequences[activeSceneElementSequenceIndex].modelID == modelID) {
+                return &sceneElementSequences[activeSceneElementSequenceIndex];
+            }
+        }
+
+        // Fallback to first matching
+        for (auto& seq : sceneElementSequences) {
+            if (seq.modelID == modelID) return &seq;
+        }
+        return nullptr;
+    }
     
     Sequence* getSequenceByIndex(int index) {
         if (index >= 0 && index < sequences.size()) {
@@ -65,10 +101,18 @@ public:
         return nullptr;
     }
 
+    SceneElementSequence* getSceneElementSequenceByIndex(int index) {
+        if (index >= 0 && index < sceneElementSequences.size()) {
+            return &sceneElementSequences[index];
+        }
+        return nullptr;
+    }
+
     // Core Logic
     void update(float deltaTime);
     void applyFrame(int frame);
     void recordKeyframe(int modelID); // Captures current state of modelID into currentFrame
+    void recordSceneElementKeyframe(int modelID); // Captures current state of scene element modelID into currentFrame
 
     // Serialization
     bool saveToFile(const std::string& filepath);

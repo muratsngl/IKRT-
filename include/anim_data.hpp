@@ -84,6 +84,73 @@ struct Sequence {
     }
 };
 
+// Represents the state of a scene element model at a specific point in time
+struct SceneElementKeyframe {
+    int frameIndex;
+    int modelID; // The ID of the scene element model
+    glm::mat4 transform; // The single transformation matrix
+
+    SceneElementKeyframe(int frame, int id, const glm::mat4& mat) 
+        : frameIndex(frame), modelID(id), transform(mat) {}
+};
+
+// Represents a timeline of changes for a specific scene element model
+struct SceneElementSequence {
+    std::string name;
+    int modelID; // The ID of the model this sequence controls
+    bool enabled = true;
+    
+    // Ordered list of keyframes
+    std::vector<SceneElementKeyframe> keyframes;
+
+    SceneElementSequence(const std::string& n, int id) : name(n), modelID(id) {}
+
+    // Helper to find a keyframe at a specific frame
+    SceneElementKeyframe* getKeyframe(int frame) {
+        for (auto& kf : keyframes) {
+            if (kf.frameIndex == frame) return &kf;
+        }
+        return nullptr;
+    }
+
+    // Insert or update a keyframe
+    void addKeyframe(const SceneElementKeyframe& kf) {
+        // Check if keyframe exists
+        for (auto& existing : keyframes) {
+            if (existing.frameIndex == kf.frameIndex) {
+                existing.transform = kf.transform;
+                existing.modelID = kf.modelID;
+                return;
+            }
+        }
+        
+        // If not found, add and sort
+        keyframes.push_back(kf);
+        std::sort(keyframes.begin(), keyframes.end(), 
+            [](const SceneElementKeyframe& a, const SceneElementKeyframe& b) {
+                return a.frameIndex < b.frameIndex;
+            });
+    }
+    
+    // Get the nearest keyframe before or at the given frame
+    const SceneElementKeyframe* getPrevKeyframe(int frame) const {
+        const SceneElementKeyframe* prev = nullptr;
+        for (const auto& kf : keyframes) {
+            if (kf.frameIndex > frame) break;
+            prev = &kf;
+        }
+        return prev;
+    }
+    
+    // Get the nearest keyframe after the given frame
+    const SceneElementKeyframe* getNextKeyframe(int frame) const {
+        for (const auto& kf : keyframes) {
+            if (kf.frameIndex > frame) return &kf;
+        }
+        return nullptr;
+    }
+};
+
 #endif
 
 //WHERE IS THE DIRTY MATRIX LOGIC

@@ -3,6 +3,7 @@
 #include "include/render_setup.hpp"
 #include "include/light_manager.hpp"
 #include "include/model_bones.h"
+#include "include/animation_manager.hpp"
 #include "json.hpp"
 #include <fstream>
 #include <iostream>
@@ -181,6 +182,11 @@ namespace SceneSerializer {
             file.close();
             
             std::cout << "Scene saved successfully to: " << filepath << std::endl;
+
+            // Auto-save animations
+            std::string animFilepath = filepath + ".anim";
+            get_animation_manager().saveToFile(animFilepath);
+
             return true;
             
         } catch (const std::exception& e) {
@@ -363,6 +369,18 @@ namespace SceneSerializer {
             }
             
             std::cout << "Scene loaded successfully from: " << filepath << std::endl;
+            
+            // Auto-load animations
+            std::string animFilepath = filepath + ".anim";
+            std::ifstream animFile(animFilepath);
+            if (animFile.good()) {
+                animFile.close();
+                get_animation_manager().loadFromFile(animFilepath);
+                std::cout << "Auto-loaded animation sequences from: " << animFilepath << std::endl;
+            } else {
+                std::cout << "No animation file found at: " << animFilepath << std::endl;
+            }
+            
             return true;
             
         } catch (const std::exception& e) {
