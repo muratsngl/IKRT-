@@ -2,6 +2,8 @@
 #define UI_SEQUENCER_HPP
 
 #include "ImSequencer.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 #include "animation_manager.hpp"
 #include <vector>
 
@@ -18,7 +20,9 @@ public:
     }
     
     virtual int GetItemCount() const override {
-        return (int)get_animation_manager().sequences.size();
+        // Include both skeletal sequences and scene element sequences
+        return (int)(get_animation_manager().sequences.size() + 
+                     get_animation_manager().sceneElementSequences.size());
     }
 
     virtual void BeginEdit(int index) override {
@@ -33,32 +37,134 @@ public:
     virtual const char* GetItemTypeName(int typeIndex) const override { return ""; }
     
     virtual const char* GetItemLabel(int index) const override {
-        Sequence* seq = get_animation_manager().getSequenceByIndex(index);
-        if (seq) return seq->name.c_str();
+        AnimationManager& animMgr = get_animation_manager();
+        int skeletalCount = (int)animMgr.sequences.size();
+        
+        // First show skeletal sequences, then scene element sequences
+        if (index < skeletalCount) {
+            Sequence* seq = animMgr.getSequenceByIndex(index);
+            if (seq) return seq->name.c_str();
+        } else {
+            int sceneIndex = index - skeletalCount;
+            SceneElementSequence* seq = animMgr.getSceneElementSequenceByIndex(sceneIndex);
+            if (seq) return seq->name.c_str();
+        }
         return "Unknown";
     }
 
     virtual void Get(int index, int** start, int** end, int* type, unsigned int* color) override {
-        Sequence* seq = get_animation_manager().getSequenceByIndex(index);
-        if (seq) {
-            // For now, let's say the sequence spans the whole timeline or min/max keyframes
-            // ImSequencer expects a start/end for the "block" representation
-            // We can calculate this from the first and last keyframe
-            static int s = 0;
-            static int e = 0;
-            
-            if (!seq->keyframes.empty()) {
-                s = seq->keyframes.front().frameIndex;
-                e = seq->keyframes.back().frameIndex;
-            } else {
-                s = 0;
-                e = 10; // Default length
+        AnimationManager& animMgr = get_animation_manager();
+        int skeletalCount = (int)animMgr.sequences.size();
+        
+        static int s = 0;
+        static int e = 0;
+        
+        // First show skeletal sequences, then scene element sequences
+        if (index < skeletalCount) {
+            Sequence* seq = animMgr.getSequenceByIndex(index);
+            if (seq) {
+                if (!seq->keyframes.empty()) {
+                    s = seq->keyframes.front().frameIndex;
+                    e = seq->keyframes.back().frameIndex;
+                } else {
+                    s = 0;
+                    e = 10; // Default length
+                }
+                
+                if (start) *start = &s;
+                if (end) *end = &e;
+                if (color) *color = 0xFFAA8080; // Red-ish color for skeletal
+                if (type) *type = 0;
             }
-            
-            if (start) *start = &s;
-            if (end) *end = &e;
-            if (color) *color = 0xFFAA8080; // A nice color
-            if (type) *type = 0;
+        } else {
+            int sceneIndex = index - skeletalCount;
+            SceneElementSequence* seq = animMgr.getSceneElementSequenceByIndex(sceneIndex);
+            if (seq) {
+                if (!seq->keyframes.empty()) {
+                    s = seq->keyframes.front().frameIndex;
+                    e = seq->keyframes.back().frameIndex;
+                } else {
+                    s = 0;
+                    e = 10; // Default length
+                }
+                
+                if (start) *start = &s;
+                if (end) *end = &e;
+                if (color) *color = 0xFF80AAFF; // Blue-ish color for scene elements
+                if (type) *type = 0;
+            }
+        }
+    }
+
+    virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect) override {
+        AnimationManager& animMgr = get_animation_manager();
+        int skeletalCount = (int)animMgr.sequences.size();
+        
+        int frameMin = GetFrameMin();
+        int frameMax = GetFrameMax();
+        
+        // Determine if this is a skeletal or scene element sequence
+        bool isSceneElement = (index >= skeletalCount);
+        
+        auto drawKeyframes = [&](const auto& keyframes) {
+            draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
+            for (const auto& kf : keyframes) {
+                int p = kf.frameIndex;
+                if (p < frameMin || p > frameMax) continue;
+
+                float width = rc.Max.x - rc.Min.x;
+                float range = (float)(frameMax - frameMin) + 2.0f;
+                float w = width / range;
+                float x = rc.Min.x + (float)(p - frameMin + 0.5f) * w;
+                
+                // Draw diamond
+                float cy = rc.Min.y + (rc.Max.y - rc.Min.y) * 0.5f;
+                float sz = 4.0f; // Size of diamond
+                
+                ImVec2 p1(x, cy - sz);
+                ImVec2 p2(x + sz, cy);
+                ImVec2 p3(x, cy + sz);
+                ImVec2 p4(x - sz, cy);
+                
+                // Check selection
+                bool isSelected = animMgr.isSelected(index, p);
+                unsigned int color = isSelected ? 0xFF00FFFF : 0xFF0000FF; // Yellow if selected, Red otherwise
+                
+                draw_list->AddQuadFilled(p1, p2, p3, p4, color);
+                
+                // Interaction
+                ImVec2 mousePos = ImGui::GetMousePos();
+                // Simple bounding box check with some padding
+                if (mousePos.x >= x - sz - 2 && mousePos.x <= x + sz + 2 &&
+                    mousePos.y >= cy - sz - 2 && mousePos.y <= cy + sz + 2) {
+                    
+                    if (ImGui::IsMouseClicked(0)) { // Left click
+                        if (ImGui::GetIO().KeyShift) {
+                            // Add to selection
+                            animMgr.addSelection(index, p, isSceneElement);
+                        } else {
+                            // Clear and select this one
+                            animMgr.clearSelection();
+                            animMgr.addSelection(index, p, isSceneElement);
+                        }
+                    }
+                }
+            }
+            draw_list->PopClipRect();
+        };
+
+        // Handle Right Click to break sequence (clear selection)
+        if (rc.Contains(ImGui::GetMousePos()) && ImGui::IsMouseClicked(1) && !ImGui::GetIO().KeyShift) {
+            animMgr.clearSelection();
+        }
+
+        if (index < skeletalCount) {
+            Sequence* seq = animMgr.getSequenceByIndex(index);
+            if (seq) drawKeyframes(seq->keyframes);
+        } else {
+            int sceneIndex = index - skeletalCount;
+            SceneElementSequence* seq = animMgr.getSceneElementSequenceByIndex(sceneIndex);
+            if (seq) drawKeyframes(seq->keyframes);
         }
     }
 
@@ -81,20 +187,27 @@ public:
 
     // We can use CustomDraw to render the individual keyframes as dots
     virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect) override {
-        Sequence* seq = get_animation_manager().getSequenceByIndex(index);
-        if (!seq) return;
+        AnimationManager& animMgr = get_animation_manager();
+        int skeletalCount = (int)animMgr.sequences.size();
+        
+        // Draw keyframes for both skeletal and scene element sequences
+        if (index < skeletalCount) {
+            Sequence* seq = animMgr.getSequenceByIndex(index);
+            if (!seq) return;
 
-        for (const auto& kf : seq->keyframes) {
-            // Calculate pixel position of the keyframe
-            // We need access to the sequencer's internal state or pass it in, 
-            // but ImSequencer doesn't expose the frame-to-pixel conversion easily in CustomDraw without calculation.
-            // However, we can approximate or use the rc bounds.
-            
-            // Actually, ImSequencer draws the "block" defined by Get().
-            // If we want to draw dots *inside* that block or on the track, we need to know the frame width.
-            // This is a bit complex without modifying ImSequencer or calculating the ratio manually.
-            
-            // For now, we will rely on the "Block" representation.
+            for (const auto& kf : seq->keyframes) {
+                // For now, we will rely on the "Block" representation
+                // Keyframe dots can be added later with proper frame-to-pixel conversion
+            }
+        } else {
+            int sceneIndex = index - skeletalCount;
+            SceneElementSequence* seq = animMgr.getSceneElementSequenceByIndex(sceneIndex);
+            if (!seq) return;
+
+            for (const auto& kf : seq->keyframes) {
+                // For now, we will rely on the "Block" representation
+                // Keyframe dots can be added later with proper frame-to-pixel conversion
+            }
         }
     }
 };

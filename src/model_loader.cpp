@@ -8,6 +8,19 @@
 #include <glm/gtx/quaternion.hpp>
 #include <iostream>
 
+// Helper functions to determine model type by ID range
+bool is_scene_element_model_id(int model_id) {
+    return is_scene_element_id(model_id);
+}
+
+bool is_interactable_model_id(int model_id) {
+    return is_interactable_id(model_id);
+}
+
+bool is_interactor_model_id(int model_id) {
+    return is_interactor_id(model_id);
+}
+
 static std::vector<InteractorModelData> interactors_data;
 static std::vector<InteractorModel*> interactors;
 static int active_interactor_index = -1;

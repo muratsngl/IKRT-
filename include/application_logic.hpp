@@ -5,15 +5,32 @@
 #include <vector>
 #include "collision.hpp"
 
-// Target proxy IDs for raycast selection (must not conflict with scene/interactable model IDs)
+// ============================================================================
+// MODEL ID RANGES - DO NOT OVERLAP
+// ============================================================================
+// Scene element models: 0-4999
+const int SCENE_ELEMENT_ID_START = 0;
+const int SCENE_ELEMENT_ID_END = 4999;
+
+// Interactable models: 5000-9999
+const int INTERACTABLE_ID_START = 5000;
+const int INTERACTABLE_ID_END = 9999;
+
+// Target proxy IDs for raycast selection: 10000-10003
 enum TargetProxyID {
     TARGET_PROXY_INDEX = 10000,
     TARGET_PROXY_MIDDLE = 10001,
     TARGET_PROXY_RING = 10002,
     TARGET_PROXY_PINKY = 10003
 };
+const int TARGET_PROXY_ID_START = 10000;
+const int TARGET_PROXY_ID_END = 10003;
 
-// Bone IDs for raycast selection (start at 20000 to avoid conflicts)
+// Interactor models: 15000-19999
+const int INTERACTOR_ID_START = 15000;
+const int INTERACTOR_ID_END = 19999;
+
+// Bone IDs for raycast selection: 20000+
 // Actual bone ID will be BONE_ID_START + bone_index
 const int BONE_ID_START = 20000;
 

@@ -10,8 +10,10 @@ std::vector<Shape> interactable_element_boxes;
 int interactable_element_count = 0;
 int scene_element_count = 0;
 
-// Global unique model ID counter for all model types
-int global_model_id_counter = 0;
+// Model type-specific ID counters
+int scene_element_id_counter = 0;
+int interactable_id_counter = 0;
+int interactor_id_counter = 0;
 
 // Definition of global bone info map and counter for InteractableModel consistency
 std::map<string, BoneInfo> global_bone_info_map;

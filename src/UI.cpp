@@ -1018,19 +1018,33 @@ void RenderSequencerWindow(bool* p_open) {
     Sequence* activeSeq = animMgr.getActiveSequence();
     if (activeSeq) {
         currentSeqName = activeSeq->name;
+    } else if (animMgr.activeSceneElementSequenceIndex >= 0 && 
+               animMgr.activeSceneElementSequenceIndex < animMgr.sceneElementSequences.size()) {
+        currentSeqName = animMgr.sceneElementSequences[animMgr.activeSceneElementSequenceIndex].name;
     }
     
     ImGui::SetNextItemWidth(200);
     if (ImGui::BeginCombo("##SequenceCombo", currentSeqName.c_str())) {
+        // Display skeletal sequences
         for (int i = 0; i < animMgr.sequences.size(); i++) {
             bool isSelected = (animMgr.activeSequenceIndex == i);
             if (ImGui::Selectable(animMgr.sequences[i].name.c_str(), isSelected)) {
                 animMgr.activeSequenceIndex = i;
-                // When switching sequences, if the new sequence has no keyframes at current frame,
-                // we might want to reset or apply the frame.
-                // If we just applyFrame, and it's empty, nothing happens (pose stays).
-                // So let's reset first, then applyFrame will overwrite if there is data.
+                animMgr.activeSceneElementSequenceIndex = -1; // Deselect scene element sequences
                 reset_interactor_pose();
+                animMgr.applyFrame(animMgr.currentFrame);
+            }
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        
+        // Display scene element sequences
+        for (int i = 0; i < animMgr.sceneElementSequences.size(); i++) {
+            bool isSelected = (animMgr.activeSceneElementSequenceIndex == i);
+            if (ImGui::Selectable(animMgr.sceneElementSequences[i].name.c_str(), isSelected)) {
+                animMgr.activeSceneElementSequenceIndex = i;
+                animMgr.activeSequenceIndex = -1; // Deselect skeletal sequences
                 animMgr.applyFrame(animMgr.currentFrame);
             }
             if (isSelected) {
@@ -1041,15 +1055,62 @@ void RenderSequencerWindow(bool* p_open) {
     }
     
     ImGui::SameLine();
+    
+    // Only allow creating new sequence if a model is selected
+    int selectedID = get_selected_object_id();
+    bool canCreateSequence = (selectedID != -1);
+    
+    if (!canCreateSequence) {
+        ImGui::BeginDisabled();
+    }
+    
     if (ImGui::Button("New Sequence")) {
-        // Create a new sequence for the active model
-        int activeIdx = get_active_interactor_index();
-        animMgr.createNewSequence(activeIdx, "New Sequence " + std::to_string(animMgr.sequences.size() + 1));
-        // Refresh pointer as vector might have reallocated
-        activeSeq = animMgr.getActiveSequence();
-        
-        // Reset pose to bind pose for the new sequence
-        reset_interactor_pose();
+        if (canCreateSequence) {
+            // Determine what type of sequence to create based on selected model
+            if (is_bone_id(selectedID) || is_interactor_model_id(selectedID) || is_target_proxy_id(selectedID)) {
+                // Create skeletal sequence for interactor
+                int activeIdx = get_active_interactor_index();
+                animMgr.createNewSequence(activeIdx, "Skeletal Seq " + std::to_string(animMgr.sequences.size() + 1));
+                reset_interactor_pose();
+            } else if (is_scene_element_model_id(selectedID) || is_interactable_model_id(selectedID)) {
+                // Create scene element sequence for the selected model
+                animMgr.createNewSceneElementSequence(selectedID, "Scene Seq " + std::to_string(animMgr.sceneElementSequences.size() + 1));
+            }
+            std::cout << "Created new sequence for model ID: " << selectedID << std::endl;
+        }
+    }
+    
+    if (!canCreateSequence) {
+        ImGui::EndDisabled();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            ImGui::SetTooltip("Select a model first to create a sequence");
+        }
+    }
+    
+    // Add Remove Sequence button
+    ImGui::SameLine();
+    bool hasSequenceToRemove = (animMgr.activeSequenceIndex >= 0 && animMgr.activeSequenceIndex < animMgr.sequences.size()) ||
+                                (animMgr.activeSceneElementSequenceIndex >= 0 && animMgr.activeSceneElementSequenceIndex < animMgr.sceneElementSequences.size());
+    
+    if (!hasSequenceToRemove) {
+        ImGui::BeginDisabled();
+    }
+    
+    if (ImGui::Button("Remove Sequence")) {
+        // Determine which type of sequence is currently active and remove it
+        // For simplicity, remove the skeletal sequence if it exists, otherwise scene element
+        if (animMgr.activeSequenceIndex >= 0 && animMgr.activeSequenceIndex < animMgr.sequences.size()) {
+            animMgr.removeSequence(animMgr.activeSequenceIndex, false);
+        } else if (animMgr.activeSceneElementSequenceIndex >= 0 && animMgr.activeSceneElementSequenceIndex < animMgr.sceneElementSequences.size()) {
+            animMgr.removeSequence(animMgr.activeSceneElementSequenceIndex, true);
+        }
+    }
+    
+    if (!hasSequenceToRemove) {
+        ImGui::EndDisabled();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            ImGui::SetTooltip("No sequence selected to remove");
+        }
     }
     
     if (activeSeq) {
@@ -1099,20 +1160,73 @@ void RenderSequencerWindow(bool* p_open) {
     ImGui::Checkbox("Auto Key", &autoKey);
     ImGui::SameLine();
     if (ImGui::Button("Key Selected")) {
-        // Record keyframe for selected model
-        // For now, we assume model ID 0 is the main character/interactor
-        // Ideally we get the ID from selection
+        // Record keyframe for selected model based on ID type
         int selectedID = get_selected_object_id();
         int activeIdx = get_active_interactor_index();
         
         if (selectedID != -1) {
-             // If a bone is selected (ID >= 20000), we still want to key the model it belongs to (ID 0 usually)
-             // Or we key the specific bone. Our system keys the model.
-             // Let's assume ID 0 for now as the main interactor
-             animMgr.recordKeyframe(activeIdx); 
+            // Check model type by ID range
+            if (is_bone_id(selectedID)) {
+                // Bone selected - keyframe the active interactor model
+                animMgr.recordKeyframe(activeIdx);
+                std::cout << "Recorded keyframe for interactor model (bone selected)" << std::endl;
+            }
+            else if (is_scene_element_model_id(selectedID)) {
+                // Scene element model selected
+                animMgr.recordSceneElementKeyframe(selectedID);
+                std::cout << "Recorded scene element keyframe for model ID: " << selectedID << std::endl;
+            }
+            else if (is_interactable_model_id(selectedID)) {
+                // Interactable model selected
+                animMgr.recordSceneElementKeyframe(selectedID);
+                std::cout << "Recorded interactable model keyframe for model ID: " << selectedID << std::endl;
+            }
+            else if (is_interactor_model_id(selectedID)) {
+                // Interactor model selected directly
+                animMgr.recordKeyframe(activeIdx);
+                std::cout << "Recorded keyframe for interactor model" << std::endl;
+            }
+            else if (is_target_proxy_id(selectedID)) {
+                // Target proxy selected - keyframe the interactor
+                animMgr.recordKeyframe(activeIdx);
+                std::cout << "Recorded keyframe for interactor model (target proxy selected)" << std::endl;
+            }
+            else {
+                // Unknown ID type - fallback to interactor
+                animMgr.recordKeyframe(activeIdx);
+                std::cout << "Recorded keyframe for interactor model (unknown ID type)" << std::endl;
+            }
         } else {
-             // Fallback to keying the main interactor if nothing selected
-             animMgr.recordKeyframe(activeIdx);
+            // Nothing selected - fallback to keying the main interactor
+            animMgr.recordKeyframe(activeIdx);
+            std::cout << "Recorded keyframe for interactor model (nothing selected)" << std::endl;
+        }
+    }
+    
+    ImGui::SameLine();
+    // Remove Keyframe button - only enabled if there's an active sequence
+    bool hasActiveSequence = (animMgr.activeSequenceIndex >= 0 && animMgr.activeSequenceIndex < animMgr.sequences.size()) ||
+                             (animMgr.activeSceneElementSequenceIndex >= 0 && animMgr.activeSceneElementSequenceIndex < animMgr.sceneElementSequences.size());
+    
+    if (!hasActiveSequence) {
+        ImGui::BeginDisabled();
+    }
+    
+    if (ImGui::Button("Remove Keyframe")) {
+        // Remove keyframe at current frame from active sequence
+        if (animMgr.activeSequenceIndex >= 0 && animMgr.activeSequenceIndex < animMgr.sequences.size()) {
+            animMgr.removeKeyframeAtFrame(animMgr.activeSequenceIndex, animMgr.currentFrame, false);
+            std::cout << "Removed keyframe at frame " << animMgr.currentFrame << " from skeletal sequence" << std::endl;
+        } else if (animMgr.activeSceneElementSequenceIndex >= 0 && animMgr.activeSceneElementSequenceIndex < animMgr.sceneElementSequences.size()) {
+            animMgr.removeKeyframeAtFrame(animMgr.activeSceneElementSequenceIndex, animMgr.currentFrame, true);
+            std::cout << "Removed keyframe at frame " << animMgr.currentFrame << " from scene element sequence" << std::endl;
+        }
+    }
+    
+    if (!hasActiveSequence) {
+        ImGui::EndDisabled();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            ImGui::SetTooltip("No sequence selected");
         }
     }
 
@@ -1140,6 +1254,23 @@ void RenderSequencerWindow(bool* p_open) {
     if (currentFrame != animMgr.currentFrame) {
         animMgr.currentFrame = currentFrame;
         animMgr.applyFrame(currentFrame);
+    }
+    
+    // Keyboard shortcuts for copy/paste (Ctrl+C and Ctrl+V)
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C, false)) {
+        animMgr.copySelectedKeyframes();
+    }
+    
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V, false)) {
+        // Paste into active sequence (selectedEntry from ImSequencer)
+        if (selectedEntry >= 0) {
+            int skeletalCount = (int)animMgr.sequences.size();
+            bool isSceneElement = (selectedEntry >= skeletalCount);
+            int targetIndex = isSceneElement ? (selectedEntry - skeletalCount) : selectedEntry;
+            
+            animMgr.pasteKeyframes(targetIndex, isSceneElement, animMgr.currentFrame);
+        }
     }
 
     ImGui::End();

@@ -37,6 +37,132 @@ AnimationManager& get_animation_manager() {
     return AnimationManager::getInstance();
 }
 
+// Remove a keyframe at a specific frame from a sequence
+bool AnimationManager::removeKeyframeAtFrame(int sequenceIndex, int frame, bool isSceneElement) {
+    if (isSceneElement) {
+        if (sequenceIndex < 0 || sequenceIndex >= sceneElementSequences.size()) return false;
+        
+        auto& keyframes = sceneElementSequences[sequenceIndex].keyframes;
+        for (auto it = keyframes.begin(); it != keyframes.end(); ++it) {
+            if (it->frameIndex == frame) {
+                keyframes.erase(it);
+                std::cout << "Removed scene element keyframe at frame " << frame << std::endl;
+                return true;
+            }
+        }
+    } else {
+        if (sequenceIndex < 0 || sequenceIndex >= sequences.size()) return false;
+        
+        auto& keyframes = sequences[sequenceIndex].keyframes;
+        for (auto it = keyframes.begin(); it != keyframes.end(); ++it) {
+            if (it->frameIndex == frame) {
+                keyframes.erase(it);
+                std::cout << "Removed skeletal keyframe at frame " << frame << std::endl;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Remove an entire sequence
+bool AnimationManager::removeSequence(int sequenceIndex, bool isSceneElement) {
+    if (isSceneElement) {
+        if (sequenceIndex < 0 || sequenceIndex >= sceneElementSequences.size()) return false;
+        
+        std::cout << "Removed scene element sequence: " << sceneElementSequences[sequenceIndex].name << std::endl;
+        sceneElementSequences.erase(sceneElementSequences.begin() + sequenceIndex);
+        
+        // Update active index if needed
+        if (activeSceneElementSequenceIndex >= sceneElementSequences.size()) {
+            activeSceneElementSequenceIndex = sceneElementSequences.empty() ? -1 : sceneElementSequences.size() - 1;
+        }
+        return true;
+    } else {
+        if (sequenceIndex < 0 || sequenceIndex >= sequences.size()) return false;
+        
+        std::cout << "Removed skeletal sequence: " << sequences[sequenceIndex].name << std::endl;
+        sequences.erase(sequences.begin() + sequenceIndex);
+        
+        // Update active index if needed
+        if (activeSequenceIndex >= sequences.size()) {
+            activeSequenceIndex = sequences.empty() ? -1 : sequences.size() - 1;
+        }
+        return true;
+    }
+}
+
+// Copy a sequence to clipboard
+void AnimationManager::copySequence(int sequenceIndex, bool isSceneElement) {
+    clipboard.isValid = false;
+    clipboard.isSceneElement = isSceneElement;
+    
+    if (isSceneElement) {
+        if (sequenceIndex < 0 || sequenceIndex >= sceneElementSequences.size()) return;
+        
+        auto& seq = sceneElementSequences[sequenceIndex];
+        clipboard.name = seq.name + " (Copy)";
+        clipboard.modelID = seq.modelID;
+        clipboard.sceneElementKeyframes = seq.keyframes;
+        clipboard.isValid = true;
+        std::cout << "Copied scene element sequence: " << seq.name << std::endl;
+    } else {
+        if (sequenceIndex < 0 || sequenceIndex >= sequences.size()) return;
+        
+        auto& seq = sequences[sequenceIndex];
+        clipboard.name = seq.name + " (Copy)";
+        clipboard.modelID = seq.modelID;
+        clipboard.skeletalKeyframes = seq.keyframes;
+        clipboard.isValid = true;
+        std::cout << "Copied skeletal sequence: " << seq.name << std::endl;
+    }
+}
+
+// Paste sequence from clipboard, offsetting all keyframes to start at atFrame
+void AnimationManager::pasteSequence(int atFrame) {
+    if (!clipboard.isValid) return;
+    
+    if (clipboard.isSceneElement) {
+        // Find the earliest keyframe to calculate offset
+        int minFrame = INT_MAX;
+        for (const auto& kf : clipboard.sceneElementKeyframes) {
+            if (kf.frameIndex < minFrame) minFrame = kf.frameIndex;
+        }
+        
+        int offset = atFrame - minFrame;
+        
+        // Create new sequence with offset keyframes
+        SceneElementSequence newSeq(clipboard.name, clipboard.modelID);
+        for (auto kf : clipboard.sceneElementKeyframes) {
+            kf.frameIndex += offset;
+            newSeq.addKeyframe(kf);
+        }
+        
+        sceneElementSequences.push_back(newSeq);
+        activeSceneElementSequenceIndex = sceneElementSequences.size() - 1;
+        std::cout << "Pasted scene element sequence at frame " << atFrame << std::endl;
+    } else {
+        // Find the earliest keyframe to calculate offset
+        int minFrame = INT_MAX;
+        for (const auto& kf : clipboard.skeletalKeyframes) {
+            if (kf.frameIndex < minFrame) minFrame = kf.frameIndex;
+        }
+        
+        int offset = atFrame - minFrame;
+        
+        // Create new sequence with offset keyframes
+        Sequence newSeq(clipboard.name, clipboard.modelID);
+        for (auto kf : clipboard.skeletalKeyframes) {
+            kf.frameIndex += offset;
+            newSeq.addKeyframe(kf);
+        }
+        
+        sequences.push_back(newSeq);
+        activeSequenceIndex = sequences.size() - 1;
+        std::cout << "Pasted skeletal sequence at frame " << atFrame << std::endl;
+    }
+}
+
 void AnimationManager::update(float deltaTime) {
     if (!isPlaying) return;
 
@@ -195,15 +321,8 @@ void AnimationManager::applyFrame(int frame) {
         // Interpolate transform
         glm::mat4 finalTransform = interpolate_transform(prevKf->transform, nextKf->transform, alpha);
         
-        // Apply to model
-        // Note: We use the modelID from the keyframe, assuming it's consistent or we want to animate whatever model is specified
-        // However, usually a sequence is for a specific model. The user requested "each keyframe should hold a model id".
-        // If the sequence has a modelID, we might use that, but the keyframe also has one.
-        // Let's use the keyframe's modelID as requested, or fallback to sequence's modelID if keyframe's is invalid?
-        // The user said "each keyframe should hold a model id".
-        // Let's assume the keyframe's modelID is the one to use.
-        
-        int targetModelID = prevKf->modelID; // Use previous keyframe's model ID for interpolation segment
+        // Apply to model - use the sequence's modelID (consistent across all keyframes in sequence)
+        int targetModelID = seq.modelID;
         if (targetModelID >= 0) {
             set_model_matrix_by_id(targetModelID, finalTransform);
         }

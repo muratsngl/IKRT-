@@ -61,6 +61,12 @@ const InteractableModel& get_interactable_model(size_t index);
 size_t get_scene_element_model_count();
 size_t get_interactable_model_count();
 std::vector<Shape>& get_interactable_element_boxes();
+
+// Helper functions to determine model type by ID (using ID ranges)
+bool is_scene_element_model_id(int model_id);
+bool is_interactable_model_id(int model_id);
+bool is_interactor_model_id(int model_id);
+
 void update_bone_transforms(const std::vector<unsigned short>& indices);
 void update_center_bone_matrices();
 void end_effector_align(std::vector<unsigned short> indices);

@@ -39,17 +39,66 @@ extern std::vector<Shape> interactable_element_boxes;
 extern int interactable_element_count;
 extern int scene_element_count;
 
-// Global unique model ID counter
-extern int global_model_id_counter;
+// Model type-specific ID counters
+extern int scene_element_id_counter;
+extern int interactable_id_counter;
+extern int interactor_id_counter;
 
-// Function to get next unique model ID
-inline int get_next_unique_model_id() {
-    return global_model_id_counter++;
+// ID range constants (defined in application_logic.hpp)
+#include "application_logic.hpp"
+
+// Function to get next unique scene element model ID
+inline int get_next_scene_element_id() {
+    int id = SCENE_ELEMENT_ID_START + scene_element_id_counter;
+    if (id > SCENE_ELEMENT_ID_END) {
+        std::cerr << "ERROR: Scene element ID range exhausted!" << std::endl;
+        return SCENE_ELEMENT_ID_START;
+    }
+    scene_element_id_counter++;
+    return id;
 }
 
-// Function to get current model ID counter value (next ID that will be assigned)
-inline int get_current_model_id_counter() {
-    return global_model_id_counter;
+// Function to get next unique interactable model ID
+inline int get_next_interactable_id() {
+    int id = INTERACTABLE_ID_START + interactable_id_counter;
+    if (id > INTERACTABLE_ID_END) {
+        std::cerr << "ERROR: Interactable model ID range exhausted!" << std::endl;
+        return INTERACTABLE_ID_START;
+    }
+    interactable_id_counter++;
+    return id;
+}
+
+// Function to get next unique interactor model ID
+inline int get_next_interactor_id() {
+    int id = INTERACTOR_ID_START + interactor_id_counter;
+    if (id > INTERACTOR_ID_END) {
+        std::cerr << "ERROR: Interactor model ID range exhausted!" << std::endl;
+        return INTERACTOR_ID_START;
+    }
+    interactor_id_counter++;
+    return id;
+}
+
+// Helper functions to determine model type by ID
+inline bool is_scene_element_id(int id) {
+    return id >= SCENE_ELEMENT_ID_START && id <= SCENE_ELEMENT_ID_END;
+}
+
+inline bool is_interactable_id(int id) {
+    return id >= INTERACTABLE_ID_START && id <= INTERACTABLE_ID_END;
+}
+
+inline bool is_interactor_id(int id) {
+    return id >= INTERACTOR_ID_START && id <= INTERACTOR_ID_END;
+}
+
+inline bool is_target_proxy_id(int id) {
+    return id >= TARGET_PROXY_ID_START && id <= TARGET_PROXY_ID_END;
+}
+
+inline bool is_bone_id(int id) {
+    return id >= BONE_ID_START;
 }
 
 struct BoneInfo
@@ -449,7 +498,7 @@ public:
     InteractableModel(string const& path, bool gamma = false) : gammaCorrection(gamma), original_file_path(path)
     {
         InteractableModelCreator creator;
-        id = get_next_unique_model_id();  // Use utility function for unique ID
+        id = get_next_interactable_id();  // Use interactable ID range
         interactable_element_count++;     // Keep count for other purposes
         creator.loadModel(path, meshes, bindPosePositions, bindPoseMatrices, textures_loaded, local_bone_info_map, id);
         directory = creator.directory;
@@ -1019,8 +1068,8 @@ public:
     SceneElementModel(std::string const& path, bool gamma = false) : gammaCorrection(gamma), original_file_path(path)
     {
         SceneElementModelCreator creator;
-        id = get_next_unique_model_id();  // Use utility function for unique ID
-        scene_element_count++;            // Keep count for other purposes
+        id = get_next_scene_element_id();  // Use scene element ID range
+        scene_element_count++;             // Keep count for other purposes
         creator.loadModel(path, meshes, textures_loaded, id);
         directory = creator.directory;
         model_index = 0; // Will be set during loading
