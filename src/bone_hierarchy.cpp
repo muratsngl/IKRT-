@@ -139,22 +139,111 @@ void BoneHierarchy::printNodeRecursive(const BoneNode* node, int depth) const {
 
 // IKChainManager implementations
 void IKChainManager::addChain(const IKChainDefinition& chain) {
-    chains.push_back(chain);
+    IKChainDefinition newChain = chain;
+    
+    // Assign unique chain ID if not already set
+    if (newChain.chainId == -1) {
+        newChain.chainId = nextChainId++;
+    }
+    
+    // Add to the model's chain vector
+    chainsByModel[newChain.modelId].push_back(newChain);
+    
+    // If this is the first chain for this model, make it active
+    if (chainsByModel[newChain.modelId].size() == 1) {
+        activeChainIndexByModel[newChain.modelId] = 0;
+    }
 }
 
-void IKChainManager::removeChain(size_t index) {
-    if (index < chains.size()) {
-        chains.erase(chains.begin() + index);
+void IKChainManager::removeChain(int modelId, size_t chainIndex) {
+    auto it = chainsByModel.find(modelId);
+    if (it != chainsByModel.end() && chainIndex < it->second.size()) {
+        it->second.erase(it->second.begin() + chainIndex);
+        
+        // Update active chain index if needed
+        int activeIdx = activeChainIndexByModel[modelId];
+        if (activeIdx >= (int)it->second.size()) {
+            activeChainIndexByModel[modelId] = std::max(0, (int)it->second.size() - 1);
+        }
+        
+        // Remove model entry if no chains remain
+        if (it->second.empty()) {
+            chainsByModel.erase(it);
+            activeChainIndexByModel.erase(modelId);
+        }
     }
 }
 
 void IKChainManager::clearChains() {
-    chains.clear();
+    chainsByModel.clear();
+    activeChainIndexByModel.clear();
+    nextChainId = 0;
 }
 
-IKChainDefinition* IKChainManager::getChain(size_t index) {
-    if (index < chains.size()) {
-        return &chains[index];
+void IKChainManager::clearChainsForModel(int modelId) {
+    chainsByModel.erase(modelId);
+    activeChainIndexByModel.erase(modelId);
+}
+
+const std::vector<IKChainDefinition>* IKChainManager::getChainsForModel(int modelId) const {
+    auto it = chainsByModel.find(modelId);
+    if (it != chainsByModel.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+std::vector<IKChainDefinition>* IKChainManager::getChainsForModelMutable(int modelId) {
+    auto it = chainsByModel.find(modelId);
+    if (it != chainsByModel.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+IKChainDefinition* IKChainManager::getChain(int modelId, size_t chainIndex) {
+    auto it = chainsByModel.find(modelId);
+    if (it != chainsByModel.end() && chainIndex < it->second.size()) {
+        return &it->second[chainIndex];
+    }
+    return nullptr;
+}
+
+size_t IKChainManager::getChainCountForModel(int modelId) const {
+    auto it = chainsByModel.find(modelId);
+    if (it != chainsByModel.end()) {
+        return it->second.size();
+    }
+    return 0;
+}
+
+size_t IKChainManager::getTotalChainCount() const {
+    size_t total = 0;
+    for (const auto& pair : chainsByModel) {
+        total += pair.second.size();
+    }
+    return total;
+}
+
+void IKChainManager::setActiveChain(int modelId, int chainIndex) {
+    auto it = chainsByModel.find(modelId);
+    if (it != chainsByModel.end() && chainIndex >= 0 && chainIndex < (int)it->second.size()) {
+        activeChainIndexByModel[modelId] = chainIndex;
+    }
+}
+
+int IKChainManager::getActiveChainIndex(int modelId) const {
+    auto it = activeChainIndexByModel.find(modelId);
+    if (it != activeChainIndexByModel.end()) {
+        return it->second;
+    }
+    return -1;
+}
+
+IKChainDefinition* IKChainManager::getActiveChain(int modelId) {
+    int activeIdx = getActiveChainIndex(modelId);
+    if (activeIdx >= 0) {
+        return getChain(modelId, activeIdx);
     }
     return nullptr;
 }
@@ -162,15 +251,27 @@ IKChainDefinition* IKChainManager::getChain(size_t index) {
 bool IKChainManager::saveToFile(const std::string& filepath) const {
     try {
         json j;
-        j["version"] = "1.0";
+        j["version"] = "2.0";  // Updated version to include modelId
         j["chains"] = json::array();
         
-        for (const auto& chain : chains) {
-            json chainData;
-            chainData["name"] = chain.name;
-            chainData["bone_indices"] = chain.boneIndices;
-            chainData["bone_names"] = chain.boneNames;
-            j["chains"].push_back(chainData);
+        // Iterate through all models and their chains
+        for (const auto& modelPair : chainsByModel) {
+            int modelId = modelPair.first;
+            for (const auto& chain : modelPair.second) {
+                json chainData;
+                chainData["chain_id"] = chain.chainId;
+                chainData["model_id"] = chain.modelId;
+                chainData["name"] = chain.name;
+                chainData["bone_indices"] = chain.boneIndices;
+                chainData["bone_names"] = chain.boneNames;
+                j["chains"].push_back(chainData);
+            }
+        }
+        
+        // Save active chain indices
+        j["active_chains"] = json::object();
+        for (const auto& activePair : activeChainIndexByModel) {
+            j["active_chains"][std::to_string(activePair.first)] = activePair.second;
         }
         
         std::ofstream file(filepath);
@@ -203,7 +304,9 @@ bool IKChainManager::loadFromFile(const std::string& filepath) {
         file >> j;
         file.close();
         
-        chains.clear();
+        clearChains();
+        
+        std::string version = j.value("version", "1.0");
         
         if (j.contains("chains")) {
             for (const auto& chainData : j["chains"]) {
@@ -211,12 +314,36 @@ bool IKChainManager::loadFromFile(const std::string& filepath) {
                 chain.name = chainData["name"];
                 chain.boneIndices = chainData["bone_indices"].get<std::vector<int>>();
                 chain.boneNames = chainData["bone_names"].get<std::vector<std::string>>();
-                chains.push_back(chain);
+                
+                // Handle version differences
+                if (version == "2.0" || chainData.contains("model_id")) {
+                    chain.chainId = chainData.value("chain_id", -1);
+                    chain.modelId = chainData.value("model_id", -1);
+                    if (chain.chainId >= nextChainId) {
+                        nextChainId = chain.chainId + 1;
+                    }
+                } else {
+                    // Legacy format - assign default values
+                    chain.chainId = nextChainId++;
+                    chain.modelId = -1;  // Unknown model
+                    std::cout << "Warning: Loading legacy chain format without model ID" << std::endl;
+                }
+                
+                addChain(chain);
+            }
+        }
+        
+        // Load active chain indices
+        if (j.contains("active_chains")) {
+            for (auto& item : j["active_chains"].items()) {
+                int modelId = std::stoi(item.key());
+                int chainIndex = item.value();
+                setActiveChain(modelId, chainIndex);
             }
         }
         
         std::cout << "IK chain configuration loaded from: " << filepath << std::endl;
-        std::cout << "Loaded " << chains.size() << " chain(s)" << std::endl;
+        std::cout << "Loaded " << getTotalChainCount() << " chain(s)" << std::endl;
         return true;
         
     } catch (const std::exception& e) {

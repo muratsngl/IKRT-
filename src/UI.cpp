@@ -239,6 +239,10 @@ void remove_last_bone_from_current_chain() {
     std::cout << "Removed bone '" << removedName << "' (ID: " << removedId << ") from chain" << std::endl;
 }
 
+IKChainManager& get_chain_manager() {
+    return chainManager;
+}
+
 // --- MODIFICATION: "File" menu has been removed ---
 void RenderMainMenuBar() {
     if (ImGui::BeginMainMenuBar()) {
@@ -531,10 +535,27 @@ void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjectio
         glm::decompose(objectMatrix, scale, rotation, translation, skew, perspective);
 
         int selected_id = get_selected_object_id();
-        if (selected_id >= 20000) {
+        
+        // Check if it's a target proxy (ID >= 30000)
+        extern int get_chain_id_from_target_proxy_id(int proxy_id);
+        int chain_id = get_chain_id_from_target_proxy_id(selected_id);
+        
+        if (chain_id >= 0) {
+            // Target proxy manipulation - update the chain's target position
+            int activeModelId = get_active_interactor_index();
+            if (activeModelId >= 0) {
+                IKChainManager& chainMgr = get_chain_manager();
+                IKChainDefinition* activeChain = chainMgr.getActiveChain(activeModelId);
+                if (activeChain && activeChain->chainId == chain_id) {
+                    activeChain->targetPosition = translation;
+                    activeChain->targetPositionChanged = true; // Flag for FABRIK update
+                }
+            }
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "IK Target Position");
+        } else if (selected_id >= 20000) {
             // Bone manipulation - propagate to children in FK mode
             int bone_id = selected_id - 20000;
-            recompute_bone_hierarchy_from(bone_id);
+            recompute_bone_hierarchy_from(bone_id,get_active_interactor_index());
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Bone Transform (FK)");
         } else {
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Object Transform");
@@ -869,12 +890,17 @@ void RenderBoneInspectorWidget(bool* p_open) {
     
     // IK Chain Builder Section
     if (ImGui::CollapsingHeader("IK Chain Builder", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // Get active interactor model info
+        InteractorModel* activeModel = get_interactor_model();
+        int activeModelId = get_active_interactor_index();
+        
         if (!buildingChain) {
             if (ImGui::Button("Start New Chain", ImVec2(-1, 0))) {
                 buildingChain = true;
                 currentChain = IKChainDefinition();
                 currentChain.name = "New Chain";
-                std::cout << "Started building new IK chain" << std::endl;
+                currentChain.modelId = activeModelId;  // Assign current model ID
+                std::cout << "Started building new IK chain for model " << activeModelId << std::endl;
             }
         } else {
             ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Building Chain...");
@@ -901,8 +927,10 @@ void RenderBoneInspectorWidget(bool* p_open) {
             // Chain actions
             if (ImGui::Button("Save Chain", ImVec2(-1, 0))) {
                 if (!currentChain.boneIndices.empty()) {
+                    // Ensure modelId is set to current active model
+                    currentChain.modelId = activeModelId;
                     chainManager.addChain(currentChain);
-                    std::cout << "Saved chain: " << currentChain.name << std::endl;
+                    std::cout << "Saved chain: " << currentChain.name << " for model " << currentChain.modelId << std::endl;
                     buildingChain = false;
                     currentChain = IKChainDefinition();
                 } else {
@@ -920,15 +948,65 @@ void RenderBoneInspectorWidget(bool* p_open) {
     
     // Saved Chains Section
     if (ImGui::CollapsingHeader("Saved IK Chains")) {
-        size_t chainCount = chainManager.getChainCount();
-        ImGui::Text("Saved Chains: %d", (int)chainCount);
+        InteractorModel* activeModel = get_interactor_model();
+        int activeModelId = get_active_interactor_index();
+        
+        size_t chainCount = chainManager.getChainCountForModel(activeModelId);
+        ImGui::Text("Chains for Model %d: %d", activeModelId, (int)chainCount);
+        ImGui::Text("Total Chains (all models): %d", (int)chainManager.getTotalChainCount());
         
         if (chainCount > 0) {
+            // Active chain selection dropdown
+            int activeChainIdx = chainManager.getActiveChainIndex(activeModelId);
+            const std::vector<IKChainDefinition>* chains = chainManager.getChainsForModel(activeModelId);
+            
+            ImGui::Separator();
+            ImGui::Text("Active Chain:");
+            
+            std::string previewName = (activeChainIdx >= 0 && chains) ? 
+                chains->at(activeChainIdx).name : "None";
+            
+            if (ImGui::BeginCombo("##ActiveChain", previewName.c_str())) {
+                for (size_t i = 0; i < chainCount; i++) {
+                    bool isSelected = (activeChainIdx == (int)i);
+                    IKChainDefinition* chain = chainManager.getChain(activeModelId, i);
+                    if (chain && ImGui::Selectable(chain->name.c_str(), isSelected)) {
+                        chainManager.setActiveChain(activeModelId, i);
+                        std::cout << "Set active chain to: " << chain->name << " (index " << i << ")" << std::endl;
+                    }
+                    if (isSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            
+            ImGui::Separator();
+            ImGui::Text("Chain Details:");
+            
             for (size_t i = 0; i < chainCount; i++) {
-                IKChainDefinition* chain = chainManager.getChain(i);
-                if (ImGui::TreeNode((void*)(intptr_t)i, "%s (%d bones)", 
-                                   chain->name.c_str(), 
-                                   (int)chain->boneIndices.size())) {
+                IKChainDefinition* chain = chainManager.getChain(activeModelId, i);
+                if (!chain) continue;
+                
+                // Highlight active chain
+                bool isActive = (activeChainIdx == (int)i);
+                if (isActive) {
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 0.2f, 1.0f));
+                }
+                
+                std::string nodeLabel = chain->name + " (" + std::to_string(chain->boneIndices.size()) + " bones)";
+                if (isActive) {
+                    nodeLabel += " [ACTIVE]";
+                }
+                
+                if (ImGui::TreeNode((void*)(intptr_t)i, "%s", nodeLabel.c_str())) {
+                    if (isActive) {
+                        ImGui::PopStyleColor();
+                    }
+                    
+                    ImGui::Text("Chain ID: %d", chain->chainId);
+                    ImGui::Text("Model ID: %d", chain->modelId);
+                    
                     for (size_t j = 0; j < chain->boneIndices.size(); j++) {
                         ImGui::Text("  %d. %s (ID: %d)", 
                                    (int)j+1,
@@ -936,13 +1014,21 @@ void RenderBoneInspectorWidget(bool* p_open) {
                                    chain->boneIndices[j]);
                     }
                     
-                    if (ImGui::Button("Delete Chain")) {
-                        chainManager.removeChain(i);
+                    ImGui::Spacing();
+                    if (ImGui::Button("Set as Active", ImVec2(-1, 0))) {
+                        chainManager.setActiveChain(activeModelId, i);
+                        std::cout << "Set active chain to: " << chain->name << std::endl;
+                    }
+                    
+                    if (ImGui::Button("Delete Chain", ImVec2(-1, 0))) {
+                        chainManager.removeChain(activeModelId, i);
                         ImGui::TreePop();
                         break;
                     }
                     
                     ImGui::TreePop();
+                } else if (isActive) {
+                    ImGui::PopStyleColor();
                 }
             }
         }

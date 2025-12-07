@@ -250,10 +250,8 @@ void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const g
         }
         
         // Get bone positions in world space
-        glm::vec3 childPos = model_data.bind_pose_matrices[childMatrixId] * 
-                            glm::vec4(model_data.bind_pose_positions[childBoneId], 1.0f);
-        glm::vec3 parentPos = model_data.bind_pose_matrices[parentBoneId] * 
-                             glm::vec4(model_data.bind_pose_positions[parentBoneId], 1.0f);
+        glm::vec3 childPos = glm::vec4(model_data.bind_pose_positions[childBoneId], 1.0f);
+        glm::vec3 parentPos = glm::vec4(model_data.bind_pose_positions[parentBoneId], 1.0f);
         
         // Calculate center and direction
         glm::vec3 center = (childPos + parentPos) * 0.5f;
@@ -290,6 +288,28 @@ void CollisionVisualizer::renderBoneVisualization(const glm::mat4& view, const g
         
         bboxShader->setMat4("model", boneTransform);
         glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+    }
+    
+    // Render active IK chain target position if it exists
+    int activeModelId = get_active_interactor_index();
+    if (activeModelId >= 0) {
+        extern IKChainManager& get_chain_manager();
+        IKChainManager& chainManager = get_chain_manager();
+        IKChainDefinition* activeChain = chainManager.getActiveChain(activeModelId);
+        
+        if (activeChain) {
+            // Render target position as a bright cyan/green box
+            glm::vec3 targetColor = glm::vec3(0.0f, 1.0f, 1.0f); // Cyan for target
+            bboxShader->setVec3("color", targetColor);
+            
+            float targetSize = 0.05f; // Size of target box
+            glm::mat4 targetTransform = glm::mat4(1.0f);
+            targetTransform = glm::translate(targetTransform, activeChain->targetPosition);
+            targetTransform = glm::scale(targetTransform, glm::vec3(targetSize));
+            
+            bboxShader->setMat4("model", targetTransform);
+            glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+        }
     }
     
     glBindVertexArray(0);

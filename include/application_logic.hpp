@@ -51,6 +51,11 @@ void update_bone_boxes();
 std::vector<Shape>& get_bone_boxes();
 int get_bone_id_from_shape_id(int shape_id);
 
+// Target proxy visualization and selection for IK chains
+void update_target_proxy_boxes();
+std::vector<Shape>& get_target_proxy_boxes();
+int get_chain_id_from_target_proxy_id(int proxy_id);
+
 // Bone hierarchy management (FK mode)
 void recompute_bone_hierarchy_from(int bone_id, int model_index = -1);
 

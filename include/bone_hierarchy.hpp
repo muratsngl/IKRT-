@@ -28,13 +28,17 @@ struct BoneNode {
 
 // IK Chain definition
 struct IKChainDefinition {
+    int chainId;                   // Unique identifier for this chain
+    int modelId;                   // Which interactor model this chain belongs to
     std::string name;
     std::vector<int> boneIndices;  // Ordered from root to tip
     std::vector<std::string> boneNames;
     glm::vec3 targetPosition;      // Target position for IK solving
+    bool targetPositionChanged;    // Flag to trigger FABRIK solving
     
-    IKChainDefinition() : targetPosition(0.0f) {}
-    IKChainDefinition(const std::string& chainName) : name(chainName), targetPosition(0.0f) {}
+    IKChainDefinition() : chainId(-1), modelId(-1), targetPosition(0.0f), targetPositionChanged(false) {}
+    IKChainDefinition(const std::string& chainName, int model_id = -1) 
+        : chainId(-1), modelId(model_id), name(chainName), targetPosition(0.0f), targetPositionChanged(false) {}
 };
 
 // Bone hierarchy manager
@@ -75,18 +79,30 @@ private:
 // IK Chain configuration manager
 class IKChainManager {
 private:
-    std::vector<IKChainDefinition> chains;
+    std::map<int, std::vector<IKChainDefinition>> chainsByModel;  // Chains organized by model ID
+    std::map<int, int> activeChainIndexByModel;  // Active chain index for each model
+    int nextChainId;  // Counter for unique chain IDs
     
 public:
+    IKChainManager() : nextChainId(0) {}
+    
     // Add/remove chains
     void addChain(const IKChainDefinition& chain);
-    void removeChain(size_t index);
+    void removeChain(int modelId, size_t chainIndex);
     void clearChains();
+    void clearChainsForModel(int modelId);
     
     // Get chains
-    const std::vector<IKChainDefinition>& getChains() const { return chains; }
-    IKChainDefinition* getChain(size_t index);
-    size_t getChainCount() const { return chains.size(); }
+    const std::vector<IKChainDefinition>* getChainsForModel(int modelId) const;
+    std::vector<IKChainDefinition>* getChainsForModelMutable(int modelId);
+    IKChainDefinition* getChain(int modelId, size_t chainIndex);
+    size_t getChainCountForModel(int modelId) const;
+    size_t getTotalChainCount() const;
+    
+    // Active chain management
+    void setActiveChain(int modelId, int chainIndex);
+    int getActiveChainIndex(int modelId) const;
+    IKChainDefinition* getActiveChain(int modelId);
     
     // Save/load chain configurations
     bool saveToFile(const std::string& filepath) const;

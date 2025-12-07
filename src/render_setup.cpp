@@ -458,8 +458,27 @@ static glm::mat4 targetProxyMatrix_Ring = glm::mat4(1.0f);
 static glm::mat4 targetProxyMatrix_Pinky = glm::mat4(1.0f);
 
 glm::mat4& get_selected_object_matrix() {
+    // Check if this is a target proxy selection (ID >= 30000)
+    if (selected_model_id >= 30000) {
+        // For target proxies, create a transformation matrix from the target position
+        static glm::mat4 targetMatrix = glm::mat4(1.0f);
+        
+        int activeModelId = get_active_interactor_index();
+        if (activeModelId >= 0) {
+            extern IKChainManager& get_chain_manager();
+            IKChainManager& chainManager = get_chain_manager();
+            IKChainDefinition* activeChain = chainManager.getActiveChain(activeModelId);
+            
+            if (activeChain) {
+                // Create a translation matrix from the target position
+                targetMatrix = glm::translate(glm::mat4(1.0f), activeChain->targetPosition);
+            }
+        }
+        
+        return targetMatrix;
+    }
     // Check if this is a bone selection (ID >= 20000)
-    if (selected_model_id >= 20000) {
+    else if (selected_model_id >= 20000) {
         int bone_id = selected_model_id - 20000;
         InteractorModelData& model_data = get_interactor_model_data_mutable();
         InteractorModel* model = get_interactor_model();
@@ -1143,6 +1162,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             if (is_interactor_model_available()) {
                 std::vector<Shape>& bone_boxes = get_bone_boxes();
                 allShapes.insert(allShapes.end(), bone_boxes.begin(), bone_boxes.end());
+                
+                // Include target proxy boxes for IK chain target selection
+                std::vector<Shape>& target_proxies = get_target_proxy_boxes();
+                allShapes.insert(allShapes.end(), target_proxies.begin(), target_proxies.end());
             }
             
             // Find all objects the ray hits and sort them by distance (nearest first)

@@ -84,9 +84,9 @@ int intersect_ray(const Ray& ray, const std::vector<Shape>& shapes) {
             continue;
         }
         
-        // Special handling for target proxy AABBs (IDs 10000-10003)
+        // Special handling for target proxy AABBs (IDs 10000-10003 or >= 30000)
         // These are already in world space and don't need model matrix transformation
-        if (shape.id >= 10000 && shape.id <= 10003) {
+        if ((shape.id >= 10000 && shape.id <= 10003) || shape.id >= 30000) {
             float t_min, t_max;
             if (ray_aabb_intersect(ray, shape.aabb, t_min, t_max)) {
                 if (t_min >= 0.0f && t_min < closest_distance) {
@@ -168,9 +168,9 @@ std::vector<int> intersect_ray_all(const Ray& ray, const std::vector<Shape>& sha
             continue;
         }
         
-        // Special handling for target proxy AABBs (IDs 10000-10003)
+        // Special handling for target proxy AABBs (IDs 10000-10003 or >= 30000)
         // These are already in world space and don't need model matrix transformation
-        if (shape.id >= 10000 && shape.id <= 10003) {
+        if ((shape.id >= 10000 && shape.id <= 10003) || shape.id >= 30000) {
             float t_min, t_max;
             if (ray_aabb_intersect(ray, shape.aabb, t_min, t_max)) {
                 if (t_min >= 0.0f) {

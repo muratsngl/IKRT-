@@ -103,7 +103,7 @@ void simple_fabrik_routine(std::vector<float>& currentPositions, const glm::vec3
 	
 
 }
-void simple_fabrik_routine_indexed(std::vector<glm::vec3>& currentPositions, const glm::vec3& targetPosition, const std::vector<unsigned short> indices) {
+void simple_fabrik_routine_indexed(std::vector<glm::vec3>& currentPositions, const glm::vec3& targetPosition, const std::vector<int>& indices) {
 	
 	short totalSizeinJoints = indices.size();
 	short totalSize = totalSizeinJoints * 3;
@@ -164,7 +164,7 @@ void simple_fabrik_routine_indexed(std::vector<glm::vec3>& currentPositions, con
 	
 }
 
-std::vector<float> find_joint_distances(std::vector<glm::vec3>& currentPositions, const std::vector<unsigned short> indices) {
+std::vector<float> find_joint_distances(std::vector<glm::vec3>& currentPositions, const std::vector<int>& indices) {
 	std::vector<float> distances;
 	for (short i = 0; i < indices.size() - 1; i++) {
 		distances.push_back(glm::distance(currentPositions[indices[i]], currentPositions[indices[i + 1]]));

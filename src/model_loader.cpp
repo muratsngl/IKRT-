@@ -250,6 +250,59 @@ void update_bone_transforms(const std::vector<unsigned short>& indices) {
     }
 }
 
+// void update_bone_transforms(const std::vector<unsigned short>& indices) {
+//     for (unsigned short i = 0; i < indices.size() - 1; i++) {
+//         glm::vec3 translateVector = (model_data.bind_pose_positions[indices[i]] - 
+//                                    model_data.bind_pose_positions_original[indices[i]]);
+        
+//         glm::vec3 original_dir = model_data.bind_pose_positions_original[indices[i + 1]] - 
+//                                 model_data.bind_pose_positions_original[indices[i]];
+//         glm::vec3 current_dir = model_data.bind_pose_positions[indices[i + 1]] - 
+//                                model_data.bind_pose_positions[indices[i]];
+        
+//         glm::vec3 rotationOrientationVector = glm::normalize(glm::cross(original_dir, current_dir));
+//         float rotationCos = glm::dot(glm::normalize(current_dir), glm::normalize(original_dir));
+        
+//         // Clamp to avoid numerical issues
+//         rotationCos = glm::clamp(rotationCos, -1.0f, 1.0f);
+        
+//         float rotationAngle = glm::acos(rotationCos);
+        
+//         // Handle near-zero rotation
+//         if (glm::length(rotationOrientationVector) < 0.001f) {
+//             rotationOrientationVector = glm::vec3(0, 0, 1);
+//             rotationAngle = 0;
+//         }
+        
+//         glm::quat rotationQuat = glm::angleAxis(rotationAngle, rotationOrientationVector);
+//         glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), 
+//                                               -model_data.bind_pose_positions_original[indices[i]]);
+        
+//         model_data.bind_pose_matrices[indices[i]] = 
+//             glm::translate(glm::mat4(1.0f), translateVector) * 
+//             glm::inverse(offsetMatrix) * 
+//             glm::mat4_cast(rotationQuat) * 
+//             offsetMatrix;
+        
+//         // Handle the last bone in the chain
+//         if (i == indices.size() - 2) {
+//             translateVector = (model_data.bind_pose_positions[indices[i + 1]] - 
+//                              model_data.bind_pose_positions_original[indices[i + 1]]);
+//             offsetMatrix = glm::translate(glm::mat4(1.0f), 
+//                                         -model_data.bind_pose_positions_original[indices[i + 1]]);
+            
+//             model_data.bind_pose_matrices[indices[i + 1]] = 
+//                 glm::translate(glm::mat4(1.0f), translateVector) * 
+//                 glm::inverse(offsetMatrix) * 
+//                 glm::mat4_cast(rotationQuat) * 
+//                 offsetMatrix;
+//         }
+//     }
+// }
+
+
+
+
 void update_center_bone_matrices() {
     // TODO: Will be reimplemented using IK chains from IKChainManager
     // Commented out center bone update code that used hardcoded indices

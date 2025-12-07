@@ -9,8 +9,9 @@
 #include "model_loader.hpp"
 #include "light_manager.hpp"
 
-// Forward declaration
+// Forward declarations
 struct GLFWwindow;
+class IKChainManager;
 
 #include "render_setup.hpp"
 
@@ -43,5 +44,6 @@ bool is_building_chain();
 bool is_bone_in_current_chain(int bone_id);
 void add_bone_to_current_chain(int bone_id);
 void remove_last_bone_from_current_chain();
+IKChainManager& get_chain_manager();
 
 #endif
