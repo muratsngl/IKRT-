@@ -286,12 +286,13 @@ void AnimationManager::applyFrame(int frame) {
                 finalPos = nextKf->targetPositions.at(proxyID);
             }
             
-            switch(proxyID) {
-                case TARGET_PROXY_INDEX: app_state.targetPositionIndex = finalPos; break;
-                case TARGET_PROXY_MIDDLE: app_state.targetPositionMiddle = finalPos; break;
-                case TARGET_PROXY_RING: app_state.targetPositionRing = finalPos; break;
-                case TARGET_PROXY_PINKY: app_state.targetPositionPinky = finalPos; break;
-            }
+            // TODO: User will implement target position updates using IK chains
+            // switch(proxyID) {
+            //     case TARGET_PROXY_INDEX: app_state.targetPositionIndex = finalPos; break;
+            //     case TARGET_PROXY_MIDDLE: app_state.targetPositionMiddle = finalPos; break;
+            //     case TARGET_PROXY_RING: app_state.targetPositionRing = finalPos; break;
+            //     case TARGET_PROXY_PINKY: app_state.targetPositionPinky = finalPos; break;
+            // }
         }
     }
 
@@ -391,12 +392,12 @@ void AnimationManager::recordKeyframe(int modelID) {
     // Let's assume modelID 0 is the main interactor.
     
     if (is_interactor_model_available()) {
-        // Capture IK Targets
-        ApplicationState& app_state = get_application_state();
-        newKf.targetPositions[TARGET_PROXY_INDEX] = app_state.targetPositionIndex;
-        newKf.targetPositions[TARGET_PROXY_MIDDLE] = app_state.targetPositionMiddle;
-        newKf.targetPositions[TARGET_PROXY_RING] = app_state.targetPositionRing;
-        newKf.targetPositions[TARGET_PROXY_PINKY] = app_state.targetPositionPinky;
+        // TODO: User will implement IK target capture using IK chains
+        // ApplicationState& app_state = get_application_state();
+        // newKf.targetPositions[TARGET_PROXY_INDEX] = app_state.targetPositionIndex;
+        // newKf.targetPositions[TARGET_PROXY_MIDDLE] = app_state.targetPositionMiddle;
+        // newKf.targetPositions[TARGET_PROXY_RING] = app_state.targetPositionRing;
+        // newKf.targetPositions[TARGET_PROXY_PINKY] = app_state.targetPositionPinky;
         
         // Capture Bone Transforms (FK)
         // Use the dirty bone indices list to determine which bones to keyframe

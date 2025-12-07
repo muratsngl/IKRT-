@@ -35,42 +35,12 @@ int main() {
     
     // Main loop
     while (!should_close_window()) {
-        // Get application state to check manual control mode
-        ApplicationState& app_state = get_application_state();
+        // Update timing
+        update_finger_positions();
         
-        // Only use shared memory if NOT in manual control mode
-        if (!app_state.manualControlMode) {
-            // Check if shared memory is available, attempt to reinitialize if not
-            if (!is_shared_memory_available()) {
-                static bool retry_notified = false;
-                if (setup_shared_memory()) {
-                    std::cout << "Shared memory successfully initialized! Hand tracking is now active." << std::endl;
-                    retry_notified = false; // Reset notification flag
-                } else if (!retry_notified) {
-                    std::cout << "Note: Shared memory still not available. Retrying each frame..." << std::endl;
-                    retry_notified = true; // Only show this message once
-                }
-            }
-            
-            // Update shared memory data
-            update_shared_memory();
-            // Update application logic
-            update_finger_positions();
-            calculate_deltas();
-        }
-        // In manual control mode, deltas are set via gizmo manipulation
-        // so we skip shared memory and finger position updates
-        
-        // Always apply FABRIK and update transforms
+        // User will implement IK/FK logic
         apply_fabrik();
         update_transforms();
-        
-        //rearrange_finger_positions_based_on_collision();
-        
-        // Update target proxies every frame to keep them in sync
-        if (CollisionVisualizer::showTargetProxies) {
-            update_target_proxies();
-        }
         
         // Update bone boxes every frame for selection (independent of visualization)
         if (is_interactor_model_available()) {
@@ -79,6 +49,7 @@ int main() {
         
         
         // Render frame
+        //TODO DECOUPLE ANIMATION AND PHYSICS ROUTINES FROM THE RENDER FUNCTIONS
         render_frame();
     }
     

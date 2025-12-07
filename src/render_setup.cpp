@@ -458,39 +458,6 @@ static glm::mat4 targetProxyMatrix_Ring = glm::mat4(1.0f);
 static glm::mat4 targetProxyMatrix_Pinky = glm::mat4(1.0f);
 
 glm::mat4& get_selected_object_matrix() {
-    // Check if selected object is a target proxy
-    if (selected_model_id >= TARGET_PROXY_INDEX && selected_model_id <= TARGET_PROXY_PINKY) {
-        // Get current target position and create matrix
-        ApplicationState& app_state = get_application_state();
-        glm::vec3* targetPos = nullptr;
-        glm::mat4* proxyMatrix = nullptr;
-        
-        switch(selected_model_id) {
-            case TARGET_PROXY_INDEX:
-                targetPos = &app_state.targetPositionIndex;
-                proxyMatrix = &targetProxyMatrix_Index;
-                break;
-            case TARGET_PROXY_MIDDLE:
-                targetPos = &app_state.targetPositionMiddle;
-                proxyMatrix = &targetProxyMatrix_Middle;
-                break;
-            case TARGET_PROXY_RING:
-                targetPos = &app_state.targetPositionRing;
-                proxyMatrix = &targetProxyMatrix_Ring;
-                break;
-            case TARGET_PROXY_PINKY:
-                targetPos = &app_state.targetPositionPinky;
-                proxyMatrix = &targetProxyMatrix_Pinky;
-                break;
-        }
-        
-        if (targetPos && proxyMatrix) {
-            // Update matrix with current position
-            *proxyMatrix = glm::translate(glm::mat4(1.0f), *targetPos);
-            return *proxyMatrix;
-        }
-    }
-    
     // Check if this is a bone selection (ID >= 20000)
     if (selected_model_id >= 20000) {
         int bone_id = selected_model_id - 20000;
@@ -795,6 +762,7 @@ void render_frame() {
             
             glClear(GL_DEPTH_BUFFER_BIT);
             
+            pointShadowShader->use();
             pointShadowShader->setMat4("lightSpaceMatrix", shadowTransforms[face]);
             
             // Render scene elements
@@ -1170,12 +1138,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             std::vector<Shape> allShapes;
             allShapes.insert(allShapes.end(), scene_element_boxes.begin(), scene_element_boxes.end());
             allShapes.insert(allShapes.end(), get_interactable_element_boxes().begin(), get_interactable_element_boxes().end());
-            
-            // Include target proxies if they're visible
-            if (CollisionVisualizer::showTargetProxies) {
-                std::vector<Shape>& target_proxies = get_target_proxy_boxes();
-                allShapes.insert(allShapes.end(), target_proxies.begin(), target_proxies.end());
-            }
             
             // Include bone boxes for selection (always available when interactor model loaded)
             if (is_interactor_model_available()) {

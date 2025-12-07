@@ -93,8 +93,9 @@ inline bool is_interactor_id(int id) {
     return id >= INTERACTOR_ID_START && id <= INTERACTOR_ID_END;
 }
 
+// Old target proxy system removed - user will implement with IK chains
 inline bool is_target_proxy_id(int id) {
-    return id >= TARGET_PROXY_ID_START && id <= TARGET_PROXY_ID_END;
+    return false; // No longer used
 }
 
 inline bool is_bone_id(int id) {

@@ -371,20 +371,12 @@ void RenderModelLoaderWidget(bool* p_open) {
         if (is_interactor_model_available()) {
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Interactor Model Loaded");
             
-            if (ImGui::Checkbox("Manual Control Mode", &app_state.manualControlMode)) {
-                if (app_state.manualControlMode) {
-                    std::cout << "Manual control mode enabled - shared memory disabled" << std::endl;
-                    CollisionVisualizer::showTargetProxies = true;
-                    update_target_proxies();
-                } else {
-                    std::cout << "Manual control mode disabled - shared memory enabled" << std::endl;
-                    CollisionVisualizer::showTargetProxies = false;
-                }
-            }
-            ImGui::SameLine();
-            ImGui::TextDisabled("(?)");
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Enable manual control of target positions\nShows target proxies and disables shared memory");
+            const char* animModeItems[] = { "FK", "IK" };
+            int currentAnimMode = (app_state.animationMode == MODE_FORWARD_KINEMATICS) ? 0 : 1;
+            
+            if (ImGui::Combo("Animation Mode", &currentAnimMode, animModeItems, IM_ARRAYSIZE(animModeItems))) {
+                app_state.animationMode = (currentAnimMode == 0) ? MODE_FORWARD_KINEMATICS : MODE_INVERSE_KINEMATICS;
+                std::cout << "Switched to " << (app_state.animationMode == MODE_FORWARD_KINEMATICS ? "FK" : "IK") << " Mode" << std::endl;
             }
             
         } else {
@@ -421,10 +413,6 @@ void RenderModelLoaderWidget(bool* p_open) {
             if (bone_id != -1) {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Selected: Bone #%d", bone_id);
                 ImGui::TextWrapped("Click on bones to build IK chains in the Bone Inspector.");
-            }
-            // Determine if it's a target proxy (cannot be deleted)
-            else if (selected_id >= TARGET_PROXY_INDEX && selected_id <= TARGET_PROXY_PINKY) {
-                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Target Proxy (Cannot Remove)");
             } else {
                 if (ImGui::Button("Remove Selected Model", ImVec2(-1, 0))) {
                     if (remove_scene_element_model_by_id(selected_id)) {
@@ -542,13 +530,8 @@ void RenderGizmoUI(const glm::mat4& cameraView, const glm::mat4& cameraProjectio
         glm::vec4 perspective;
         glm::decompose(objectMatrix, scale, rotation, translation, skew, perspective);
 
-        // Check if we're manipulating a target proxy
         int selected_id = get_selected_object_id();
-        if (selected_id >= TARGET_PROXY_INDEX && selected_id <= TARGET_PROXY_PINKY) {
-            // Update target position via delta system
-            update_target_from_gizmo(selected_id, translation);
-            ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Target Proxy");
-        } else if (selected_id >= 20000) {
+        if (selected_id >= 20000) {
             // Bone manipulation - propagate to children in FK mode
             int bone_id = selected_id - 20000;
             recompute_bone_hierarchy_from(bone_id);
@@ -1185,11 +1168,6 @@ void RenderSequencerWindow(bool* p_open) {
                 // Interactor model selected directly
                 animMgr.recordKeyframe(activeIdx);
                 std::cout << "Recorded keyframe for interactor model" << std::endl;
-            }
-            else if (is_target_proxy_id(selectedID)) {
-                // Target proxy selected - keyframe the interactor
-                animMgr.recordKeyframe(activeIdx);
-                std::cout << "Recorded keyframe for interactor model (target proxy selected)" << std::endl;
             }
             else {
                 // Unknown ID type - fallback to interactor

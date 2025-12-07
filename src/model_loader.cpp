@@ -217,10 +217,8 @@ void update_bone_transforms(const std::vector<unsigned short>& indices) {
     if (active_interactor_index < 0) return;
     InteractorModelData& data = interactors_data[active_interactor_index];
 
+    //TODO::make fabrik write to the original positions so that we can find the relative update.
     for (unsigned short i = 0; i < indices.size() - 1; i++) {
-        glm::vec3 translateVector = (data.bind_pose_positions[indices[i]] - 
-                                   data.bind_pose_positions_original[indices[i]]);
-        
         glm::vec3 original_dir = data.bind_pose_positions_original[indices[i + 1]] - 
                                 data.bind_pose_positions_original[indices[i]];
         glm::vec3 current_dir = data.bind_pose_positions[indices[i + 1]] - 
@@ -241,28 +239,14 @@ void update_bone_transforms(const std::vector<unsigned short>& indices) {
         }
         
         glm::quat rotationQuat = glm::angleAxis(rotationAngle, rotationOrientationVector);
-        glm::mat4 offsetMatrix = glm::translate(glm::mat4(1.0f), 
-                                              -data.bind_pose_positions_original[indices[i]]);
         
-        data.bind_pose_matrices[indices[i]] = 
-            glm::translate(glm::mat4(1.0f), translateVector) * 
-            glm::inverse(offsetMatrix) * 
-            glm::mat4_cast(rotationQuat) * 
-            offsetMatrix;
-        
-        // Handle the last bone in the chain
-        if (i == indices.size() - 2) {
-            translateVector = (data.bind_pose_positions[indices[i + 1]] - 
-                             data.bind_pose_positions_original[indices[i + 1]]);
-            offsetMatrix = glm::translate(glm::mat4(1.0f), 
-                                        -data.bind_pose_positions_original[indices[i + 1]]);
-            
-            data.bind_pose_matrices[indices[i + 1]] = 
-                glm::translate(glm::mat4(1.0f), translateVector) * 
-                glm::inverse(offsetMatrix) * 
-                glm::mat4_cast(rotationQuat) * 
-                offsetMatrix;
-        }
+        data.tot_transformation_matrices[indices[i]] = 
+            data.tot_transformation_matrices[indices[i]] * 
+            glm::mat4_cast(rotationQuat);
+    }
+    
+    if (!indices.empty()) {
+        recompute_bone_hierarchy_from(indices[0], active_interactor_index);
     }
 }
 

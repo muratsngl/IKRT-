@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <glm/glm.hpp>
 
 // Structure representing a bone node in the hierarchy
 struct BoneNode {
@@ -30,9 +31,10 @@ struct IKChainDefinition {
     std::string name;
     std::vector<int> boneIndices;  // Ordered from root to tip
     std::vector<std::string> boneNames;
+    glm::vec3 targetPosition;      // Target position for IK solving
     
-    IKChainDefinition() = default;
-    IKChainDefinition(const std::string& chainName) : name(chainName) {}
+    IKChainDefinition() : targetPosition(0.0f) {}
+    IKChainDefinition(const std::string& chainName) : name(chainName), targetPosition(0.0f) {}
 };
 
 // Bone hierarchy manager
