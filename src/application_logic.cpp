@@ -64,6 +64,7 @@ void apply_fabrik() {
                                   activeChain->boneIndices);
     
     // Step 3: Calculate rotation for each bone and update total transformation matrices
+    glm::mat4 parent(1.0f);
     for (size_t i = 0; i < activeChain->boneIndices.size() - 1; i++) {
         int boneIdx = activeChain->boneIndices[i];
         int nextBoneIdx = activeChain->boneIndices[i + 1];
@@ -72,11 +73,11 @@ void apply_fabrik() {
         if (boneIdx >= modelData.offset_matrices.size() || nextBoneIdx >= modelData.offset_matrices.size()) continue;
         
         // Transform positions to bone-local space using offset matrix
-        glm::vec3 localPrevCurrent = glm::vec3(modelData.offset_matrices[boneIdx] * glm::vec4(prevPositions[i], 1.0f));
-        glm::vec3 localPrevNext = glm::vec3(modelData.offset_matrices[boneIdx] * glm::vec4(prevPositions[i + 1], 1.0f));
+        glm::vec3 localPrevCurrent = glm::vec3(glm::vec4(prevPositions[i], 1.0f));
+        glm::vec3 localPrevNext = glm::vec3(glm::vec4(prevPositions[i + 1], 1.0f));
         
-        glm::vec3 localCurrentCurrent = glm::vec3(modelData.offset_matrices[boneIdx] * glm::vec4(modelData.bind_pose_positions[boneIdx], 1.0f));
-        glm::vec3 localCurrentNext = glm::vec3(modelData.offset_matrices[boneIdx] * glm::vec4(modelData.bind_pose_positions[nextBoneIdx], 1.0f));
+        glm::vec3 localCurrentCurrent = glm::vec3(glm::vec4(modelData.bind_pose_positions[boneIdx], 1.0f));
+        glm::vec3 localCurrentNext = glm::vec3(glm::vec4(modelData.bind_pose_positions[nextBoneIdx], 1.0f));
         
         // Calculate direction before FABRIK (in bone-local space)
         glm::vec3 original_dir = localPrevNext - localPrevCurrent;
@@ -104,11 +105,12 @@ void apply_fabrik() {
         
         rotationAxis = glm::normalize(rotationAxis);
         glm::quat rotationQuat = glm::angleAxis(rotationAngle, rotationAxis);
-        
+        glm::mat4  rotation = glm::inverse(parent) * glm::mat4_cast(rotationQuat);
+        parent = rotation*parent;
         // Update total transformation matrix with rotation
         modelData.tot_transformation_matrices[boneIdx] = 
-            modelData.tot_transformation_matrices[boneIdx] * 
-            glm::mat4_cast(rotationQuat);
+            rotation*modelData.tot_transformation_matrices[boneIdx] 
+            ;
     }
     
     // Step 4: Recompute bone hierarchy from root bone of the chain
